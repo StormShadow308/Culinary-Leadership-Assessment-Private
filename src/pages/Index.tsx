@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -107,6 +106,71 @@ const Index = () => {
                 <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 px-4 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="relative">
+              <img
+                src="/lovable-uploads/452bb85c-a9fd-4058-b2d1-124fa5d74c5a.png"
+                alt="Chef preparing food"
+                className="rounded-lg shadow-xl animate-on-scroll opacity-0 translate-y-10"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-orange/10 to-brand-blue/10 rounded-lg"></div>
+            </div>
+            <div className="space-y-8">
+              <h2 className="text-3xl md:text-4xl font-bold animate-on-scroll opacity-0 translate-y-10">
+                Benefits
+              </h2>
+              
+              <div className="space-y-6">
+                <div className="flex gap-4 animate-on-scroll opacity-0 translate-y-10">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-brand-orange/10 flex items-center justify-center">
+                      <ChefHat className="h-6 w-6 text-brand-orange" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Enhanced Leadership Skills</h3>
+                    <p className="text-gray-600">
+                      Develop crucial soft skills needed for successful kitchen management.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 animate-on-scroll opacity-0 translate-y-10" style={{ animationDelay: "100ms" }}>
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-brand-blue/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-brand-blue" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Better Team Dynamics</h3>
+                    <p className="text-gray-600">
+                      Create a more collaborative and efficient kitchen environment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 animate-on-scroll opacity-0 translate-y-10" style={{ animationDelay: "200ms" }}>
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-brand-orange/10 flex items-center justify-center">
+                      <BarChart3 className="h-6 w-6 text-brand-orange" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Data-Driven Insights</h3>
+                    <p className="text-gray-600">
+                      Make informed decisions about hiring and team development.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
