@@ -17,9 +17,8 @@ import {
   ChefHat, 
   LayoutDashboard, 
   GraduationCap,
-  BarChart, 
-  Calendar,
-  UserCog
+  UserCog,
+  FileText
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -227,11 +226,94 @@ const mockStudentData = [
       communicationActiveListening: 0,
       overallScore: 0
     }
+  },
+  { 
+    id: 9,
+    client: "Edwins Leadership and Restaurant Institute",
+    cohort: "E-110424",
+    name: "Vance Knapp",
+    status: "Stay",
+    entries: "Completed",
+    preAssessment: {
+      resilienceAdaptability: 0,
+      teamDynamicsCollaboration: 0,
+      decisionMakingProblemSolving: 0,
+      selfAwarenessEmotionalIntelligence: 0,
+      communicationActiveListening: 0,
+      overallScore: 0
+    },
+    postAssessment: {
+      resilienceAdaptability: 0,
+      teamDynamicsCollaboration: 0,
+      decisionMakingProblemSolving: 0,
+      selfAwarenessEmotionalIntelligence: 0,
+      communicationActiveListening: 0,
+      overallScore: 0
+    },
+    details: {
+      overallScore: {
+        score: "0 out of 40",
+        rating: "Needs Development"
+      },
+      categories: [
+        {
+          name: "Resilience and Adaptability",
+          score: "0 out of 8",
+          rating: "Needs Development"
+        },
+        {
+          name: "Team Dynamics & Collaboration",
+          score: "0 out of 8",
+          rating: "Needs Development"
+        },
+        {
+          name: "Decision-Making & Problem-Solving",
+          score: "0 out of 8",
+          rating: "Needs Development"
+        },
+        {
+          name: "Self-Awareness & Emotional Intelligence",
+          score: "0 out of 8",
+          rating: "Needs Development"
+        },
+        {
+          name: "Communication & Active Listening",
+          score: "0 out of 8",
+          rating: "Needs Development"
+        }
+      ],
+      summary: "Lacks foundational leadership skills; requires extensive support."
+    }
   }
 ];
 
+// Type definition for student report
+type SkillCategory = {
+  name: string;
+  score: string;
+  rating: string;
+};
+
+type StudentDetails = {
+  overallScore: {
+    score: string;
+    rating: string;
+  };
+  categories: SkillCategory[];
+  summary: string;
+};
+
 const OrgDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+
+  const handleStudentClick = (studentId: number) => {
+    setSelectedStudent(studentId);
+  };
+
+  const handleBackToStudentList = () => {
+    setSelectedStudent(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -276,30 +358,19 @@ const OrgDashboard = () => {
                 </li>
                 <li>
                   <button 
-                    onClick={() => setActiveTab("analytics")}
+                    onClick={() => {
+                      setActiveTab("student-report");
+                      setSelectedStudent(null);
+                    }}
                     className={cn(
                       "flex items-center w-full p-2 rounded-md text-left",
-                      activeTab === "analytics" 
+                      activeTab === "student-report" 
                         ? "bg-brand-orange/10 text-brand-orange" 
                         : "text-gray-700 hover:bg-gray-100"
                     )}
                   >
-                    <BarChart className="h-5 w-5 mr-2" />
-                    Analytics
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => setActiveTab("schedule")}
-                    className={cn(
-                      "flex items-center w-full p-2 rounded-md text-left",
-                      activeTab === "schedule" 
-                        ? "bg-brand-orange/10 text-brand-orange" 
-                        : "text-gray-700 hover:bg-gray-100"
-                    )}
-                  >
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Schedule
+                    <FileText className="h-5 w-5 mr-2" />
+                    Student Report
                   </button>
                 </li>
                 <li>
@@ -490,31 +561,188 @@ const OrgDashboard = () => {
               </div>
             )}
 
-            {/* Analytics Tab Placeholder */}
-            {activeTab === "analytics" && (
+            {/* Student Report Tab */}
+            {activeTab === "student-report" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                  Analytics
+                  Student Report
                 </h1>
-                <Card className="p-6">
-                  <CardContent>
-                    <p className="text-gray-600">Analytics dashboard coming soon.</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Schedule Tab Placeholder */}
-            {activeTab === "schedule" && (
-              <div className="space-y-6 animate-fade-in">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                  Schedule
-                </h1>
-                <Card className="p-6">
-                  <CardContent>
-                    <p className="text-gray-600">Schedule dashboard coming soon.</p>
-                  </CardContent>
-                </Card>
+                
+                {selectedStudent === null ? (
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Select a Student to View Report</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-hidden">
+                        <Table>
+                          <TableHeader className="bg-gray-50">
+                            <TableRow>
+                              <TableHead className="font-semibold">Client</TableHead>
+                              <TableHead className="font-semibold">Cohort</TableHead>
+                              <TableHead className="font-semibold">Name</TableHead>
+                              <TableHead className="font-semibold">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {mockStudentData.map((student) => (
+                              <TableRow key={student.id} className="cursor-pointer hover:bg-gray-100">
+                                <TableCell>{student.client}</TableCell>
+                                <TableCell>{student.cohort}</TableCell>
+                                <TableCell>{student.name}</TableCell>
+                                <TableCell>
+                                  <button 
+                                    onClick={() => handleStudentClick(student.id)}
+                                    className="px-3 py-1 bg-brand-blue text-white rounded-md text-sm hover:bg-brand-blue/90 transition-colors"
+                                  >
+                                    View Report
+                                  </button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-6">
+                    <button 
+                      onClick={handleBackToStudentList}
+                      className="mb-4 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors inline-flex items-center"
+                    >
+                      ← Back to Student List
+                    </button>
+                    
+                    {(() => {
+                      const student = mockStudentData.find(s => s.id === selectedStudent);
+                      if (!student) return <p>Student not found</p>;
+                      
+                      // For demo purposes, we'll display Vance Knapp's data for any student
+                      const reportStudent = student.id === 9 ? student : mockStudentData[8]; // Use Vance Knapp data
+                      
+                      return (
+                        <Card className="overflow-hidden">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-8">
+                              <div className="flex items-center space-x-4">
+                                <img 
+                                  src="/lovable-uploads/bd6e6c59-1db5-4935-a3bf-9d2725449104.png" 
+                                  alt="Report Header" 
+                                  className="max-w-full h-auto"
+                                  style={{ maxHeight: "150px" }}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="mb-8">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                  <p className="text-lg font-medium text-blue-800">Client:</p>
+                                  <p className="text-lg">{reportStudent.client}</p>
+                                </div>
+                                <div>
+                                  <p className="text-lg font-medium text-blue-800">Cohort:</p>
+                                  <p className="text-lg">{reportStudent.cohort}</p>
+                                </div>
+                                <div>
+                                  <p className="text-lg font-medium text-blue-800">Student:</p>
+                                  <p className="text-lg">{reportStudent.name}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mb-8">
+                              <h2 className="text-2xl font-bold text-blue-800 mb-4">Summary</h2>
+                              
+                              <div className="overflow-x-auto mb-6">
+                                <table className="min-w-full border-collapse">
+                                  <thead>
+                                    <tr>
+                                      <th className="bg-gray-900 text-white text-center py-2 px-4 border border-gray-800">Overall Score</th>
+                                      <th className="bg-gray-900 text-white text-center py-2 px-4 border border-gray-800">0 out of 40</th>
+                                      <th className="bg-gray-900 text-white text-center py-2 px-4 border border-gray-800">Needs Development</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr>
+                                      <td className="border border-gray-300 py-2 px-4">Resilience and Adaptability</td>
+                                      <td className="border border-gray-300 py-2 px-4 text-center">0 out of 8</td>
+                                      <td className="border border-gray-300 py-2 px-4 bg-yellow-200"></td>
+                                    </tr>
+                                    <tr>
+                                      <td className="border border-gray-300 py-2 px-4">Team Dynamics & Collaboration</td>
+                                      <td className="border border-gray-300 py-2 px-4 text-center">0 out of 8</td>
+                                      <td className="border border-gray-300 py-2 px-4 bg-yellow-200"></td>
+                                    </tr>
+                                    <tr>
+                                      <td className="border border-gray-300 py-2 px-4">Decision-Making & Problem-Solving</td>
+                                      <td className="border border-gray-300 py-2 px-4 text-center">0 out of 8</td>
+                                      <td className="border border-gray-300 py-2 px-4 bg-yellow-200"></td>
+                                    </tr>
+                                    <tr>
+                                      <td className="border border-gray-300 py-2 px-4">Self-Awareness & Emotional Intelligence</td>
+                                      <td className="border border-gray-300 py-2 px-4 text-center">0 out of 8</td>
+                                      <td className="border border-gray-300 py-2 px-4 bg-yellow-200"></td>
+                                    </tr>
+                                    <tr>
+                                      <td className="border border-gray-300 py-2 px-4">Communication & Active Listening</td>
+                                      <td className="border border-gray-300 py-2 px-4 text-center">0 out of 8</td>
+                                      <td className="border border-gray-300 py-2 px-4 bg-yellow-200"></td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                            
+                            <div className="mb-8">
+                              <h2 className="text-2xl font-bold text-blue-800 mb-4">Details</h2>
+                              <h3 className="text-xl font-bold mb-4">{reportStudent.name}: 0 out of 40 - Needs Development</h3>
+                              <p className="text-lg mb-6">Lacks foundational leadership skills; requires extensive support.</p>
+                              
+                              <div className="space-y-8">
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Resilience and Adaptability: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Team Dynamics & Collaboration: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Decision-Making & Problem-Solving: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Self-Awareness & Emotional Intelligence: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Communication & Active Listening: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
 
