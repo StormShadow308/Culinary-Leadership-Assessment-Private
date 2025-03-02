@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -818,3 +819,245 @@ const OrgDashboard = () => {
                                   <h4 className="text-lg font-bold mb-2">Self-Awareness & Emotional Intelligence: 0 out of 8 - Needs Development</h4>
                                   <div className="bg-gray-100 p-4 rounded-md">
                                     <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="text-lg font-bold mb-2">Communication & Active Listening: 0 out of 8 - Needs Development</h4>
+                                  <div className="bg-gray-100 p-4 rounded-md">
+                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Comparison Report Tab */}
+            {activeTab === "comparison-report" && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">
+                  Comparison Report
+                </h1>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Class A vs Class B</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="p-4 bg-orange-50 rounded-md">
+                          <h3 className="font-semibold text-lg mb-2">{mockCohortComparisonData.classA.name}</h3>
+                          <p className="text-sm mb-1"><span className="font-medium">Client:</span> {mockCohortComparisonData.classA.client}</p>
+                          <p className="text-sm mb-1"><span className="font-medium">Cohort:</span> {mockCohortComparisonData.classA.cohort}</p>
+                          <p className="text-sm mb-1"><span className="font-medium">Type:</span> {mockCohortComparisonData.classA.type}</p>
+                          <p className="text-sm"><span className="font-medium">Status:</span> {mockCohortComparisonData.classA.status}</p>
+                        </div>
+                        <div className="p-4 bg-blue-50 rounded-md">
+                          <h3 className="font-semibold text-lg mb-2">{mockCohortComparisonData.classB.name}</h3>
+                          <p className="text-sm mb-1"><span className="font-medium">Client:</span> {mockCohortComparisonData.classB.client}</p>
+                          <p className="text-sm mb-1"><span className="font-medium">Cohort:</span> {mockCohortComparisonData.classB.cohort}</p>
+                          <p className="text-sm mb-1"><span className="font-medium">Type:</span> {mockCohortComparisonData.classB.type}</p>
+                          <p className="text-sm"><span className="font-medium">Status:</span> {mockCohortComparisonData.classB.status}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Comparison Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="p-4 rounded-md">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart
+                            data={[
+                              { name: "RA", classA: 0, classB: 0 },
+                              { name: "TD", classA: 0, classB: 0 },
+                              { name: "DM", classA: 0, classB: 0 },
+                              { name: "SA", classA: 0, classB: 0 },
+                              { name: "CA", classA: 0, classB: 0 },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="classA" name="Class A" fill="#F97316" />
+                            <Bar dataKey="classB" name="Class B" fill="#0EA5E9" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-6">
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Proficiency Levels</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-4">Scoring Breakdown</h3>
+                          <div className="space-y-2">
+                            {proficiencyLevels.map((level) => (
+                              <div key={level.id} className="flex items-center">
+                                <div 
+                                  className="w-4 h-4 rounded-full mr-2" 
+                                  style={{ backgroundColor: level.color }}
+                                ></div>
+                                <span className="text-sm font-medium">{level.name}</span>
+                                <span className="text-xs text-gray-500 ml-2">{level.range}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-semibold text-lg mb-4">Student Distribution</h3>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: "Needs Development", value: 27, color: "#EF4444" },
+                                  { name: "Developing Proficiency", value: 0, color: "#F59E0B" },
+                                  { name: "Moderate Proficiency", value: 0, color: "#10B981" },
+                                  { name: "High Proficiency", value: 0, color: "#3B82F6" },
+                                  { name: "Exceptional Proficiency", value: 0, color: "#8B5CF6" },
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                {
+                                  [
+                                    { name: "Needs Development", value: 27, color: "#EF4444" },
+                                    { name: "Developing Proficiency", value: 0, color: "#F59E0B" },
+                                    { name: "Moderate Proficiency", value: 0, color: "#10B981" },
+                                    { name: "High Proficiency", value: 0, color: "#3B82F6" },
+                                    { name: "Exceptional Proficiency", value: 0, color: "#8B5CF6" },
+                                  ].map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))
+                                }
+                              </Pie>
+                              <Tooltip />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Cohort Scoring Curve</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={mockCohortScoringCurveData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="score" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line 
+                              type="monotone" 
+                              dataKey="classA" 
+                              name="Class A"
+                              stroke="#F97316" 
+                              activeDot={{ r: 8 }} 
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="classB" 
+                              name="Class B"
+                              stroke="#0EA5E9" 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="overflow-hidden">
+                    <CardHeader>
+                      <CardTitle>Top Students Ranking</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="font-semibold">No.</TableHead>
+                              <TableHead className="font-semibold">Student</TableHead>
+                              <TableHead className="font-semibold">Class</TableHead>
+                              <TableHead className="font-semibold">Score</TableHead>
+                              <TableHead className="font-semibold">Score (%)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {mockTopStudentsData.slice(0, 10).map((student) => (
+                              <TableRow key={student.no}>
+                                <TableCell>{student.no}</TableCell>
+                                <TableCell>{student.student}</TableCell>
+                                <TableCell>{student.class}</TableCell>
+                                <TableCell>{student.score}</TableCell>
+                                <TableCell>{student.scorePercentage}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === "settings" && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">
+                  Settings
+                </h1>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Organization Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Settings content will go here.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default OrgDashboard;
