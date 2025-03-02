@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -26,9 +25,12 @@ import {
   GraduationCap,
   UserCog,
   FileText,
-  BarChart2
+  BarChart2,
+  LineChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  FileBarChart
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, SubTabsList, SubTabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -41,7 +43,6 @@ const mockPieData = [
 
 const COLORS = ["#F97316", "#0EA5E9", "#22C55E", "#EAB308"];
 
-// Mock data for student assessment results
 const mockStudentData = [
   { 
     id: 1,
@@ -295,23 +296,6 @@ const mockStudentData = [
   }
 ];
 
-// Type definition for student report
-type SkillCategory = {
-  name: string;
-  score: string;
-  rating: string;
-};
-
-type StudentDetails = {
-  overallScore: {
-    score: string;
-    rating: string;
-  };
-  categories: SkillCategory[];
-  summary: string;
-};
-
-// Add mock data for comparison report
 const mockCohortComparisonData = {
   classA: {
     name: "Class A",
@@ -357,7 +341,6 @@ const mockCohortComparisonData = {
   }
 };
 
-// Scoring breakdown data
 const proficiencyLevels = [
   { id: 1, name: "Needs Development", range: "(0 - 9)", color: "#EF4444" },
   { id: 2, name: "Developing Proficiency", range: "(10 - 19)", color: "#F59E0B" },
@@ -366,14 +349,12 @@ const proficiencyLevels = [
   { id: 5, name: "Exceptional Proficiency", range: "(36 - 40)", color: "#8B5CF6" }
 ];
 
-// Mock data for cohort scoring curve chart
 const mockCohortScoringCurveData = Array.from({ length: 40 }, (_, i) => ({
   score: i + 1,
   classA: 0,
   classB: 0
 }));
 
-// Mock data for top students ranking
 const mockTopStudentsData = Array.from({ length: 20 }, (_, i) => ({
   no: i + 1,
   student: "#N/A",
@@ -382,9 +363,81 @@ const mockTopStudentsData = Array.from({ length: 20 }, (_, i) => ({
   scorePercentage: "#N/A"
 }));
 
+const mockOverallReportData = {
+  cohortScoring: {
+    totalStudents: 38,
+    proficiencyLevels: [
+      { level: "Exceptional Proficiency", range: "(36 - 40)", students: 0, percentage: "0%" },
+      { level: "High Proficiency", range: "(30 - 35)", students: 0, percentage: "0%" },
+      { level: "Moderate Proficiency", range: "(20 - 29)", students: 0, percentage: "0%" },
+      { level: "Developing Proficiency", range: "(10 - 19)", students: 0, percentage: "0%" },
+      { level: "Needs Development", range: "(0 - 9)", students: 38, percentage: "100%" }
+    ],
+    categoryScores: [
+      { category: "Resilience and Adaptability", score: 0.00 },
+      { category: "Team Dynamics & Collaboration", score: 0.00 },
+      { category: "Decision-Making & Problem-Solving", score: 0.00 },
+      { category: "Self-Awareness & Emotional Intelligence", score: 0.00 },
+      { category: "Communication & Active Listening", score: 0.00 }
+    ],
+    studentsPerCategory: [
+      {
+        category: "Resilience and Adaptability",
+        needsDevelopment: 38,
+        developingProficiency: 0,
+        moderateProficiency: 0,
+        highProficiency: 0,
+        exceptionalProficiency: 0
+      },
+      {
+        category: "Team Dynamics & Collaboration",
+        needsDevelopment: 38,
+        developingProficiency: 0,
+        moderateProficiency: 0,
+        highProficiency: 0,
+        exceptionalProficiency: 0
+      },
+      {
+        category: "Decision-Making & Problem-Solving",
+        needsDevelopment: 38,
+        developingProficiency: 0,
+        moderateProficiency: 0,
+        highProficiency: 0,
+        exceptionalProficiency: 0
+      },
+      {
+        category: "Self-Awareness & Emotional Intelligence",
+        needsDevelopment: 38,
+        developingProficiency: 0,
+        moderateProficiency: 0,
+        highProficiency: 0,
+        exceptionalProficiency: 0
+      },
+      {
+        category: "Communication & Active Listening",
+        needsDevelopment: 38,
+        developingProficiency: 0,
+        moderateProficiency: 0,
+        highProficiency: 0,
+        exceptionalProficiency: 0
+      }
+    ],
+    scoringCurveData: Array.from({ length: 41 }, (_, i) => ({
+      score: i,
+      students: 0
+    }))
+  }
+};
+
+const scoringCurveData = Array.from({ length: 41 }, (_, i) => ({
+  score: i,
+  count: i === 0 ? 38 : 0
+}));
+
 const OrgDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+  const [activeReportSubTab, setActiveReportSubTab] = useState("cohort-scoring");
 
   const handleStudentClick = (studentId: number) => {
     setSelectedStudent(studentId);
@@ -399,7 +452,6 @@ const OrgDashboard = () => {
       <Navigation />
       
       <div className="flex pt-16">
-        {/* Sidebar */}
         <div className="w-64 bg-white shadow-md hidden md:block h-[calc(100vh-64px)] fixed">
           <div className="p-4 border-b">
             <h2 className="text-xl font-semibold text-gray-800">Organization</h2>
@@ -468,6 +520,20 @@ const OrgDashboard = () => {
                 </li>
                 <li>
                   <button 
+                    onClick={() => setActiveTab("overall-report")}
+                    className={cn(
+                      "flex items-center w-full p-2 rounded-md text-left",
+                      activeTab === "overall-report" 
+                        ? "bg-brand-orange/10 text-brand-orange" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <FileBarChart className="h-5 w-5 mr-2" />
+                    Overall Report - Pre Only
+                  </button>
+                </li>
+                <li>
+                  <button 
                     onClick={() => setActiveTab("settings")}
                     className={cn(
                       "flex items-center w-full p-2 rounded-md text-left",
@@ -485,17 +551,14 @@ const OrgDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="w-full md:ml-64 p-4 pt-6 pb-16">
           <div className="max-w-7xl mx-auto">
-            {/* Dashboard Tab */}
             {activeTab === "dashboard" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
                   Organization Dashboard
                 </h1>
 
-                {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   <Card className="p-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
                     <div className="flex items-center">
@@ -534,7 +597,6 @@ const OrgDashboard = () => {
                   </Card>
                 </div>
 
-                {/* Chart */}
                 <Card className="p-6 h-[400px] animate-fade-in" style={{ animationDelay: "400ms" }}>
                   <h2 className="text-xl font-semibold mb-4">Skill Distribution</h2>
                   <ResponsiveContainer width="100%" height="100%">
@@ -563,7 +625,6 @@ const OrgDashboard = () => {
               </div>
             )}
 
-            {/* All Students Tab */}
             {activeTab === "students" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
@@ -585,12 +646,10 @@ const OrgDashboard = () => {
                             <TableHead className="font-semibold">Stay/Out</TableHead>
                             <TableHead className="font-semibold">Entries Answer</TableHead>
                             
-                            {/* Pre-Program Headers */}
                             <TableHead className="font-semibold bg-orange-100" colSpan={6}>
                               Pre-Program
                             </TableHead>
                             
-                            {/* Post-Program Headers */}
                             <TableHead className="font-semibold bg-blue-100" colSpan={6}>
                               Post-Program
                             </TableHead>
@@ -603,7 +662,6 @@ const OrgDashboard = () => {
                             <TableHead></TableHead>
                             <TableHead></TableHead>
                             
-                            {/* Pre-Program Sub-Headers */}
                             <TableHead className="bg-orange-50 text-xs">1.Resilience & Adaptability</TableHead>
                             <TableHead className="bg-orange-50 text-xs">1.Team Dynamics & Collaboration</TableHead>
                             <TableHead className="bg-orange-50 text-xs">1.Decision-Making & Problem-Solving</TableHead>
@@ -611,7 +669,6 @@ const OrgDashboard = () => {
                             <TableHead className="bg-orange-50 text-xs">1.Communication & Active Listening</TableHead>
                             <TableHead className="bg-orange-50 text-xs">1.Overall Score</TableHead>
                             
-                            {/* Post-Program Sub-Headers */}
                             <TableHead className="bg-blue-50 text-xs">2.Resilience & Adaptability</TableHead>
                             <TableHead className="bg-blue-50 text-xs">2.Team Dynamics & Collaboration</TableHead>
                             <TableHead className="bg-blue-50 text-xs">2.Decision-Making & Problem-Solving</TableHead>
@@ -629,7 +686,6 @@ const OrgDashboard = () => {
                               <TableCell className="text-green-600">{student.status}</TableCell>
                               <TableCell className="text-green-600 bg-green-100">{student.entries}</TableCell>
                               
-                              {/* Pre-Program Data */}
                               <TableCell className="bg-orange-50">{student.preAssessment.resilienceAdaptability}</TableCell>
                               <TableCell className="bg-orange-50">{student.preAssessment.teamDynamicsCollaboration}</TableCell>
                               <TableCell className="bg-orange-50">{student.preAssessment.decisionMakingProblemSolving}</TableCell>
@@ -637,7 +693,6 @@ const OrgDashboard = () => {
                               <TableCell className="bg-orange-50">{student.preAssessment.communicationActiveListening}</TableCell>
                               <TableCell className="bg-orange-50">{student.preAssessment.overallScore}</TableCell>
                               
-                              {/* Post-Program Data */}
                               <TableCell className="bg-blue-50">{student.postAssessment.resilienceAdaptability}</TableCell>
                               <TableCell className="bg-blue-50">{student.postAssessment.teamDynamicsCollaboration}</TableCell>
                               <TableCell className="bg-blue-50">{student.postAssessment.decisionMakingProblemSolving}</TableCell>
@@ -654,7 +709,6 @@ const OrgDashboard = () => {
               </div>
             )}
 
-            {/* Student Report Tab */}
             {activeTab === "student-report" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
@@ -711,8 +765,7 @@ const OrgDashboard = () => {
                       const student = mockStudentData.find(s => s.id === selectedStudent);
                       if (!student) return <p>Student not found</p>;
                       
-                      // For demo purposes, we'll display Vance Knapp's data for any student
-                      const reportStudent = student.id === 9 ? student : mockStudentData[8]; // Use Vance Knapp data
+                      const reportStudent = student.id === 9 ? student : mockStudentData[8];
                       
                       return (
                         <Card className="overflow-hidden">
@@ -839,7 +892,6 @@ const OrgDashboard = () => {
               </div>
             )}
 
-            {/* Comparison Report Tab */}
             {activeTab === "comparison-report" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
@@ -886,7 +938,7 @@ const OrgDashboard = () => {
                               { name: "SA", classA: 0, classB: 0 },
                               { name: "CA", classA: 0, classB: 0 },
                             ]}
-                            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
@@ -1035,7 +1087,388 @@ const OrgDashboard = () => {
               </div>
             )}
 
-            {/* Settings Tab */}
+            {activeTab === "overall-report" && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  Overall Report - Pre Only
+                </h1>
+                
+                <div className="border-b pb-2">
+                  <Tabs 
+                    value={activeReportSubTab} 
+                    onValueChange={setActiveReportSubTab}
+                    className="w-full"
+                  >
+                    <SubTabsList className="w-full flex overflow-x-auto">
+                      <SubTabsTrigger value="cohort-scoring">Cohort Scoring</SubTabsTrigger>
+                      <SubTabsTrigger value="individual-scores">Individual Scores</SubTabsTrigger>
+                      <SubTabsTrigger value="score-distribution">Score Distribution</SubTabsTrigger>
+                      <SubTabsTrigger value="category-breakdown">Category Breakdown</SubTabsTrigger>
+                    </SubTabsList>
+                    
+                    <TabsContent value="cohort-scoring" className="pt-4">
+                      <div className="space-y-8">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-xl text-green-800">Cohort Scoring Curve</CardTitle>
+                          </CardHeader>
+                          <CardContent className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart
+                                data={scoringCurveData}
+                                margin={{
+                                  top: 20, right: 30, left: 20, bottom: 10
+                                }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="score" 
+                                  label={{ 
+                                    value: 'Score', 
+                                    position: 'insideBottomRight', 
+                                    offset: -10 
+                                  }}
+                                />
+                                <YAxis 
+                                  label={{ 
+                                    value: 'Number of Students', 
+                                    angle: -90, 
+                                    position: 'insideLeft',
+                                    style: { textAnchor: 'middle' }
+                                  }}
+                                />
+                                <Tooltip />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="count" 
+                                  name="Students" 
+                                  stroke="#8884d8" 
+                                  activeDot={{ r: 8 }} 
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-xl text-green-800">Overall Proficiency Levels for Cohort</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader className="bg-gray-100">
+                                  <TableRow>
+                                    <TableHead className="w-[300px] font-semibold">Scoring</TableHead>
+                                    <TableHead className="text-center font-semibold">Student</TableHead>
+                                    <TableHead className="text-center font-semibold">%</TableHead>
+                                    <TableHead className="text-center font-semibold" colSpan={5}>
+                                      <div className="w-full flex items-center">
+                                        <div className="w-[20%] text-center">0%</div>
+                                        <div className="w-[20%] text-center">20%</div>
+                                        <div className="w-[20%] text-center">40%</div>
+                                        <div className="w-[20%] text-center">60%</div>
+                                        <div className="w-[20%] text-center">80%</div>
+                                        <div className="w-[20%] text-center">100%</div>
+                                      </div>
+                                    </TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {mockOverallReportData.cohortScoring.proficiencyLevels.map((level, index) => (
+                                    <TableRow key={index}>
+                                      <TableCell className="font-medium">{level.level} {level.range}</TableCell>
+                                      <TableCell className="text-center">{level.students}</TableCell>
+                                      <TableCell 
+                                        className={cn(
+                                          "text-center",
+                                          index === 4 && "bg-green-100"
+                                        )}
+                                      >{level.percentage}</TableCell>
+                                      <TableCell colSpan={5} className="p-0">
+                                        <div className="h-full w-full bg-gray-100 flex">
+                                          {index === 4 ? (
+                                            <div className="h-full bg-orange-400" style={{ width: "100%" }}></div>
+                                          ) : (
+                                            <div className="h-full bg-transparent" style={{ width: "0%" }}></div>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                  <TableRow className="bg-gray-50">
+                                    <TableCell className="font-bold text-center">Total</TableCell>
+                                    <TableCell className="font-bold text-center">38</TableCell>
+                                    <TableCell className="font-bold text-center">100%</TableCell>
+                                    <TableCell colSpan={5}></TableCell>
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-xl text-orange-800">Average Score per Category</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="col-span-2">
+                                <div className="h-[300px]">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                      data={mockOverallReportData.cohortScoring.categoryScores}
+                                      margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                                      layout="vertical"
+                                    >
+                                      <CartesianGrid strokeDasharray="3 3" />
+                                      <XAxis 
+                                        type="number"
+                                        domain={[0, 8]}
+                                        label={{ 
+                                          value: 'Score', 
+                                          position: 'insideBottom', 
+                                          offset: -10 
+                                        }}
+                                      />
+                                      <YAxis 
+                                        dataKey="category" 
+                                        type="category" 
+                                        width={150} 
+                                        tick={{ fontSize: 12 }}
+                                      />
+                                      <Tooltip />
+                                      <Legend />
+                                      <Bar 
+                                        dataKey="score" 
+                                        name="Pre-Program" 
+                                        fill="#8884d8" 
+                                        background={{ fill: '#eee' }}
+                                      />
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+                              <div>
+                                <Table>
+                                  <TableHeader className="bg-gray-100">
+                                    <TableRow>
+                                      <TableHead className="font-semibold">Average Score</TableHead>
+                                      <TableHead className="text-center font-semibold" colSpan={5}>Categories</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    <TableRow>
+                                      <TableCell className="font-medium">Pre-Program</TableCell>
+                                      {mockOverallReportData.cohortScoring.categoryScores.map((cat, idx) => (
+                                        <TableCell key={idx} className="text-center">0.00</TableCell>
+                                      ))}
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-xl text-orange-800">Number of Students per Scoring and Category</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-8">
+                              <div className="h-[300px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart
+                                    data={mockOverallReportData.cohortScoring.categoryScores}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                                    layout="vertical"
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                      type="number" 
+                                      domain={[0, 100]} 
+                                      tickFormatter={(value) => `${value}%`}
+                                      label={{ 
+                                        value: 'Percentage of Students', 
+                                        position: 'insideBottom', 
+                                        offset: -10 
+                                      }}
+                                    />
+                                    <YAxis 
+                                      dataKey="category" 
+                                      type="category" 
+                                      width={150} 
+                                      tick={{ fontSize: 12 }}
+                                    />
+                                    <Tooltip />
+                                    <Bar 
+                                      dataKey="dummy" 
+                                      name="Needs Development" 
+                                      stackId="a" 
+                                      fill="#EF4444" 
+                                      radius={0}
+                                      background={{ fill: '#eee' }}
+                                    >
+                                      {mockOverallReportData.cohortScoring.categoryScores.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill="#EF4444" />
+                                      ))}
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                              
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead rowSpan={2} className="font-semibold align-middle">Number of Student</TableHead>
+                                      <TableHead className="text-center font-semibold bg-red-500 text-white">Needs Development</TableHead>
+                                      <TableHead className="text-center font-semibold bg-yellow-300">Developing Proficiency</TableHead>
+                                      <TableHead className="text-center font-semibold bg-green-400">Moderate Proficiency</TableHead>
+                                      <TableHead className="text-center font-semibold bg-blue-400">High Proficiency</TableHead>
+                                      <TableHead className="text-center font-semibold bg-purple-500 text-white">Exceptional Proficiency</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {mockOverallReportData.cohortScoring.studentsPerCategory.map((category, index) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="font-medium">{category.category}</TableCell>
+                                        <TableCell className="text-center">{category.needsDevelopment}</TableCell>
+                                        <TableCell className="text-center">{category.developingProficiency}</TableCell>
+                                        <TableCell className="text-center">{category.moderateProficiency}</TableCell>
+                                        <TableCell className="text-center">{category.highProficiency}</TableCell>
+                                        <TableCell className="text-center">{category.exceptionalProficiency}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-xl text-orange-800">Percent of Students in Each Proficiency Level, by Skill Category</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-8">
+                              {mockOverallReportData.cohortScoring.studentsPerCategory.map((category, idx) => (
+                                <div key={idx} className="space-y-2">
+                                  <h3 className="text-lg font-semibold flex items-center">
+                                    <span className="h-2 w-2 rounded-full bg-black mr-2"></span>
+                                    {category.category}
+                                  </h3>
+                                  <div className="overflow-x-auto">
+                                    <Table>
+                                      <TableHeader className="bg-gray-100">
+                                        <TableRow>
+                                          <TableHead className="w-[300px] font-semibold">Scoring</TableHead>
+                                          <TableHead className="text-center font-semibold">Student</TableHead>
+                                          <TableHead className="text-center font-semibold">%</TableHead>
+                                          <TableHead className="text-center font-semibold" colSpan={5}>
+                                            <div className="w-full flex items-center">
+                                              <div className="w-[20%] text-center">0%</div>
+                                              <div className="w-[20%] text-center">20%</div>
+                                              <div className="w-[20%] text-center">40%</div>
+                                              <div className="w-[20%] text-center">60%</div>
+                                              <div className="w-[20%] text-center">80%</div>
+                                              <div className="w-[20%] text-center">100%</div>
+                                            </div>
+                                          </TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        <TableRow>
+                                          <TableCell>Exceptional Proficiency</TableCell>
+                                          <TableCell className="text-center">0</TableCell>
+                                          <TableCell className="text-center bg-green-100">0%</TableCell>
+                                          <TableCell colSpan={5} className="p-0"></TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                          <TableCell>High Proficiency</TableCell>
+                                          <TableCell className="text-center">0</TableCell>
+                                          <TableCell className="text-center bg-green-100">0%</TableCell>
+                                          <TableCell colSpan={5} className="p-0"></TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                          <TableCell>Moderate Proficiency</TableCell>
+                                          <TableCell className="text-center">0</TableCell>
+                                          <TableCell className="text-center bg-green-100">0%</TableCell>
+                                          <TableCell colSpan={5} className="p-0"></TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                          <TableCell>Developing Proficiency</TableCell>
+                                          <TableCell className="text-center">0</TableCell>
+                                          <TableCell className="text-center bg-green-100">0%</TableCell>
+                                          <TableCell colSpan={5} className="p-0"></TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                          <TableCell>Needs Development</TableCell>
+                                          <TableCell className="text-center">38</TableCell>
+                                          <TableCell className="text-center bg-green-100">100%</TableCell>
+                                          <TableCell colSpan={5} className="p-0">
+                                            <div className="h-full w-full bg-gray-100 flex">
+                                              <div className="h-full bg-orange-400" style={{ width: "100%" }}></div>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                        <TableRow className="bg-gray-50">
+                                          <TableCell className="font-bold">Total Student</TableCell>
+                                          <TableCell className="font-bold text-center">38</TableCell>
+                                          <TableCell className="font-bold text-center">100%</TableCell>
+                                          <TableCell colSpan={5}></TableCell>
+                                        </TableRow>
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="individual-scores" className="pt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Individual Scores</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Individual scores content will go here.</p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    
+                    <TabsContent value="score-distribution" className="pt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Score Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Score distribution content will go here.</p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    
+                    <TabsContent value="category-breakdown" className="pt-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Category Breakdown</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Category breakdown content will go here.</p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </div>
+            )}
+
             {activeTab === "settings" && (
               <div className="space-y-6 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">

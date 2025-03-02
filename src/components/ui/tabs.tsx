@@ -63,4 +63,35 @@ const TabsHeader = React.forwardRef<
 ))
 TabsHeader.displayName = "TabsHeader"
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, TabsHeader }
+// Adding a new TabsPrimitive for subtabs with different styling
+const SubTabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex h-9 items-center justify-start space-x-2 rounded-md bg-transparent p-0 text-muted-foreground",
+      className
+    )}
+    {...props}
+  />
+))
+SubTabsList.displayName = "SubTabsList"
+
+const SubTabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap px-3 py-1 text-sm font-medium border-b-2 border-transparent transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-brand-orange data-[state=active]:text-brand-orange",
+      className
+    )}
+    {...props}
+  />
+))
+SubTabsTrigger.displayName = "SubTabsTrigger"
+
+export { Tabs, TabsList, TabsTrigger, TabsContent, TabsHeader, SubTabsList, SubTabsTrigger }
