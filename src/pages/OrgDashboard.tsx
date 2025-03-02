@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -10,6 +9,13 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  BarChart,
+  Bar,
 } from "recharts";
 import { 
   Users, 
@@ -18,7 +24,8 @@ import {
   LayoutDashboard, 
   GraduationCap,
   UserCog,
-  FileText
+  FileText,
+  BarChart2
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -303,6 +310,77 @@ type StudentDetails = {
   summary: string;
 };
 
+// Add mock data for comparison report
+const mockCohortComparisonData = {
+  classA: {
+    name: "Class A",
+    client: "Edwins Leadership and Restaurant Institute",
+    cohort: "E-110424",
+    type: "Pre-Program",
+    status: "Only Completed",
+    scores: {
+      resilienceAdaptability: 0,
+      teamDynamicsCollaboration: 0,
+      decisionMakingProblemSolving: 0,
+      selfAwarenessEmotionalIntelligence: 0,
+      communicationActiveListening: 0,
+    },
+    students: {
+      needsDevelopment: 27,
+      developingProficiency: 0,
+      moderateProficiency: 0,
+      highProficiency: 0,
+      exceptionalProficiency: 0
+    }
+  },
+  classB: {
+    name: "Class B",
+    client: "Edwins Leadership and Restaurant Institute",
+    cohort: "E-010924",
+    type: "Pre-Program",
+    status: "Only Completed",
+    scores: {
+      resilienceAdaptability: 0,
+      teamDynamicsCollaboration: 0,
+      decisionMakingProblemSolving: 0,
+      selfAwarenessEmotionalIntelligence: 0,
+      communicationActiveListening: 0,
+    },
+    students: {
+      needsDevelopment: 35,
+      developingProficiency: 0,
+      moderateProficiency: 0,
+      highProficiency: 0,
+      exceptionalProficiency: 0
+    }
+  }
+};
+
+// Scoring breakdown data
+const proficiencyLevels = [
+  { id: 1, name: "Needs Development", range: "(0 - 9)", color: "#EF4444" },
+  { id: 2, name: "Developing Proficiency", range: "(10 - 19)", color: "#F59E0B" },
+  { id: 3, name: "Moderate Proficiency", range: "(20 - 29)", color: "#10B981" },
+  { id: 4, name: "High Proficiency", range: "(30 - 35)", color: "#3B82F6" },
+  { id: 5, name: "Exceptional Proficiency", range: "(36 - 40)", color: "#8B5CF6" }
+];
+
+// Mock data for cohort scoring curve chart
+const mockCohortScoringCurveData = Array.from({ length: 40 }, (_, i) => ({
+  score: i + 1,
+  classA: 0,
+  classB: 0
+}));
+
+// Mock data for top students ranking
+const mockTopStudentsData = Array.from({ length: 20 }, (_, i) => ({
+  no: i + 1,
+  student: "#N/A",
+  class: "#N/A",
+  score: "#N/A",
+  scorePercentage: "#N/A"
+}));
+
 const OrgDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
@@ -371,6 +449,20 @@ const OrgDashboard = () => {
                   >
                     <FileText className="h-5 w-5 mr-2" />
                     Student Report
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setActiveTab("comparison-report")}
+                    className={cn(
+                      "flex items-center w-full p-2 rounded-md text-left",
+                      activeTab === "comparison-report" 
+                        ? "bg-brand-orange/10 text-brand-orange" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <BarChart2 className="h-5 w-5 mr-2" />
+                    Comparison Report
                   </button>
                 </li>
                 <li>
@@ -726,46 +818,3 @@ const OrgDashboard = () => {
                                   <h4 className="text-lg font-bold mb-2">Self-Awareness & Emotional Intelligence: 0 out of 8 - Needs Development</h4>
                                   <div className="bg-gray-100 p-4 rounded-md">
                                     <p className="italic text-gray-500">[Assessment details would appear here]</p>
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <h4 className="text-lg font-bold mb-2">Communication & Active Listening: 0 out of 8 - Needs Development</h4>
-                                  <div className="bg-gray-100 p-4 rounded-md">
-                                    <p className="italic text-gray-500">[Assessment details would appear here]</p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Settings Tab Placeholder */}
-            {activeTab === "settings" && (
-              <div className="space-y-6 animate-fade-in">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                  Settings
-                </h1>
-                <Card className="p-6">
-                  <CardContent>
-                    <p className="text-gray-600">Settings dashboard coming soon.</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
-  );
-};
-
-export default OrgDashboard;

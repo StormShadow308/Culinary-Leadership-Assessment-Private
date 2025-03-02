@@ -51,4 +51,16 @@ const TabsContent = React.forwardRef<
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+const TabsHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("border-b", className)}
+    {...props}
+  />
+))
+TabsHeader.displayName = "TabsHeader"
+
+export { Tabs, TabsList, TabsTrigger, TabsContent, TabsHeader }
