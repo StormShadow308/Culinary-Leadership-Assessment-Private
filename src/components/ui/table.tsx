@@ -82,6 +82,22 @@ const TableHead = React.forwardRef<
 ))
 TableHead.displayName = "TableHead"
 
+const TableHeadColored = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement> & { color?: string }
+>(({ className, color, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={cn(
+      "h-12 px-4 text-left align-middle font-medium text-white [&:has([role=checkbox])]:pr-0",
+      color || "bg-gray-800",
+      className
+    )}
+    {...props}
+  />
+))
+TableHeadColored.displayName = "TableHeadColored"
+
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
@@ -112,6 +128,7 @@ export {
   TableBody,
   TableFooter,
   TableHead,
+  TableHeadColored,
   TableRow,
   TableCell,
   TableCaption,
