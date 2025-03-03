@@ -106,6 +106,40 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
+// Special components for the ranking tables
+const RankingTableTitle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { leftTitle?: string; centerTitle?: string; rightTitle?: string }
+>(({ className, leftTitle, centerTitle, rightTitle, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex justify-between items-center my-6", className)}
+    {...props}
+  >
+    {leftTitle && <h3 className="text-lg font-medium text-orange-500">{leftTitle}</h3>}
+    {centerTitle && <h3 className="text-xl font-bold text-center flex-1">{centerTitle}</h3>}
+    {rightTitle && <h3 className="text-lg font-medium text-orange-500">{rightTitle}</h3>}
+  </div>
+))
+RankingTableTitle.displayName = "RankingTableTitle"
+
+const ScoreProgressBar = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { percentage: number }
+>(({ className, percentage, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("w-full bg-gray-200 rounded-sm h-5", className)}
+    {...props}
+  >
+    <div 
+      className="h-full bg-green-500 rounded-sm" 
+      style={{ width: `${percentage}%` }}
+    />
+  </div>
+))
+ScoreProgressBar.displayName = "ScoreProgressBar"
+
 export {
   Table,
   TableHeader,
@@ -115,4 +149,6 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  RankingTableTitle,
+  ScoreProgressBar
 }
