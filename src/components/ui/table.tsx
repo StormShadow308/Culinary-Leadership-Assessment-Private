@@ -106,6 +106,20 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
+interface ScoreBarProps {
+  percentage: number;
+  color?: string;
+}
+
+const ScoreBar = ({ percentage, color = "bg-green-500" }: ScoreBarProps) => (
+  <div className="w-full h-6 bg-gray-200 rounded">
+    <div
+      className={`h-full ${color} rounded`}
+      style={{ width: `${percentage}%` }}
+    ></div>
+  </div>
+);
+
 export {
   Table,
   TableHeader,
@@ -115,4 +129,5 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  ScoreBar
 }
