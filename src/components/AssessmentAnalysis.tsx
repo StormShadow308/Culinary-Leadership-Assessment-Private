@@ -1,18 +1,20 @@
 
-import React from 'react'
-import { Card, CardContent } from './ui/card'
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const AssessmentAnalysis = () => {
   return (
-    <div className="w-full p-6">
-      <h2 className="text-2xl font-bold mb-4">Assessment Analysis</h2>
+    <div className="space-y-4">
       <Card>
+        <CardHeader>
+          <CardTitle>Assessment Analysis</CardTitle>
+        </CardHeader>
         <CardContent>
-          <p>Assessment analysis content will go here.</p>
+          <p>Assessment analysis content will be displayed here.</p>
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default AssessmentAnalysis
+export default AssessmentAnalysis;
