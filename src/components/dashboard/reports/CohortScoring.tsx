@@ -1,7 +1,23 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { 
+  Area, 
+  AreaChart, 
+  Bar, 
+  BarChart, 
+  CartesianGrid, 
+  Cell, 
+  Legend, 
+  Line, 
+  LineChart, 
+  Pie, 
+  PieChart, 
+  ResponsiveContainer, 
+  Tooltip, 
+  XAxis, 
+  YAxis 
+} from "recharts";
 
 interface CohortScoringProps {
   cohort: string;
