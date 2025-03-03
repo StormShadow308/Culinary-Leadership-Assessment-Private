@@ -106,6 +106,48 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
+// Adding Table components specifically for ranking tables
+const RankingTable = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref) => (
+  <div className="relative w-full overflow-auto border rounded-sm">
+    <table
+      ref={ref}
+      className={cn("w-full caption-bottom text-sm", className)}
+      {...props}
+    />
+  </div>
+))
+RankingTable.displayName = "RankingTable"
+
+const RankingTableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={cn(
+      "h-10 px-4 text-center align-middle font-medium bg-gray-100 border text-gray-800 [&:has([role=checkbox])]:pr-0",
+      className
+    )}
+    {...props}
+  />
+))
+RankingTableHead.displayName = "RankingTableHead"
+
+const RankingTableCell = React.forwardRef<
+  HTMLTableCellElement,
+  React.TdHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <td
+    ref={ref}
+    className={cn("py-2 px-4 align-middle text-center border [&:has([role=checkbox])]:pr-0", className)}
+    {...props}
+  />
+))
+RankingTableCell.displayName = "RankingTableCell"
+
 export {
   Table,
   TableHeader,
@@ -115,4 +157,7 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  RankingTable,
+  RankingTableHead,
+  RankingTableCell,
 }
