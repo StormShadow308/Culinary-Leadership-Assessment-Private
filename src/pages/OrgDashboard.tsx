@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -1101,9 +1102,8 @@ const OrgDashboard = () => {
                   >
                     <SubTabsList className="w-full flex overflow-x-auto">
                       <SubTabsTrigger value="cohort-scoring">Cohort Scoring</SubTabsTrigger>
-                      <SubTabsTrigger value="individual-scores">Individual Scores</SubTabsTrigger>
-                      <SubTabsTrigger value="score-distribution">Score Distribution</SubTabsTrigger>
-                      <SubTabsTrigger value="category-breakdown">Category Breakdown</SubTabsTrigger>
+                      <SubTabsTrigger value="student-rankings">Student Rankings</SubTabsTrigger>
+                      <SubTabsTrigger value="assessment-analysis">Assessment Analysis</SubTabsTrigger>
                     </SubTabsList>
                     
                     <TabsContent value="cohort-scoring" className="pt-4">
@@ -1432,35 +1432,150 @@ const OrgDashboard = () => {
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="individual-scores" className="pt-4">
+                    <TabsContent value="student-rankings" className="pt-4">
                       <Card>
                         <CardHeader>
-                          <CardTitle>Individual Scores</CardTitle>
+                          <CardTitle>Student Rankings</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p>Individual scores content will go here.</p>
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="font-semibold">Rank</TableHead>
+                                  <TableHead className="font-semibold">Student</TableHead>
+                                  <TableHead className="font-semibold">Class</TableHead>
+                                  <TableHead className="font-semibold">Score</TableHead>
+                                  <TableHead className="font-semibold">Score (%)</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {mockTopStudentsData.slice(0, 20).map((student) => (
+                                  <TableRow key={student.no}>
+                                    <TableCell>{student.no}</TableCell>
+                                    <TableCell>{student.student}</TableCell>
+                                    <TableCell>{student.class}</TableCell>
+                                    <TableCell>{student.score}</TableCell>
+                                    <TableCell>{student.scorePercentage}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
                         </CardContent>
                       </Card>
                     </TabsContent>
                     
-                    <TabsContent value="score-distribution" className="pt-4">
+                    <TabsContent value="assessment-analysis" className="pt-4">
                       <Card>
                         <CardHeader>
-                          <CardTitle>Score Distribution</CardTitle>
+                          <CardTitle>Assessment Analysis</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p>Score distribution content will go here.</p>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                    
-                    <TabsContent value="category-breakdown" className="pt-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Category Breakdown</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p>Category breakdown content will go here.</p>
+                          <div className="space-y-6">
+                            <h3 className="text-lg font-semibold">Question Performance Analysis</h3>
+                            <div className="h-[300px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={[
+                                    { question: "Q1", avgScore: 0.2, maxPossible: 1 },
+                                    { question: "Q2", avgScore: 0.3, maxPossible: 1 },
+                                    { question: "Q3", avgScore: 0.1, maxPossible: 1 },
+                                    { question: "Q4", avgScore: 0.4, maxPossible: 1 },
+                                    { question: "Q5", avgScore: 0.3, maxPossible: 1 },
+                                    { question: "Q6", avgScore: 0.2, maxPossible: 1 },
+                                    { question: "Q7", avgScore: 0.1, maxPossible: 1 },
+                                    { question: "Q8", avgScore: 0.3, maxPossible: 1 },
+                                  ]}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey="question" />
+                                  <YAxis domain={[0, 1]} />
+                                  <Tooltip />
+                                  <Legend />
+                                  <Bar 
+                                    dataKey="avgScore" 
+                                    name="Average Score" 
+                                    fill="#F97316" 
+                                  />
+                                  <Bar 
+                                    dataKey="maxPossible" 
+                                    name="Max Possible" 
+                                    fill="#0EA5E9" 
+                                  />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+
+                            <h3 className="text-lg font-semibold mt-8">Response Distribution</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <h4 className="text-md font-medium mb-2">Question 1: Leadership Style</h4>
+                                <ResponsiveContainer width="100%" height={200}>
+                                  <PieChart>
+                                    <Pie
+                                      data={[
+                                        { answer: "Option A", count: 22 },
+                                        { answer: "Option B", count: 8 },
+                                        { answer: "Option C", count: 6 },
+                                        { answer: "Option D", count: 2 },
+                                      ]}
+                                      cx="50%"
+                                      cy="50%"
+                                      labelLine={false}
+                                      outerRadius={80}
+                                      fill="#8884d8"
+                                      dataKey="count"
+                                    >
+                                      {[
+                                        { answer: "Option A", count: 22, color: "#F97316" },
+                                        { answer: "Option B", count: 8, color: "#0EA5E9" },
+                                        { answer: "Option C", count: 6, color: "#22C55E" },
+                                        { answer: "Option D", count: 2, color: "#EAB308" },
+                                      ].map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                      ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+                              <div>
+                                <h4 className="text-md font-medium mb-2">Question 2: Team Communication</h4>
+                                <ResponsiveContainer width="100%" height={200}>
+                                  <PieChart>
+                                    <Pie
+                                      data={[
+                                        { answer: "Option A", count: 15 },
+                                        { answer: "Option B", count: 12 },
+                                        { answer: "Option C", count: 8 },
+                                        { answer: "Option D", count: 3 },
+                                      ]}
+                                      cx="50%"
+                                      cy="50%"
+                                      labelLine={false}
+                                      outerRadius={80}
+                                      fill="#8884d8"
+                                      dataKey="count"
+                                    >
+                                      {[
+                                        { answer: "Option A", count: 15, color: "#F97316" },
+                                        { answer: "Option B", count: 12, color: "#0EA5E9" },
+                                        { answer: "Option C", count: 8, color: "#22C55E" },
+                                        { answer: "Option D", count: 3, color: "#EAB308" },
+                                      ].map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                      ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     </TabsContent>
