@@ -1,6 +1,4 @@
-
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import {
   BarChart,
@@ -87,8 +85,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

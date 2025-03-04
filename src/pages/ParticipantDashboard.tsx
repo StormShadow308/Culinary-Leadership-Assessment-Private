@@ -1,6 +1,4 @@
-
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import {
   RadarChart,
@@ -75,8 +73,6 @@ const ParticipantDashboard = () => {
           </Card>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };
