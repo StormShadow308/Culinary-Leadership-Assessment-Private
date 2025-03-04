@@ -1,90 +1,123 @@
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
-import { Card } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { Users, TrendingUp, Award } from "lucide-react";
-
-const mockData = [
-  { name: "Jan", assessments: 65 },
-  { name: "Feb", assessments: 80 },
-  { name: "Mar", assessments: 95 },
-  { name: "Apr", assessments: 120 },
-  { name: "May", assessments: 150 },
-  { name: "Jun", assessments: 180 },
-];
+import OrganizationSelector from "@/components/admin-dashboard/OrganizationSelector";
+import AdminDashboardOverview from "@/components/admin-dashboard/AdminDashboardOverview";
+import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import Dashboard from "@/components/org-dashboard/Dashboard";
+import StudentsTable from "@/components/org-dashboard/StudentsTable";
+import StudentReport from "@/components/org-dashboard/StudentReport";
+import ComparisonReportNew from "@/components/org-dashboard/ComparisonReportNew";
+import OverallReport from "@/components/org-dashboard/OverallReport";
+import Settings from "@/components/org-dashboard/Settings";
+import { Menu } from "lucide-react";
 
 const AdminDashboard = () => {
+  // State for organization selection
+  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
+  
+  // State for dashboard navigation
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Handle organization selection
+  const handleSelectOrganization = (orgId: number) => {
+    setSelectedOrgId(orgId);
+    setActiveTab("dashboard");
+    setSelectedStudent(null);
+  };
+
+  // Handle back to organization list
+  const handleBackToOrgList = () => {
+    setSelectedOrgId(null);
+    setActiveTab("dashboard");
+    setSelectedStudent(null);
+  };
+
+  // Handle student selection
+  const handleStudentClick = (studentId: number) => {
+    setSelectedStudent(studentId);
+  };
+
+  // Handle back to student list
+  const handleBackToStudentList = () => {
+    setSelectedStudent(null);
+  };
+
+  // Toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="pt-20 pb-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 animate-fade-in">
-            Admin Dashboard
-          </h1>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="p-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-brand-orange/10">
-                  <Users className="h-6 w-6 text-brand-orange" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-semibold">2,543</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 animate-fade-in" style={{ animationDelay: "200ms" }}>
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-brand-blue/10">
-                  <TrendingUp className="h-6 w-6 text-brand-blue" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                  <p className="text-2xl font-semibold">87%</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-100">
-                  <Award className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Certifications</p>
-                  <p className="text-2xl font-semibold">1,128</p>
-                </div>
-              </div>
-            </Card>
+      {selectedOrgId === null ? (
+        // Admin Dashboard Overview with Organization Selection
+        <main className="pt-20 pb-16 px-4">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <AdminDashboardOverview />
+            <OrganizationSelector onSelectOrganization={handleSelectOrganization} />
+          </div>
+        </main>
+      ) : (
+        // Organization-specific Dashboard (similar to OrgDashboard)
+        <div className="flex flex-col md:flex-row pt-16">
+          {/* Mobile Sidebar Toggle */}
+          <div className="md:hidden p-4 flex items-center">
+            <button 
+              onClick={toggleMobileSidebar}
+              className="p-2 rounded-md bg-white shadow text-gray-700"
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="ml-3 text-xl font-semibold text-gray-800">
+              {activeTab === "dashboard" && "Dashboard"}
+              {activeTab === "students" && "All Students"}
+              {activeTab === "student-report" && "Student Report"}
+              {activeTab === "comparison-report" && "Comparison Report"}
+              {activeTab === "overall-report" && "Overall Report - Pre Only"}
+              {activeTab === "settings" && "Settings"}
+            </h1>
           </div>
 
-          {/* Chart */}
-          <Card className="p-6 h-[400px] animate-fade-in" style={{ animationDelay: "400ms" }}>
-            <h2 className="text-xl font-semibold mb-4">Assessment Completion Trend</h2>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="assessments" fill="#F97316" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          <AdminSidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            setSelectedStudent={setSelectedStudent}
+            selectedOrgId={selectedOrgId}
+            onBackToOrgList={handleBackToOrgList}
+            isMobileOpen={isMobileSidebarOpen}
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
+          />
+
+          <div className="w-full md:ml-64 p-4 pt-6 pb-16">
+            <div className="max-w-7xl mx-auto">
+              {activeTab === "dashboard" && <Dashboard />}
+
+              {activeTab === "students" && (
+                <StudentsTable onStudentClick={handleStudentClick} />
+              )}
+
+              {activeTab === "student-report" && (
+                <StudentReport 
+                  selectedStudent={selectedStudent} 
+                  onBackToStudentList={handleBackToStudentList} 
+                  onStudentSelect={handleStudentClick}
+                />
+              )}
+
+              {activeTab === "comparison-report" && <ComparisonReportNew />}
+
+              {activeTab === "overall-report" && <OverallReport />}
+
+              {activeTab === "settings" && <Settings />}
+            </div>
+          </div>
         </div>
-      </main>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrgDashboard from "./pages/OrgDashboard";
 import ParticipantDashboard from "./pages/ParticipantDashboard";
+import Assessment from "./pages/Assessment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +23,7 @@ const App = () => (
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/org-dashboard" element={<OrgDashboard />} />
           <Route path="/participant-dashboard" element={<ParticipantDashboard />} />
+          <Route path="/assessment" element={<Assessment />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

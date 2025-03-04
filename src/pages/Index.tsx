@@ -43,17 +43,17 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in delay-200">
             <Link
-              to="/participant-dashboard"
+              to="/assessment"
               className="inline-flex items-center px-6 py-3 rounded-lg bg-brand-orange text-white hover:bg-brand-orange/90 transition-colors"
             >
               Start Assessment
               <ChevronRight className="ml-2 h-4 w-4" />
             </Link>
             <Link
-              to="/org-dashboard"
-              className="inline-flex items-center px-6 py-3 rounded-lg bg-brand-blue text-white hover:bg-brand-blue/90 transition-colors"
+              to="/participant-dashboard"
+              className="inline-flex items-center px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              View Demo
+              View Dashboard
               <ChevronRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
