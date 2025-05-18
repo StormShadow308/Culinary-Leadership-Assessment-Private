@@ -1,0 +1,3 @@
+ALTER TABLE "participants" ADD COLUMN "organization_id" text;--> statement-breakpoint
+ALTER TABLE "participants" ADD CONSTRAINT "participants_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "idx_participants_organization_id" ON "participants" USING btree ("organization_id" text_ops);

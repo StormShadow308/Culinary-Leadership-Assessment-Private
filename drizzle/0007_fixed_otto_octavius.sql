@@ -1,0 +1,2 @@
+ALTER TABLE "participants" ADD COLUMN "stay_out" text DEFAULT 'Stay' NOT NULL;--> statement-breakpoint
+ALTER TABLE "participants" ADD CONSTRAINT "stay_out_check" CHECK (stay_out = ANY (ARRAY['Stay'::text, 'Out'::text]));

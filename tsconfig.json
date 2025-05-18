@@ -1,19 +1,120 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "skipLibCheck": true,
+    /**
+     * Target ES2017 for broad browser compatibility while supporting modern features
+     * This enables use of newer JavaScript features that will be transpiled to ES2017
+     */
+    "target": "ES2017",
+
+    /**
+     * Include DOM, DOM Iterable and ESNext type definitions
+     * - dom: Provides types for browser DOM APIs
+     * - dom.iterable: Types for iterable DOM collections
+     * - esnext: Types for the latest ECMAScript features
+     */
+    "lib": ["dom", "dom.iterable", "esnext"],
+
+    /**
+     * Allow JavaScript files to be imported and type checked
+     * Useful for incremental migration from JavaScript to TypeScript
+     */
     "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false
-  }
+
+    /**
+     * Skip type checking of declaration files in node_modules
+     * Improves build performance by not checking third-party library typings
+     */
+    "skipLibCheck": true,
+
+    /**
+     * Enable all strict type checking options
+     * When set to false, disables strict null checks, strict function types,
+     * strict property initialization, and other strict flags
+     */
+    "strict": false,
+
+    /**
+     * Don't emit output files (JavaScript) during compilation
+     * This is useful for type checking only without generating output files
+     */
+    "noEmit": true,
+
+    /**
+     * Enable incremental compilation to improve build performance
+     * Saves information about the project graph from the last compilation to a file
+     */
+    "incremental": true,
+
+    /**
+     * Specify module code generation to use ESNext module system
+     * Keeps import/export statements intact for bundlers to process
+     */
+    "module": "esnext",
+
+    /**
+     * Allow default imports from modules with no default export
+     * Enables compatibility between CommonJS and ES Modules
+     */
+    "esModuleInterop": true,
+
+    /**
+     * Specify how TypeScript looks up modules
+     * 'node' strategy mimics Node.js resolution mechanism
+     */
+    "moduleResolution": "node",
+
+    /**
+     * Allow importing JSON files as modules
+     * Provides type checking for JSON imports
+     */
+    "resolveJsonModule": true,
+
+    /**
+     * Ensure each file can be safely transpiled without relying on other imports
+     * Required for tools like Babel that process files individually
+     */
+    "isolatedModules": true,
+
+    /**
+     * Support JSX in .tsx files without transforming to JavaScript
+     * 'preserve' leaves the JSX as is for a framework (like Next.js) to process
+     */
+    "jsx": "preserve",
+
+    /**
+     * TypeScript plugins to extend the compiler's functionality
+     * The Next.js plugin enables features specific to Next.js framework
+     */
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+
+    /**
+     * Set base directory for resolving non-relative module names
+     * Makes import paths cleaner and more maintainable
+     */
+    "baseUrl": ".",
+
+    /**
+     * Configure path aliases for import statements
+     * The '~/' alias points to the project root for convenient imports
+     */
+    "paths": {
+      "~/*": ["./*"]
+    }
+  },
+
+  /**
+   * Files to include in the TypeScript compilation
+   * Includes Next.js type declarations, TypeScript files, and TypeScript JSX files
+   */
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
+
+  /**
+   * Files to exclude from TypeScript compilation
+   * Excludes node_modules to improve compilation performance
+   */
+  "exclude": ["node_modules"]
 }
