@@ -12,13 +12,14 @@ import {
   Flex,
   Group,
   Progress,
+  Space,
   Stack,
   Text,
   Title,
 } from '@mantine/core';
 
 import { db } from '~/db';
-import { attempts, options, participants, questions, responses } from '~/db/schema';
+import { attempts, cohorts, options, participants, questions, responses } from '~/db/schema';
 
 import { and, count, eq } from 'drizzle-orm';
 
@@ -95,6 +96,10 @@ export default async function AttemptQuestionPage({
   const { attemptId } = await params;
   const { question, questionOptions, totalQuestions, existingResponse, participant } =
     await getQuestionData(attemptId);
+  const [cohort] = await db
+    .select({ name: cohorts.name })
+    .from(cohorts)
+    .where(eq(cohorts.id, participant[0]?.participant.cohortId));
 
   const progress = (question.orderNumber / totalQuestions) * 100;
   const isPreviousDisabled = question.orderNumber === 1;
@@ -110,6 +115,13 @@ export default async function AttemptQuestionPage({
               <Image src="/tla-logo.png" alt="TLA Logo" width={75} height={30} />
               <Divider orientation="vertical" />
               <Image src="/cla-logo.png" alt="CLA Logo" width={75} height={75} />
+              <Space m="auto" />
+              <Stack gap="0" align="end">
+                <Text size="md">{participant[0]?.participant.fullName}</Text>
+                <Text size="sm" c="dimmed">
+                  {cohort.name}
+                </Text>
+              </Stack>
             </Group>
             {/* Progress section */}
             <Box my="lg">

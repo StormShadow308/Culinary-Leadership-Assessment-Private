@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { Paper, Text } from '@mantine/core';
 
-import { AreaChart } from '@mantine/charts';
+import { AreaChart, BarChart } from '@mantine/charts';
 
 interface CohortScoringCurveProps {
   attempts: Array<{
@@ -46,12 +46,11 @@ export function CohortScoringCurve({ attempts }: CohortScoringCurveProps) {
       <Text fw={500} size="lg" mb="xl">
         Cohort Scoring Curve
       </Text>
-      <AreaChart
+      <BarChart
         h={300}
         data={distributionData}
         dataKey="score"
         series={[{ name: 'percentage', color: 'blue.6' }]}
-        curveType="natural"
         withLegend
         legendProps={{ verticalAlign: 'bottom', height: 50 }}
         withTooltip

@@ -1,6 +1,8 @@
 'use client';
 
-import { Badge, Card, Group, Table, Text } from '@mantine/core';
+import Link from 'next/link';
+
+import { Anchor, Badge, Card, Group, ScrollArea, Table, Text } from '@mantine/core';
 
 interface Respondent {
   id: string;
@@ -12,16 +14,9 @@ interface Respondent {
 
 interface TopPerformingRespondentsProps {
   respondents: Array<Respondent>;
-  limit?: number;
 }
 
-export function TopPerformingRespondents({
-  respondents,
-  limit = 5,
-}: TopPerformingRespondentsProps) {
-  // Show only the top N respondents
-  const topRespondents = respondents.slice(0, limit);
-
+export function TopPerformingRespondents({ respondents }: TopPerformingRespondentsProps) {
   return (
     <Card padding="lg" radius="md" withBorder>
       <Group justify="space-between" align="center" mb="md">
@@ -30,7 +25,7 @@ export function TopPerformingRespondents({
         </Text>
       </Group>
 
-      <Table highlightOnHover>
+      <Table>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Respondent Name</Table.Th>
@@ -38,32 +33,41 @@ export function TopPerformingRespondents({
             <Table.Th>Score</Table.Th>
           </Table.Tr>
         </Table.Thead>
-        <Table.Tbody>
-          {topRespondents.map(respondent => (
-            <Table.Tr key={respondent.id}>
-              <Table.Td>{respondent.name || 'Anonymous'}</Table.Td>
-              <Table.Td>
-                {respondent.cohortName ? (
-                  <Badge color="blue" variant="light">
-                    {respondent.cohortName}
-                  </Badge>
-                ) : (
-                  <Text c="dimmed" size="sm">
-                    No cohort
-                  </Text>
-                )}
-              </Table.Td>
-              <Table.Td>
-                {respondent.score}/{respondent.totalPossible}
-              </Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
       </Table>
 
-      <Text size="sm" c="dimmed" ta="center" mt="sm">
-        Top {limit} respondents based on pre-assessment scores
-      </Text>
+      <ScrollArea h={200} style={{ flexGrow: 1 }}>
+        <Table highlightOnHover>
+          <Table.Tbody>
+            {respondents.map(respondent => (
+              <Table.Tr key={respondent.id}>
+                <Table.Td>
+                  <Anchor
+                    variant="text"
+                    component={Link}
+                    href={`/organisation/respondents/${respondent.id}`}
+                  >
+                    {respondent.name || 'Anonymous'}
+                  </Anchor>
+                </Table.Td>
+                <Table.Td>
+                  {respondent.cohortName ? (
+                    <Badge color="blue" variant="light">
+                      {respondent.cohortName}
+                    </Badge>
+                  ) : (
+                    <Text c="dimmed" size="sm">
+                      No cohort
+                    </Text>
+                  )}
+                </Table.Td>
+                <Table.Td>
+                  {respondent.score}/{respondent.totalPossible}
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </ScrollArea>
     </Card>
   );
 }

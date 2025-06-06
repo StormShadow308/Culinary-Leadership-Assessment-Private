@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-import { Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Card, Group, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
 
 import { IconChartBar, IconCheckbox, IconUsers } from '@tabler/icons-react';
 
@@ -8,6 +8,8 @@ import { db } from '~/db';
 import { attempts, cohorts, participants } from '~/db/schema';
 
 import { auth } from '~/lib/auth';
+
+import CohortFilter from '~/app/organisation/components/cohort-filter';
 
 import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -81,15 +83,35 @@ const PROFICIENCY_LEVELS = [
   },
 ];
 
-export default async function Organisation() {
+type OrganisationSearchParams = {
+  cohort?: string;
+};
+
+type OrganisationProps = {
+  searchParams: Promise<OrganisationSearchParams>;
+};
+
+export default async function Organisation(props: OrganisationProps) {
+  const { cohort: selectedCohort } = await props.searchParams;
+
   const organizations = await auth.api.listOrganizations({ headers: await headers() });
   const currentOrgId = organizations[0]?.id;
+
+  const orgCohorts = await db
+    .select({ name: cohorts.name, id: cohorts.id })
+    .from(cohorts)
+    .where(eq(cohorts.organizationId, currentOrgId));
 
   // Fetch total respondents count (all participants)
   const [respondentsResult] = await db
     .select({ count: count() })
     .from(participants)
-    .where(eq(participants.organizationId, currentOrgId));
+    .where(
+      and(
+        eq(participants.organizationId, currentOrgId),
+        selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0
+      )
+    );
 
   const totalRespondents = respondentsResult?.count || 0;
 
@@ -97,7 +119,12 @@ export default async function Organisation() {
   const orgParticipants = await db
     .select({ id: participants.id })
     .from(participants)
-    .where(eq(participants.organizationId, currentOrgId));
+    .where(
+      and(
+        eq(participants.organizationId, currentOrgId),
+        selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0
+      )
+    );
 
   const participantIds = orgParticipants.map(p => p.id);
 
@@ -302,6 +329,7 @@ export default async function Organisation() {
     .where(
       and(
         eq(participants.organizationId, currentOrgId),
+        selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0,
         eq(attempts.status, 'completed'),
         eq(attempts.type, 'pre_assessment')
       )
@@ -345,6 +373,9 @@ export default async function Organisation() {
 
   return (
     <Stack>
+      <Group mt="md" justify="end">
+        <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
+      </Group>
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <Card padding="lg" radius="md" withBorder>
           <Group justify="space-between" align="center">
@@ -400,6 +431,11 @@ export default async function Organisation() {
       </SimpleGrid>
       {completedAttempts > 0 && (
         <>
+          {/* Full width proficiency levels table */}
+          <ProficiencyLevelsTable
+            proficiencyData={proficiencyDistribution}
+            totalRespondents={completedAttempts}
+          />
           <SimpleGrid cols={{ base: 1, md: 2 }}>
             {/* Proficiency Levels Chart */}
             <ProficiencyLevelsChart attempts={attemptScores} />
@@ -411,11 +447,6 @@ export default async function Organisation() {
             {/* Top Performing Respondents */}
             <TopPerformingRespondents respondents={topRespondents} />
           </SimpleGrid>
-          {/* Full width proficiency levels table */}
-          <ProficiencyLevelsTable
-            proficiencyData={proficiencyDistribution}
-            totalRespondents={completedAttempts}
-          />
         </>
       )}
     </Stack>

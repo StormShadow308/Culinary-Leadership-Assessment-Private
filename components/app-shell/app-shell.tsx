@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import NextImage from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,7 +19,7 @@ import {
 
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 
-import { IconToolsKitchen } from '@tabler/icons-react';
+import logo from '~/assets/logo.png';
 
 import { UserMenu } from './user-menu';
 
@@ -95,7 +96,7 @@ export function AppShell({ children, links = [] }: AppShellProps) {
             <Burger opened={opened} onClick={toggle} hiddenFrom="lg" size="sm" />
             <Anchor underline="never" c="var(--mantine-color-text)" component={Link} href="/">
               <Group gap="xs">
-                <IconToolsKitchen size={26} />
+                <NextImage src={logo} alt="TLA Logo" width={26} height={26} />
                 <Title mr={16} order={3} fw={600} style={{ cursor: 'pointer' }}>
                   Culinary Assessment
                 </Title>
