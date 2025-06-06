@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { Paper, Text } from '@mantine/core';
 
-import { AreaChart, BarChart } from '@mantine/charts';
+import { BarChart } from '@mantine/charts';
 
 interface CohortScoringCurveProps {
   attempts: Array<{

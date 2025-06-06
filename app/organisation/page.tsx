@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-import { Card, Group, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
+import { Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 
 import { IconChartBar, IconCheckbox, IconUsers } from '@tabler/icons-react';
 
