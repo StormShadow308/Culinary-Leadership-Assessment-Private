@@ -9,6 +9,8 @@
     "db:migrate": "npx drizzle-kit migrate",
     "db:reset": "docker-compose down -v && docker-compose up -d",
     "db:seed": "tsx ./db/seed.ts",
+    "db:fix-orgs": "tsx ./db/scripts/fix-org-ids.ts",
+    "db:list-orgs": "tsx ./db/scripts/list-orgs.ts",
     "db:start": "docker-compose up -d",
     "db:stop": "docker-compose down -v",
     "db:studio": "npx drizzle-kit studio",

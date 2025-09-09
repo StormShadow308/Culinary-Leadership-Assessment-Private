@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '~/db';
-import { assessments, attempts, participants, responses } from '~/db/schema';
+import { assessments, attempts, organization, participants, responses } from '~/db/schema';
 
 import { actionClient } from '~/lib/action';
 
@@ -115,13 +115,40 @@ export const newAssessmentAction = actionClient
           .where(eq(participants.id, participant.id))
           .execute();
       } else {
-        // Create new participant
+        // Get or create a default organization for students
+        let defaultOrgId: string;
+        const existingOrg = await db
+          .select({ id: organization.id })
+          .from(organization)
+          .where(eq(organization.slug, 'default-students'))
+          .limit(1)
+          .execute();
+
+        if (existingOrg.length > 0) {
+          defaultOrgId = existingOrg[0].id;
+        } else {
+          // Create default organization for students
+          const [newOrg] = await db
+            .insert(organization)
+            .values({
+              id: 'org_default_students',
+              name: 'Default Students Organization',
+              slug: 'default-students',
+              createdAt: new Date().toISOString(),
+            })
+            .returning({ id: organization.id })
+            .execute();
+          defaultOrgId = newOrg.id;
+        }
+
+        // Create new participant with default organization
         const [newParticipant] = await db
           .insert(participants)
           // @ts-expect-error - TypeScript doesn't recognize the values method correctly
           .values({
             email,
             fullName,
+            organizationId: defaultOrgId,
             createdAt: new Date().toISOString(),
             lastActiveAt: new Date().toISOString(),
           })

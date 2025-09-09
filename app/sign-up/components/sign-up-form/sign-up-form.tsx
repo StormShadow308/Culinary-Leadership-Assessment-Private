@@ -9,11 +9,12 @@ import { z } from 'zod';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Alert, Button, PasswordInput, Stack, TextInput } from '@mantine/core';
+import { Alert, Button, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
 
 import { IconAlertCircle } from '@tabler/icons-react';
 
 import { authClient } from '~/lib/auth-client';
+import { setUserRoleAction } from '~/lib/user-role.action';
 
 export const signUpSchema = z.object({
   name: z
@@ -51,6 +52,7 @@ const ERROR_MESSAGES = {
 
 export function SignUpForm() {
   const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [role, setRole] = useState<'student' | 'organization'>('organization');
 
   const { register, handleSubmit, formState } = useForm<SignUpPayload>({
     resolver: zodResolver(signUpSchema),
@@ -64,8 +66,16 @@ export function SignUpForm() {
       email: values.email,
       password: values.password,
       fetchOptions: {
-        onSuccess() {
-          redirect('/admin');
+        async onSuccess() {
+          // Persist role server-side to enforce route access
+          try {
+            await setUserRoleAction({ role });
+          } catch {}
+          if (role === 'student') {
+            redirect('/assessment');
+          } else {
+            redirect('/organisation/new');
+          }
         },
         onError(context) {
           setSignUpError(context.error.code);
@@ -107,8 +117,19 @@ export function SignUpForm() {
           label="Password"
           type="password"
           placeholder="Your password"
+          autoComplete="current-password"
           {...register('password')}
           error={formState.errors.password?.message}
+          required
+        />
+        <Select
+          label="Continue as"
+          data={[
+            { value: 'student', label: 'Student' },
+            { value: 'organization', label: 'Organization' },
+          ]}
+          value={role}
+          onChange={value => setRole((value as 'student' | 'organization') ?? 'organization')}
           required
         />
         <Button mt="md" type="submit" loading={formState.isSubmitting} fullWidth>

@@ -99,7 +99,8 @@ export default async function AttemptQuestionPage({
   const [cohort] = await db
     .select({ name: cohorts.name })
     .from(cohorts)
-    .where(eq(cohorts.id, participant[0]?.participant.cohortId));
+    .where(eq(cohorts.id, participant[0]?.participant.cohortId))
+    .execute();
 
   const progress = (question.orderNumber / totalQuestions) * 100;
   const isPreviousDisabled = question.orderNumber === 1;
@@ -107,10 +108,10 @@ export default async function AttemptQuestionPage({
   console.log('Participant:', participant[0]?.participant);
 
   return (
-    <Container h="100%" py="lg" px="md">
+    <Container h="100%" py="lg" px="md" size="lg">
       <Center h="100%">
         <Flex direction="column" gap="md" w="100%">
-          <Card padding="lg" radius="md" withBorder>
+          <Card padding="lg" radius="md" withBorder maw={1100} mx="auto" shadow="sm">
             <Group>
               <Image src="/tla-logo.png" alt="TLA Logo" width={75} height={30} />
               <Divider orientation="vertical" />
@@ -119,7 +120,7 @@ export default async function AttemptQuestionPage({
               <Stack gap="0" align="end">
                 <Text size="md">{participant[0]?.participant.fullName}</Text>
                 <Text size="sm" c="dimmed">
-                  {cohort.name}
+                  {cohort?.name ?? ''}
                 </Text>
               </Stack>
             </Group>

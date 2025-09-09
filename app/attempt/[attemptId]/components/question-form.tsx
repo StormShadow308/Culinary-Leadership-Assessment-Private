@@ -115,7 +115,7 @@ export function QuestionForm(props: QuestionFormProps) {
                   style={{ userSelect: 'none' }}
                   key={`best-${option.id}`}
                   value={option.id}
-                  label={`${option.id}. ${option.text}`}
+                  label={<Box style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{`${option.id}. ${option.text}`}</Box>}
                 />
               ))}
             </Stack>
@@ -133,7 +133,7 @@ export function QuestionForm(props: QuestionFormProps) {
                   style={{ userSelect: 'none' }}
                   key={`worst-${option.id}`}
                   value={option.id}
-                  label={`${option.id}. ${option.text}`}
+                  label={<Box style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{`${option.id}. ${option.text}`}</Box>}
                 />
               ))}
             </Stack>
@@ -141,7 +141,7 @@ export function QuestionForm(props: QuestionFormProps) {
         </Grid.Col>
       </Grid>
 
-      <Group justify="space-between" mt="xl">
+      <Group justify="space-between" mt="xl" wrap="wrap">
         <Button
           variant="outline"
           onClick={handlePrevious}

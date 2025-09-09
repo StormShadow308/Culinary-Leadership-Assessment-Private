@@ -7,7 +7,7 @@ import { attempts, cohorts, participants } from '~/db/schema';
 
 import { auth } from '~/lib/auth';
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, or } from 'drizzle-orm';
 
 import { InviteStudent } from './components/invite-student';
 import StudentsTable, { type ReportData } from './components/students-table';
@@ -21,7 +21,11 @@ export default async function Students() {
   const sessionData = await auth.api.getSession({ headers: await headers() });
   const organizationId = sessionData?.session?.activeOrganizationId;
 
-  // First get all participants with basic info
+  // Debug logging
+  console.log('Session data:', sessionData);
+  console.log('Organization ID:', organizationId);
+
+  // First get all participants with basic info (including default students)
   const participantsDataWithAssessments = await db
     .select({
       id: participants.id,
@@ -35,7 +39,15 @@ export default async function Students() {
     })
     .from(participants)
     .leftJoin(cohorts, eq(participants.cohortId, cohorts.id))
-    .where(eq(participants.organizationId, organizationId));
+    .where(
+      or(
+        organizationId ? eq(participants.organizationId, organizationId) : undefined,
+        eq(participants.organizationId, 'org_default_students')
+      )
+    );
+
+  // Debug logging
+  console.log('Participants data:', participantsDataWithAssessments);
 
   // Early return if no participants to avoid unnecessary queries
   if (participantsDataWithAssessments.length === 0) {
@@ -43,7 +55,12 @@ export default async function Students() {
     const cohortsData = await db
       .select({ name: cohorts.name })
       .from(cohorts)
-      .where(eq(cohorts.organizationId, organizationId));
+      .where(
+        or(
+          organizationId ? eq(cohorts.organizationId, organizationId) : undefined,
+          eq(cohorts.organizationId, 'org_default_students')
+        )
+      );
 
     const cohortNames = cohortsData.map(cohort => cohort.name);
 
@@ -99,6 +116,10 @@ export default async function Students() {
       )
     );
 
+  // Debug logging for assessments
+  console.log('Pre-assessments:', preAssessments);
+  console.log('Post-assessments:', postAssessments);
+
   // Combine all data
   const participantsData = participantsDataWithAssessments.map(participant => {
     const preAssessment = preAssessments.find(a => a.participantId === participant.id);
@@ -113,11 +134,18 @@ export default async function Students() {
     };
   });
 
+  console.log('Final participants data:', participantsData);
+
   // Get list of all cohort names for the dropdown
   const cohortsData = await db
     .select({ name: cohorts.name })
     .from(cohorts)
-    .where(eq(cohorts.organizationId, organizationId));
+    .where(
+      or(
+        organizationId ? eq(cohorts.organizationId, organizationId) : undefined,
+        eq(cohorts.organizationId, 'org_default_students')
+      )
+    );
 
   const cohortNames = cohortsData.map(cohort => cohort.name);
 
