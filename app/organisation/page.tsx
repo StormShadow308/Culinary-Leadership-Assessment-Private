@@ -5,13 +5,13 @@ import { Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import { IconChartBar, IconCheckbox, IconUsers } from '@tabler/icons-react';
 
 import { db } from '~/db';
-import { attempts, cohorts, organization, participants } from '~/db/schema';
+import { attempts, cohorts, participants } from '~/db/schema';
 
 import { auth } from '~/lib/auth';
 
 import CohortFilter from '~/app/organisation/components/cohort-filter';
 
-import { and, avg, count, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { CohortScoringCurve } from './charts/cohort-scoring-curve';
 import { ProficiencyLevelsChart } from './charts/proficiency-levels-chart';
@@ -97,55 +97,10 @@ export default async function Organisation(props: OrganisationProps) {
   const organizations = await auth.api.listOrganizations({ headers: await headers() });
   const currentOrgId = organizations[0]?.id;
 
-  // Debug logging
-  console.log('Organizations:', organizations);
-  console.log('Current Org ID:', currentOrgId);
-  
-  // Check what participants exist in the database
-  const allParticipants = await db
-    .select({
-      id: participants.id,
-      email: participants.email,
-      fullName: participants.fullName,
-      organizationId: participants.organizationId,
-    })
-    .from(participants)
-    .execute();
-  
-  console.log('All participants in database:', allParticipants);
-  
-  // Check what attempts exist in the database
-  const allAttempts = await db
-    .select({
-      id: attempts.id,
-      participantId: attempts.participantId,
-      status: attempts.status,
-      type: attempts.type,
-      reportData: attempts.reportData,
-    })
-    .from(attempts)
-    .execute();
-  
-  console.log('All attempts in database:', allAttempts);
-  
-  // Check if default students organization exists
-  const defaultStudentsOrg = await db
-    .select({ id: organization.id, name: organization.name, slug: organization.slug })
-    .from(organization)
-    .where(eq(organization.slug, 'default-students'))
-    .execute();
-  
-  console.log('Default students organization:', defaultStudentsOrg);
-
   const orgCohorts = await db
     .select({ name: cohorts.name, id: cohorts.id })
     .from(cohorts)
-    .where(
-      or(
-        currentOrgId ? eq(cohorts.organizationId, currentOrgId) : undefined,
-        eq(cohorts.organizationId, 'org_default_students')
-      )
-    );
+    .where(eq(cohorts.organizationId, currentOrgId));
 
   // Fetch total respondents count (all participants from current org and default students org)
   const [respondentsResult] = await db
@@ -153,10 +108,7 @@ export default async function Organisation(props: OrganisationProps) {
     .from(participants)
     .where(
       and(
-        or(
-          currentOrgId ? eq(participants.organizationId, currentOrgId) : undefined,
-          eq(participants.organizationId, 'org_default_students')
-        ),
+        eq(participants.organizationId, currentOrgId),
         selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0
       )
     );
@@ -169,26 +121,14 @@ export default async function Organisation(props: OrganisationProps) {
     .from(participants)
     .where(
       and(
-        or(
-          currentOrgId ? eq(participants.organizationId, currentOrgId) : undefined,
-          eq(participants.organizationId, 'org_default_students')
-        ),
+        eq(participants.organizationId, currentOrgId),
         selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0
       )
     );
 
   const participantIds = orgParticipants.map(p => p.id);
 
-  // Debug logging
-  console.log('Org participants:', orgParticipants);
-  console.log('Participant IDs:', participantIds);
-  console.log('Total respondents:', totalRespondents);
   
-  // Debug the actual query being used
-  console.log('Query conditions:');
-  console.log('- Current Org ID:', currentOrgId);
-  console.log('- Default students org exists:', defaultStudentsOrg.length > 0);
-  console.log('- Default students org ID:', defaultStudentsOrg[0]?.id);
 
   // If no participants, return early with empty data
   if (participantIds.length === 0) {
