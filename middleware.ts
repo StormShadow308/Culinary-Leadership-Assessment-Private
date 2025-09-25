@@ -6,6 +6,20 @@ import { db } from './db';
 import { member as memberTable, user as userTable } from './db/schema';
 import { eq } from 'drizzle-orm';
 
+// Simple in-memory cache for user data (in production, use Redis)
+const userCache = new Map<string, { role: string; isOrgMember: boolean; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache cleanup function
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of userCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      userCache.delete(key);
+    }
+  }
+}, 60000); // Clean up every minute
+
 export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url);
 
@@ -46,24 +60,47 @@ export async function middleware(request: NextRequest) {
   
   if (user) {
     try {
-      // Get user from local database
-      const localUser = await db
-        .select()
-        .from(userTable)
-        .where(eq(userTable.email, user.email!))
-        .limit(1);
+      // Check cache first
+      const cacheKey = user.email!;
+      const cached = userCache.get(cacheKey);
       
-      if (localUser.length > 0) {
-        userRole = localUser[0].role;
-        
-        const memberships = await db
-          .select({ id: memberTable.id })
-          .from(memberTable)
-          .where(eq(memberTable.userId, localUser[0].id))
+      if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        userRole = cached.role;
+        isOrgMember = cached.isOrgMember;
+      } else {
+        // Get user from local database with optimized query
+        const [localUser] = await db
+          .select({
+            id: userTable.id,
+            role: userTable.role,
+          })
+          .from(userTable)
+          .where(eq(userTable.email, user.email!))
           .limit(1);
-        isOrgMember = memberships.length > 0;
+        
+        if (localUser) {
+          userRole = localUser.role;
+          
+          // Check membership with optimized query
+          const [membership] = await db
+            .select({ id: memberTable.id })
+            .from(memberTable)
+            .where(eq(memberTable.userId, localUser.id))
+            .limit(1);
+          isOrgMember = !!membership;
+        }
+        
+        // Cache the result
+        userCache.set(cacheKey, {
+          role: userRole,
+          isOrgMember,
+          timestamp: Date.now()
+        });
       }
-    } catch {}
+    } catch (error) {
+      console.error('Middleware error:', error);
+      // Continue with default values on error
+    }
   }
 
   if (pathname === '/assessment') {

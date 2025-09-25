@@ -47,11 +47,14 @@ export default async function Students(props: StudentsProps) {
     currentOrgId = organizations[0]?.id;
   }
 
+  // For admin users, show all participants from all organizations
+  const isAdmin = currentUser.role === 'admin';
+
   // Debug logging
   console.log('Current user:', currentUser);
   console.log('Organization ID:', currentOrgId);
 
-  // First get all participants with basic info (including default students)
+  // First get all participants with basic info
   const participantsDataWithAssessments = await db
     .select({
       id: participants.id,
@@ -62,16 +65,19 @@ export default async function Students(props: StudentsProps) {
       cohortId: participants.cohortId,
       cohortName: cohorts.name,
       stayOut: participants.stayOut,
+      organizationId: participants.organizationId,
     })
     .from(participants)
     .leftJoin(cohorts, eq(participants.cohortId, cohorts.id))
     .where(
-      currentOrgId 
-        ? or(
-            eq(participants.organizationId, currentOrgId),
-            eq(participants.organizationId, 'org_default_students')
-          )
-        : eq(participants.organizationId, 'org_default_students')
+      isAdmin 
+        ? undefined // Admin users see all participants
+        : currentOrgId 
+          ? or(
+              eq(participants.organizationId, currentOrgId),
+              eq(participants.organizationId, 'org_default_students')
+            )
+          : eq(participants.organizationId, 'org_default_students')
     );
 
   // Debug logging
@@ -170,12 +176,14 @@ export default async function Students(props: StudentsProps) {
     .select({ name: cohorts.name })
     .from(cohorts)
     .where(
-      currentOrgId 
-        ? or(
-            eq(cohorts.organizationId, currentOrgId),
-            eq(cohorts.organizationId, 'org_default_students')
-          )
-        : eq(cohorts.organizationId, 'org_default_students')
+      isAdmin 
+        ? undefined // Admin users see all cohorts
+        : currentOrgId 
+          ? or(
+              eq(cohorts.organizationId, currentOrgId),
+              eq(cohorts.organizationId, 'org_default_students')
+            )
+          : eq(cohorts.organizationId, 'org_default_students')
     );
 
   const cohortNames = cohortsData.map(cohort => cohort.name);

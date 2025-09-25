@@ -1,14 +1,15 @@
 
-import { Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Card, Group, SimpleGrid, Stack, Text, Button, Alert, Title } from '@mantine/core';
 
-import { IconChartBar, IconCheckbox, IconUsers } from '@tabler/icons-react';
+import { IconChartBar, IconCheckbox, IconUsers, IconBuilding, IconAlertCircle } from '@tabler/icons-react';
 
 import { db } from '~/db';
-import { attempts, cohorts, participants, organization } from '~/db/schema';
+import { attempts, cohorts, participants, organization, member } from '~/db/schema';
 
 import { getCurrentUser } from '~/lib/user-sync';
 
 import CohortFilter from '~/app/organisation/components/cohort-filter';
+import CreateOrganizationModal from '~/app/organisation/components/create-organization-modal';
 
 import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -100,21 +101,90 @@ export default async function Organisation(props: OrganisationProps) {
     return <div>Unauthorized</div>;
   }
 
-  // Get the organization ID from URL parameter or default to first organization
+  // Check if user has organization membership or is admin
+  let userMembership: any[] = [];
+  let isAdmin = false;
+
+  if (currentUser.role === 'admin') {
+    // Admin users have access to all organizations
+    isAdmin = true;
+    // Get the first organization for admin users
+    const firstOrg = await db
+      .select()
+      .from(organization)
+      .limit(1);
+    
+    if (firstOrg.length > 0) {
+      userMembership = [{
+        organizationId: firstOrg[0].id,
+        role: 'admin',
+        organizationName: firstOrg[0].name,
+        organizationSlug: firstOrg[0].slug,
+        organizationMetadata: firstOrg[0].metadata,
+      }];
+    }
+  } else {
+    // Regular users need organization membership
+    userMembership = await db
+      .select({
+        organizationId: member.organizationId,
+        role: member.role,
+        organizationName: organization.name,
+        organizationSlug: organization.slug,
+        organizationMetadata: organization.metadata,
+      })
+      .from(member)
+      .innerJoin(organization, eq(member.organizationId, organization.id))
+      .where(eq(member.userId, currentUser.id))
+      .limit(1);
+  }
+
+  // If user doesn't have organization membership and is not admin, show create organization option
+  if (userMembership.length === 0 && !isAdmin) {
+    return (
+      <Stack>
+        <Alert icon={<IconAlertCircle size={16} />} title="No Organization Found" color="blue">
+          You don't have an organization membership yet. Create a new organization to get started.
+        </Alert>
+        <CreateOrganizationModal />
+      </Stack>
+    );
+  }
+
+  const membership = userMembership[0];
+  
+  // Get the organization ID from URL parameter or user's membership
   let currentOrgId: string | undefined;
   
   if (orgId) {
     // Verify the organization exists
-    const targetOrg = await db.select().from(organization).where(eq(organization.id, orgId)).limit(1);
+    const targetOrg = await db
+      .select()
+      .from(organization)
+      .where(eq(organization.id, orgId))
+      .limit(1);
     if (targetOrg.length > 0) {
-      currentOrgId = orgId;
+      // Admin users have access to all organizations
+      if (isAdmin) {
+        currentOrgId = orgId;
+      } else {
+        // Regular users need membership
+        const userAccess = await db
+          .select()
+          .from(member)
+          .where(and(eq(member.userId, currentUser.id), eq(member.organizationId, orgId)))
+          .limit(1);
+        
+        if (userAccess.length > 0) {
+          currentOrgId = orgId;
+        }
+      }
     }
   }
   
-  // If no valid orgId provided or found, get the first organization
+  // If no valid orgId provided or found, use user's organization
   if (!currentOrgId) {
-    const organizations = await db.select().from(organization);
-    currentOrgId = organizations[0]?.id;
+    currentOrgId = membership.organizationId;
   }
 
   const orgCohorts = await db
@@ -399,11 +469,41 @@ export default async function Organisation(props: OrganisationProps) {
     totalPossible: respondent.reportData?.totalPossible || 40,
   }));
 
+  // Parse organization description from metadata
+  let organizationDescription = null;
+  try {
+    if (membership.organizationMetadata) {
+      const metadata = JSON.parse(membership.organizationMetadata);
+      organizationDescription = metadata.description || null;
+    }
+  } catch (error) {
+    console.warn('Failed to parse organization metadata:', error);
+  }
+
   return (
     <Stack>
-      <Group mt="md" justify="end">
-        <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
-      </Group>
+      {/* Organization Header */}
+      <Card padding="lg" radius="md" withBorder>
+        <Group justify="space-between" align="flex-start">
+          <Stack gap="xs">
+            <Title order={2}>{membership.organizationName}</Title>
+            {organizationDescription && (
+              <Text size="sm" c="dimmed">
+                {organizationDescription}
+              </Text>
+            )}
+            <Text size="xs" c="dimmed">
+              Role: {membership.role} • Organization ID: {membership.organizationId}
+              {isAdmin && (
+                <Text component="span" c="blue" fw={500}> • Admin Access</Text>
+              )}
+            </Text>
+          </Stack>
+          <Group>
+            <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
+          </Group>
+        </Group>
+      </Card>
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <Card padding="lg" radius="md" withBorder>
           <Group justify="space-between" align="center">

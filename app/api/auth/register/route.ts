@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/db';
-import { user as userSchema } from '~/db/schema';
+import { user as userSchema, participants, cohorts } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateAndSendPasscode } from '~/lib/passcode-service';
 
@@ -87,6 +87,35 @@ export async function POST(request: NextRequest) {
       
       // Set role using raw SQL
       await db.execute(`UPDATE "user" SET role = '${role}' WHERE email = '${email}'`);
+
+      // If user is a student, create a participant record and assign to default organization
+      if (role === 'student') {
+        console.log('🎓 Creating participant record for student...');
+        
+        // Get the default cohort for the default organization
+        const defaultCohort = await db
+          .select()
+          .from(cohorts)
+          .where(eq(cohorts.organizationId, 'org_default_students'))
+          .limit(1);
+
+        if (defaultCohort.length > 0) {
+          // Create participant record
+          await db.insert(participants).values({
+            email: email,
+            fullName: name,
+            organizationId: 'org_default_students',
+            cohortId: defaultCohort[0].id,
+            stayOut: 'Stay',
+            createdAt: new Date().toISOString(),
+            lastActiveAt: new Date().toISOString()
+          });
+          
+          console.log('✅ Participant record created for student:', email);
+        } else {
+          console.warn('⚠️ Default cohort not found, participant record not created');
+        }
+      }
 
       // Passcode already sent above, no need for additional email sending
 

@@ -14,7 +14,12 @@ import {
   Table,
   Badge,
   Alert,
-  Textarea
+  Textarea,
+  Grid,
+  Paper,
+  Divider,
+  Progress,
+  NumberInput
 } from '@mantine/core';
 import { IconEdit, IconTrash, IconPlus, IconAlertCircle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -41,6 +46,106 @@ interface Participant {
 interface Assessment {
   id: string;
   title: string;
+}
+
+interface ReportData {
+  totalScore: number;
+  totalPossible: number;
+  overallPercentage: number;
+  categoryResults: Array<{
+    category: string;
+    score: number;
+    total: number;
+    percentage: number;
+  }>;
+}
+
+// Component to display report data in a user-friendly format
+function ReportDataDisplay({ reportData }: { reportData: ReportData | null }) {
+  if (!reportData) {
+    return (
+      <Alert icon={<IconAlertCircle size={16} />} color="gray">
+        No report data available
+      </Alert>
+    );
+  }
+
+  return (
+    <Stack gap="md">
+      {/* Overall Score */}
+      <Paper p="md" withBorder>
+        <Group justify="space-between" mb="sm">
+          <Text fw={600} size="lg">Overall Performance</Text>
+          <Badge color="blue" size="lg">
+            {reportData.overallPercentage.toFixed(1)}%
+          </Badge>
+        </Group>
+        <Progress 
+          value={reportData.overallPercentage} 
+          size="lg" 
+          radius="md"
+          color={reportData.overallPercentage >= 80 ? 'green' : reportData.overallPercentage >= 60 ? 'yellow' : 'red'}
+        />
+        <Group justify="space-between" mt="xs">
+          <Text size="sm" c="dimmed">
+            Score: {reportData.totalScore} / {reportData.totalPossible}
+          </Text>
+          <Text size="sm" c="dimmed">
+            {reportData.overallPercentage >= 80 ? 'Excellent' : 
+             reportData.overallPercentage >= 60 ? 'Good' : 
+             reportData.overallPercentage >= 40 ? 'Fair' : 'Needs Improvement'}
+          </Text>
+        </Group>
+      </Paper>
+
+      {/* Category Breakdown */}
+      {reportData.categoryResults && reportData.categoryResults.length > 0 && (
+        <Paper p="md" withBorder>
+          <Text fw={600} size="lg" mb="md">Category Breakdown</Text>
+          <Grid>
+            {reportData.categoryResults.map((category, index) => (
+              <Grid.Col key={index} span={{ base: 12, sm: 6, md: 4 }}>
+                <Card p="sm" withBorder>
+                  <Text fw={500} size="sm" mb="xs">{category.category}</Text>
+                  <Progress 
+                    value={category.percentage} 
+                    size="sm" 
+                    radius="md"
+                    color={category.percentage >= 80 ? 'green' : category.percentage >= 60 ? 'yellow' : 'red'}
+                  />
+                  <Group justify="space-between" mt="xs">
+                    <Text size="xs" c="dimmed">
+                      {category.score} / {category.total}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {category.percentage.toFixed(1)}%
+                    </Text>
+                  </Group>
+                </Card>
+              </Grid.Col>
+            ))}
+          </Grid>
+        </Paper>
+      )}
+
+      {/* Raw Data (Collapsible) */}
+      <Paper p="md" withBorder>
+        <Text fw={600} size="md" mb="sm">Raw Report Data</Text>
+        <Textarea
+          value={JSON.stringify(reportData, null, 2)}
+          readOnly
+          minRows={8}
+          maxRows={12}
+          styles={{
+            input: {
+              fontFamily: 'monospace',
+              fontSize: '12px',
+            }
+          }}
+        />
+      </Paper>
+    </Stack>
+  );
 }
 
 export default function AdminAttempts() {
@@ -141,12 +246,28 @@ export default function AdminAttempts() {
     if (!selectedAttempt) return;
 
     try {
+      // Validate JSON if reportData is provided
+      let parsedReportData = null;
+      if (formData.reportData && formData.reportData.trim()) {
+        try {
+          parsedReportData = JSON.parse(formData.reportData);
+        } catch (jsonError) {
+          notifications.show({
+            title: 'Invalid JSON',
+            message: 'Please check the JSON format in the report data field',
+            color: 'red',
+          });
+          return;
+        }
+      }
+
       const response = await fetch('/api/admin/attempts', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedAttempt.id,
-          ...formData,
+          status: formData.status,
+          reportData: parsedReportData
         }),
       });
 
@@ -289,12 +410,21 @@ export default function AdminAttempts() {
               </td>
               <td>
                 {attempt.reportData ? (
-                  <Text size="sm" fw={500}>
-                    {typeof attempt.reportData === 'object' && attempt.reportData !== null && 'correctAnswers' in attempt.reportData && 'totalQuestions' in attempt.reportData 
-                      ? `${(attempt.reportData as Record<string, unknown>).correctAnswers}/${(attempt.reportData as Record<string, unknown>).totalQuestions}`
-                      : 'Completed'
-                    }
-                  </Text>
+                  <Group gap="xs">
+                    <Badge 
+                      color={
+                        (attempt.reportData as any).overallPercentage >= 80 ? 'green' :
+                        (attempt.reportData as any).overallPercentage >= 60 ? 'yellow' :
+                        (attempt.reportData as any).overallPercentage >= 40 ? 'orange' : 'red'
+                      }
+                      size="sm"
+                    >
+                      {(attempt.reportData as any).overallPercentage?.toFixed(1) || 0}%
+                    </Badge>
+                    <Text size="sm" c="dimmed">
+                      {(attempt.reportData as any).totalScore || 0} / {(attempt.reportData as any).totalPossible || 0}
+                    </Text>
+                  </Group>
                 ) : (
                   <Text size="sm" c="dimmed">-</Text>
                 )}
@@ -383,7 +513,7 @@ export default function AdminAttempts() {
         opened={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         title="Edit Attempt"
-        size="lg"
+        size="xl"
       >
         <Stack gap="md">
           <Select
@@ -398,13 +528,36 @@ export default function AdminAttempts() {
             onChange={(value) => setFormData({ ...formData, status: value || 'in_progress' })}
             required
           />
-          <Textarea
-            label="Report Data (JSON)"
-            placeholder="Enter report data as JSON"
-            value={formData.reportData}
-            onChange={(e) => setFormData({ ...formData, reportData: e.target.value })}
-            minRows={5}
-          />
+          
+          {/* Report Data Display */}
+          {selectedAttempt?.reportData && (
+            <>
+              <Divider label="Report Data" labelPosition="center" />
+              <ReportDataDisplay reportData={selectedAttempt.reportData as ReportData} />
+            </>
+          )}
+          
+          {/* Raw JSON Editor (for advanced users) */}
+          <Paper p="md" withBorder>
+            <Text fw={600} size="md" mb="sm">Raw JSON Editor</Text>
+            <Text size="sm" c="dimmed" mb="sm">
+              Advanced: Edit the raw JSON data below. Changes will be validated before saving.
+            </Text>
+            <Textarea
+              label="Report Data (JSON)"
+              placeholder="Enter report data as JSON"
+              value={formData.reportData}
+              onChange={(e) => setFormData({ ...formData, reportData: e.target.value })}
+              minRows={8}
+              styles={{
+                input: {
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                }
+              }}
+            />
+          </Paper>
+          
           <Group justify="flex-end">
             <Button variant="light" onClick={() => setEditModalOpen(false)}>
               Cancel

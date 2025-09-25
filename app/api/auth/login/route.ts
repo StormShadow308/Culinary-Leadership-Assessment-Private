@@ -4,9 +4,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/db';
 import { user as userSchema } from '~/db/schema';
 import { eq } from 'drizzle-orm';
+import { checkRateLimit } from '~/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, 'AUTH');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Too many requests. Please try again later.',
+          retryAfter: rateLimit.resetTime ? Math.ceil((rateLimit.resetTime - Date.now()) / 1000) : 900
+        }, 
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': rateLimit.resetTime ? Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString() : '900',
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.resetTime?.toString() || ''
+          }
+        }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
