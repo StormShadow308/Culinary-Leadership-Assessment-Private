@@ -6,9 +6,9 @@ import { db } from '~/db';
 import { assessments, attempts, cohorts, participants } from '~/db/schema';
 
 import { actionClient } from '~/lib/action';
-import { sendEmail } from '~/lib/email';
+import { sendInvitationEmail, generateInviteLink } from '~/lib/invitation-service';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { inviteFormSchema } from './invite-student.schema';
 
@@ -156,25 +156,27 @@ export const inviteStudentAction = actionClient
         attemptId = newAttempt.id;
       }
 
-      // Generate invitation URL with attempt ID
-      // Generate invitation URL with attempt ID
-      const assessmentUrl = `${BASE_URL}/assessment?attemptId=${attemptId}`;
+      // Generate invitation URL using the invitation service
+      const inviteLink = generateInviteLink(email, BASE_URL);
 
-      // Send invitation email using the real sendEmail function
-      const emailResult = await sendEmail({
-        to: email,
-        subject: `You've been invited to an assessment`,
-        html: `
-          <p>Hello ${name},</p>
-          <p>You've been invited to take an assessment as part of the ${cohortName} cohort.</p>
-          <p>Please click the link below to start your assessment:</p>
-          <p><a href="${assessmentUrl}">${assessmentUrl}</a></p>
-          <p>Thank you,<br/>The Assessment Team</p>
-        `,
+      // Get organization name for the invitation email
+      const orgData = await db.execute(sql`
+        SELECT name FROM organization WHERE id = ${organizationId}
+      `);
+      const organizationName = orgData.rows[0]?.name || 'Unknown Organization';
+
+      // Send invitation email using the invitation service
+      const emailResult = await sendInvitationEmail({
+        participantName: name,
+        participantEmail: email,
+        organizationName: organizationName,
+        cohortName: cohortName,
+        inviteLink: inviteLink
       });
 
       if (!emailResult.success) {
-        throw new Error('Failed to send email');
+        console.error('Failed to send invitation email:', emailResult.error);
+        throw new Error(`Failed to send invitation email: ${emailResult.error}`);
       }
 
       // Update the attempt to mark email as sent
@@ -196,7 +198,7 @@ export const inviteStudentAction = actionClient
           participantId,
           cohortId,
           attemptId,
-          assessmentUrl,
+          inviteLink,
         },
       };
     } catch (error) {

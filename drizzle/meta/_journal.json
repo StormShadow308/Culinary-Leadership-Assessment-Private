@@ -57,6 +57,13 @@
       "when": 1745310027089,
       "tag": "0007_fixed_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1758621529382,
+      "tag": "0008_chunky_sasquatch",
+      "breakpoints": true
     }
   ]
 }

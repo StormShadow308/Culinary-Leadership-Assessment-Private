@@ -1,7 +1,7 @@
-import { headers } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-import { auth } from './lib/auth';
 import { db } from './db';
 import { member as memberTable, user as userTable } from './db/schema';
 import { eq } from 'drizzle-orm';
@@ -14,20 +14,55 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   // Determine if the authenticated user is an organization member
   let isOrgMember = false;
-  if (session) {
+  let userRole = 'student';
+  
+  if (user) {
     try {
-      const memberships = await db
-        .select({ id: memberTable.id })
-        .from(memberTable)
-        .where(eq(memberTable.userId, session.user.id))
+      // Get user from local database
+      const localUser = await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, user.email!))
         .limit(1);
-      isOrgMember = memberships.length > 0;
+      
+      if (localUser.length > 0) {
+        userRole = localUser[0].role;
+        
+        const memberships = await db
+          .select({ id: memberTable.id })
+          .from(memberTable)
+          .where(eq(memberTable.userId, localUser[0].id))
+          .limit(1);
+        isOrgMember = memberships.length > 0;
+      }
     } catch {}
   }
 
@@ -41,90 +76,86 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // Allow unauthenticated access to sign-in and sign-up
-  if (pathname === '/sign-in' || pathname === '/sign-up') {
+  // Allow unauthenticated access to authentication pages
+  if (pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-email') {
     return NextResponse.next();
   }
 
-  // Redirect authenticated users away from sign-in to their appropriate page
-  if (pathname === '/sign-in' && session) {
-    if (session.user.role === 'admin') {
+  // Only redirect authenticated users away from sign-in and sign-up (not forgot-password, etc.)
+  if ((pathname === '/sign-in' || pathname === '/sign-up') && user) {
+    if (userRole === 'admin') {
       console.log('User is admin, redirecting to /admin');
       return NextResponse.redirect(new URL('/admin', request.url));
-    }
-
-    if (!isOrgMember) {
-      console.log('User is not an org member, redirecting to /assessment');
+    } else if (userRole === 'student') {
+      console.log('User is student, redirecting to /assessment');
+      return NextResponse.redirect(new URL('/assessment', request.url));
+    } else if (isOrgMember) {
+      console.log('Org member, redirecting to /organisation');
+      return NextResponse.redirect(new URL('/organisation', request.url));
+    } else {
+      console.log('Default user, redirecting to /assessment');
       return NextResponse.redirect(new URL('/assessment', request.url));
     }
-
-    if (session.session.activeOrganizationId === null) {
-      console.log('Org member with no active organization, redirecting to /organisation/new');
-      return NextResponse.redirect(new URL('/organisation/new', request.url));
-    }
-
-    console.log('Org member, redirecting to /organisation');
-    return NextResponse.redirect(new URL('/organisation', request.url));
   }
 
-  // Redirect authenticated users away from sign-up
-  if (pathname === '/sign-up' && session) {
-    if (session.user.role === 'admin') {
-      console.log('User is admin, redirecting to /admin');
-      return NextResponse.redirect(new URL('/admin', request.url));
-    } else {
-      console.log('User is not admin, redirecting to /organisation');
-      return NextResponse.redirect(new URL('/organisation', request.url));
+  // STRICT ROLE-BASED ACCESS CONTROL
+  if (user) {
+    console.log(`🔐 Access Control: User ${user.email} (Role: ${userRole}) trying to access ${pathname}`);
+    
+    // ADMIN-ONLY ROUTES: Only admins can access
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+      if (userRole !== 'admin') {
+        console.log(`❌ Access Denied: Non-admin user trying to access admin area`);
+        if (userRole === 'student') {
+          return NextResponse.redirect(new URL('/assessment', request.url));
+        } else if (userRole === 'organization') {
+          return NextResponse.redirect(new URL('/organisation', request.url));
+        } else {
+          return NextResponse.redirect(new URL('/assessment', request.url));
+        }
+      }
     }
+
+    // ORGANIZATION-ONLY ROUTES: Only organization users and admins can access
+    if (pathname === '/organisation' || pathname.startsWith('/organisation/')) {
+      if (userRole !== 'organization' && userRole !== 'admin') {
+        console.log(`❌ Access Denied: Non-organization user trying to access organization area`);
+        if (userRole === 'student') {
+          return NextResponse.redirect(new URL('/assessment', request.url));
+        } else {
+          return NextResponse.redirect(new URL('/assessment', request.url));
+        }
+      }
+    }
+
+    // STUDENT-ONLY ROUTES: Only students can access assessment and attempt routes
+    if (pathname === '/assessment' || pathname.startsWith('/attempt')) {
+      if (userRole !== 'student') {
+        console.log(`❌ Access Denied: Non-student user trying to access student area`);
+        if (userRole === 'admin') {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        } else if (userRole === 'organization') {
+          return NextResponse.redirect(new URL('/organisation', request.url));
+        } else {
+          return NextResponse.redirect(new URL('/assessment', request.url));
+        }
+      }
+    }
+
+    // Note: Authentication pages are now allowed for all users (authenticated and unauthenticated)
+    // This allows users to reset passwords even while logged in
   }
 
-  // Enforce access based on organization membership
-  if (session) {
-    try {
-      const memberships = await db
-        .select({ id: memberTable.id })
-        .from(memberTable)
-        .where(eq(memberTable.userId, session.user.id))
-        .limit(1);
-
-      const isOrgMember = memberships.length > 0;
-
-      // Block students (non-members) from any organisation/admin paths
-      if (!isOrgMember && (pathname === '/organisation' || pathname.startsWith('/organisation') || pathname === '/admin' || pathname.startsWith('/admin'))) {
-        return NextResponse.redirect(new URL('/assessment', request.url));
-      }
-
-      // Optionally, block org members from attempt routes meant for students only
-      if (isOrgMember && pathname.startsWith('/attempt')) {
-        return NextResponse.redirect(new URL('/organisation', request.url));
-      }
-    } catch {}
-  }
-
-  // Check for admin routes - require both authentication AND admin role
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    // Redirect unauthenticated users to sign-in
-    if (!session) {
-      return NextResponse.redirect(new URL('/sign-in', request.url));
-    }
-
-    // Redirect non-admin users appropriately
-    if (session?.user.role !== 'admin') {
-      console.log('Non-admin user trying to access admin area');
-
-      // Check if user has an active organization
-      if (session.session.activeOrganizationId === null) {
-        console.log('User has no active organization, redirecting to /organisation/new');
-        return NextResponse.redirect(new URL('/organisation/new', request.url));
-      } else {
-        console.log('User has active organization, redirecting to /organisation');
-        return NextResponse.redirect(new URL('/organisation', request.url));
-      }
-    }
+  // Redirect unauthenticated users to sign-in for protected routes
+  if (!user && (pathname === '/admin' || pathname.startsWith('/admin/') || 
+                pathname === '/organisation' || pathname.startsWith('/organisation/') ||
+                pathname === '/assessment' || pathname.startsWith('/attempt'))) {
+    console.log(`🔒 Unauthenticated user trying to access protected route: ${pathname}`);
+    return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
   // For all other routes
-  if (!session) {
+  if (!user) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 

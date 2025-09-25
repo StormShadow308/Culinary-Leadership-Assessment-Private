@@ -223,6 +223,21 @@ export const user = pgTable('user', {
   banExpires: timestamp('ban_expires'),
 });
 
+export const passcodes = pgTable('passcodes', {
+  id: uuid().defaultRandom().primaryKey(),
+  email: text('email').notNull(),
+  code: text('code').notNull(),
+  type: text('type', { enum: ['registration', 'password_reset'] }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('idx_passcodes_email').on(table.email),
+  index('idx_passcodes_code').on(table.code),
+  index('idx_passcodes_type').on(table.type),
+  index('idx_passcodes_expires_at').on(table.expiresAt),
+]);
+
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
   expiresAt: timestamp('expires_at').notNull(),

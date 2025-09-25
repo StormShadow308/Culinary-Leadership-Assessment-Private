@@ -133,8 +133,7 @@ export const newAssessmentAction = actionClient
             .values({
               id: 'org_default_students',
               name: 'Default Students Organization',
-              slug: 'default-students',
-              createdAt: new Date().toISOString(),
+              createdAt: new Date(),
             })
             .returning({ id: organization.id })
             .execute();

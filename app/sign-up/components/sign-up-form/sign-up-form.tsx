@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { z } from 'zod';
 
@@ -13,8 +12,6 @@ import { Alert, Button, PasswordInput, Select, Stack, TextInput } from '@mantine
 
 import { IconAlertCircle } from '@tabler/icons-react';
 
-import { authClient } from '~/lib/auth-client';
-import { setUserRoleAction } from '~/lib/user-role.action';
 
 export const signUpSchema = z.object({
   name: z
@@ -44,6 +41,14 @@ const ERROR_MESSAGES = {
     title: 'Password Too Short',
     message: 'Your password must be at least 8 characters long.',
   },
+  EMAIL_CONFIRMATION_ERROR: {
+    title: 'Email Confirmation Error',
+    message: 'Unable to send confirmation email. Please try again or contact support.',
+  },
+  EMAIL_CONFIRMATION_REQUIRED: {
+    title: 'Check Your Email',
+    message: 'We sent you a confirmation link. Please check your email and click the link to complete your registration.',
+  },
   DEFAULT: {
     title: 'Sign-up Error',
     message: 'An error occurred during sign-up. Please try again later.',
@@ -53,6 +58,7 @@ const ERROR_MESSAGES = {
 export function SignUpForm() {
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [role, setRole] = useState<'student' | 'organization'>('organization');
+  const router = useRouter();
 
   const { register, handleSubmit, formState } = useForm<SignUpPayload>({
     resolver: zodResolver(signUpSchema),
@@ -61,27 +67,61 @@ export function SignUpForm() {
   const handleSignUp = async (values: SignUpPayload) => {
     setSignUpError(null); // Reset error state on new submission
 
-    await authClient.signUp.email({
-      name: values.name,
-      email: values.email,
-      password: values.password,
-      fetchOptions: {
-        async onSuccess() {
-          // Persist role server-side to enforce route access
-          try {
-            await setUserRoleAction({ role });
-          } catch {}
-          if (role === 'student') {
-            redirect('/assessment');
-          } else {
-            redirect('/organisation/new');
-          }
+    try {
+      // Use the new registration API that handles both Supabase and database
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        onError(context) {
-          setSignUpError(context.error.code);
-        },
-      },
-    });
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          name: values.name,
+          role: role,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Registration error:', result.error);
+        
+        if (result.error.includes('already exists') || result.error.includes('User already exists')) {
+          setSignUpError('USER_ALREADY_EXISTS');
+        } else if (result.error.includes('Invalid email')) {
+          setSignUpError('INVALID_EMAIL');
+        } else if (result.error.includes('Password should be at least')) {
+          setSignUpError('PASSWORD_TOO_SHORT');
+        } else if (result.error.includes('Error sending confirmation email')) {
+          setSignUpError('EMAIL_CONFIRMATION_ERROR');
+        } else {
+          setSignUpError('DEFAULT');
+        }
+        return;
+      }
+
+             if (result.success && result.user) {
+               // Check if email verification is required
+               if (result.requiresVerification) {
+                 // Redirect to verification page
+                 router.push(`/verify-email?email=${encodeURIComponent(values.email)}&type=registration`);
+               } else if (result.user.emailConfirmed) {
+                 // Email already confirmed, redirect immediately
+                 if (role === 'student') {
+                   router.push('/assessment');
+                 } else {
+                   router.push('/organisation/new');
+                 }
+               } else {
+                 // Email confirmation required, show success message
+                 setSignUpError('EMAIL_CONFIRMATION_REQUIRED');
+               }
+             }
+    } catch (error) {
+      console.error('Sign up exception:', error);
+      setSignUpError('DEFAULT');
+    }
   };
 
   // Get the appropriate error message object based on the error code

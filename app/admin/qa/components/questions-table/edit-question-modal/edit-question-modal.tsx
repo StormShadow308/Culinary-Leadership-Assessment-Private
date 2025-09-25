@@ -8,6 +8,7 @@ import { useAction } from 'next-safe-action/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button, Group, Modal, Select, Stack, Tabs, Text, Textarea } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { editQuestionAction } from './edit-question.action';
 import { type FormValues, editQuestionSchema } from './edit-question.schema';
@@ -24,10 +25,11 @@ interface EditQuestionModalProps {
   onClose: () => void;
   questionId: number;
   initialQuestionText: string;
+  onRefresh?: () => void;
 }
 
 export function EditQuestionModal(props: EditQuestionModalProps) {
-  const { opened, onClose, questionId, initialQuestionText } = props;
+  const { opened, onClose, questionId, initialQuestionText, onRefresh } = props;
 
   const [options, setOptions] = useState<Option[]>([]);
   const [editableOptions, setEditableOptions] = useState<{ [key: string]: string }>({});
@@ -68,9 +70,26 @@ export function EditQuestionModal(props: EditQuestionModalProps) {
 
   const { executeAsync: updateQuestion, isExecuting } = useAction(editQuestionAction, {
     onSuccess: () => {
+      // Show success notification
+      notifications.show({
+        title: 'Success',
+        message: 'Question updated successfully',
+        color: 'green',
+      });
       // Close modal and reset form on success
       onClose();
       reset();
+      // Call refresh callback if provided
+      if (onRefresh) {
+        onRefresh();
+      }
+    },
+    onError: (error) => {
+      notifications.show({
+        title: 'Error',
+        message: error.error?.serverError || 'Failed to update question',
+        color: 'red',
+      });
     },
   });
 

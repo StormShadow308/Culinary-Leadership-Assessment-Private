@@ -8,6 +8,10 @@ import { assessments, attempts, participants } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 
 import { Instructions } from './components/instructions';
+import { InviteWelcome } from './components/invite-welcome';
+
+// Force dynamic rendering to avoid build-time database calls
+export const dynamic = 'force-dynamic';
 import { NewAssessmentForm } from './components/new-assessment-form';
 
 async function getChefLeadershipAssessment() {
@@ -49,18 +53,22 @@ async function getParticipantInfo(attemptId?: string) {
 export default async function CulinaryLeadershipAssessment({
   searchParams,
 }: {
-  searchParams: Promise<{ attemptId?: string }>;
+  searchParams: Promise<{ attemptId?: string; invite?: string; participant?: string; name?: string; email?: string }>;
 }) {
   const assessment = await getChefLeadershipAssessment();
 
   const params = await searchParams;
 
   const attemptId = params.attemptId;
+  const isInvite = params.invite === 'true';
+  const participantId = params.participant;
+  const inviteName = params.name;
+  const inviteEmail = params.email;
 
   const participant = await getParticipantInfo(attemptId);
 
-  const participantName = participant?.participant.fullName;
-  const participantEmail = participant?.participant.email;
+  const participantName = participant?.participant.fullName || inviteName;
+  const participantEmail = participant?.participant.email || inviteEmail;
 
   return (
     <Container h="100%" size={480}>
@@ -74,6 +82,14 @@ export default async function CulinaryLeadershipAssessment({
               {assessment.description || 'Evaluate your leadership skills in culinary environments'}
             </Text>
           </Box>
+          
+          {/* Invite Welcome Message */}
+          <InviteWelcome 
+            participantName={participantName}
+            participantEmail={participantEmail}
+            isInvite={isInvite}
+          />
+          
           {/* Instructions */}
           <Instructions />
           {/* New Assessment Form */}

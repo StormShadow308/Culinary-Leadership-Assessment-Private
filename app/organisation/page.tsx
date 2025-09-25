@@ -1,13 +1,12 @@
-import { headers } from 'next/headers';
 
 import { Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 
 import { IconChartBar, IconCheckbox, IconUsers } from '@tabler/icons-react';
 
 import { db } from '~/db';
-import { attempts, cohorts, participants } from '~/db/schema';
+import { attempts, cohorts, participants, organization } from '~/db/schema';
 
-import { auth } from '~/lib/auth';
+import { getCurrentUser } from '~/lib/user-sync';
 
 import CohortFilter from '~/app/organisation/components/cohort-filter';
 
@@ -85,6 +84,7 @@ const PROFICIENCY_LEVELS = [
 
 type OrganisationSearchParams = {
   cohort?: string;
+  orgId?: string;
 };
 
 type OrganisationProps = {
@@ -92,10 +92,30 @@ type OrganisationProps = {
 };
 
 export default async function Organisation(props: OrganisationProps) {
-  const { cohort: selectedCohort } = await props.searchParams;
+  const { cohort: selectedCohort, orgId } = await props.searchParams;
 
-  const organizations = await auth.api.listOrganizations({ headers: await headers() });
-  const currentOrgId = organizations[0]?.id;
+  // Get current user
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return <div>Unauthorized</div>;
+  }
+
+  // Get the organization ID from URL parameter or default to first organization
+  let currentOrgId: string | undefined;
+  
+  if (orgId) {
+    // Verify the organization exists
+    const targetOrg = await db.select().from(organization).where(eq(organization.id, orgId)).limit(1);
+    if (targetOrg.length > 0) {
+      currentOrgId = orgId;
+    }
+  }
+  
+  // If no valid orgId provided or found, get the first organization
+  if (!currentOrgId) {
+    const organizations = await db.select().from(organization);
+    currentOrgId = organizations[0]?.id;
+  }
 
   const orgCohorts = await db
     .select({ name: cohorts.name, id: cohorts.id })

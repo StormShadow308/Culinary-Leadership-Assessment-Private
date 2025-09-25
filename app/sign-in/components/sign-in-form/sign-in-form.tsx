@@ -2,19 +2,17 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { z } from 'zod';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Alert, Button, PasswordInput, Select, Stack, TextInput } from '@mantine/core';
+import { Alert, Button, PasswordInput, Select, Stack, TextInput, Text } from '@mantine/core';
+import Link from 'next/link';
 
 import { IconAlertCircle } from '@tabler/icons-react';
 
-import { authClient } from '~/lib/auth-client';
-import { setUserRoleAction } from '~/lib/user-role.action';
 
 export const signInSchema = z.object({
   email: z
@@ -42,6 +40,7 @@ const ERROR_MESSAGES = {
 export function SignInForm() {
   const [signInError, setSignInError] = useState<string | null>(null);
   const [role, setRole] = useState<'student' | 'organization'>('organization');
+  const router = useRouter();
 
   const { register, handleSubmit, formState } = useForm<SignInPayload>({
     resolver: zodResolver(signInSchema),
@@ -50,26 +49,53 @@ export function SignInForm() {
   const handleSignIn = async (values: SignInPayload) => {
     setSignInError(null); // Reset error state on new submission
 
-    await authClient.signIn.email({
-      email: values.email,
-      password: values.password,
-      fetchOptions: {
-        async onSuccess() {
-          // Persist role server-side to enforce route access
-          try {
-            await setUserRoleAction({ role });
-          } catch {}
-          if (role === 'student') {
-            redirect('/assessment');
-          } else {
-            redirect('/organisation');
-          }
+    try {
+      // Use the new login API that checks both Supabase and database
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        onError(context) {
-          setSignInError(context.error.code);
-        },
-      },
-    });
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Login error:', result.error);
+        
+        // Check if user needs email verification
+        if (result.requiresVerification && result.email) {
+          // Redirect to verification page
+          router.push(`/verify-email?email=${encodeURIComponent(result.email)}&type=registration`);
+          return;
+        }
+        
+        setSignInError('INVALID_EMAIL_OR_PASSWORD');
+        return;
+      }
+
+      if (result.success && result.user) {
+        // Redirect based on user role and selected role
+        const userRole = result.user.role;
+        
+        if (userRole === 'admin') {
+          router.push('/admin');
+        } else if (role === 'student' || userRole === 'student') {
+          router.push('/assessment');
+        } else {
+          router.push('/organisation');
+        }
+      } else {
+        setSignInError('DEFAULT');
+      }
+    } catch (error) {
+      console.error('Sign in exception:', error);
+      setSignInError('DEFAULT');
+    }
   };
 
   // Get the appropriate error message object based on the error code
@@ -111,10 +137,16 @@ export function SignInForm() {
           onChange={value => setRole((value as 'student' | 'organization') ?? 'organization')}
           required
         />
-        <Button mt="md" type="submit" loading={formState.isSubmitting} fullWidth>
-          Sign in
-        </Button>
-      </Stack>
-    </form>
-  );
-}
+              <Button mt="md" type="submit" loading={formState.isSubmitting} fullWidth>
+                Sign in
+              </Button>
+              
+              <Text ta="center" size="sm">
+                <Link href="/forgot-password" style={{ color: 'var(--mantine-color-blue-6)' }}>
+                  Forgot your password?
+                </Link>
+              </Text>
+            </Stack>
+          </form>
+        );
+      }

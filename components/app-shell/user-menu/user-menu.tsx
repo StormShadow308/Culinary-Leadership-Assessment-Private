@@ -4,14 +4,15 @@ import { Menu, MenuDropdown, MenuItem, MenuLabel } from '@mantine/core';
 
 import { IconLogout } from '@tabler/icons-react';
 
-import { authClient } from '~/lib/auth-client';
+import { auth } from '~/lib/auth-client';
 
 import { ThemeSelect } from './theme-select';
 import { UserInfo } from './user-info';
 
 export function UserMenu() {
   const signOut = async () => {
-    await authClient.signOut({ fetchOptions: { onSuccess: () => redirect('/sign-in') } });
+    await auth.signOut();
+    redirect('/sign-in');
   };
 
   return (

@@ -7,9 +7,10 @@ declare namespace NodeJS {
     POSTGRES_PORT: string;
     // Drizzle
     DATABASE_URL: string;
-    // Authentication
-    BETTER_AUTH_SECRET: string;
-    BETTER_AUTH_URL: string;
+    // Supabase
+    NEXT_PUBLIC_SUPABASE_URL: string;
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+    SUPABASE_SERVICE_ROLE_KEY: string;
     // Email
     RESEND_API_KEY: string;
     EMAIL_FROM: string;

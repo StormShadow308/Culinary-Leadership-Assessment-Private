@@ -17,12 +17,6 @@ export default function SignInPage() {
             Click here to sign up
           </Anchor>
         </Text>
-        <Text size="sm" ta="center">
-          Forgot your password?{' '}
-          <Anchor component={Link} href="/forgot-password">
-            Reset it
-          </Anchor>
-        </Text>
       </Stack>
     </Center>
   );

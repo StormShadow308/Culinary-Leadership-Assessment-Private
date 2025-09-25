@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { z } from 'zod';
@@ -15,7 +15,6 @@ import { useDisclosure } from '@mantine/hooks';
 
 import { IconPlus } from '@tabler/icons-react';
 
-import { authClient } from '~/lib/auth-client';
 
 import { ComboboxComponent } from '~/components/combobox-component';
 
@@ -26,19 +25,50 @@ type InviteFormValues = z.infer<typeof inviteFormSchema>;
 
 interface InviteStudentProps {
   currentCohorts: Array<string>;
+  organizationId?: string;
 }
 
-export function InviteStudent({ currentCohorts }: InviteStudentProps) {
+export function InviteStudent({ currentCohorts, organizationId: propOrganizationId }: InviteStudentProps) {
   const [opened, { open, close }] = useDisclosure();
 
   const [cohorts, setCohorts] = useState(currentCohorts);
 
-  const { data: sessionData } = authClient.useSession();
+  // Get organization ID from the current context
+  // This should match the logic in the organization dashboard
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+
+  // Get organization ID from props, URL parameters, or default
+  useEffect(() => {
+    console.log('🔍 Getting organization ID...');
+    console.log('🔍 Prop organizationId:', propOrganizationId);
+    
+    if (propOrganizationId) {
+      console.log('✅ Using organizationId from props:', propOrganizationId);
+      setOrganizationId(propOrganizationId);
+      return;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const orgId = urlParams.get('orgId');
+    console.log('🔍 URL orgId:', orgId);
+    
+    if (orgId) {
+      console.log('✅ Using orgId from URL:', orgId);
+      setOrganizationId(orgId);
+    } else {
+      console.log('🔧 Using fallback organization ID');
+      setOrganizationId('org-culinary-leadership-academy');
+    }
+  }, [propOrganizationId]);
 
   const { executeAsync, isExecuting } = useAction(inviteStudentAction, {
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Invite successful:', data);
       reset();
       close();
+    },
+    onError: (error) => {
+      console.error('❌ Invite failed:', error);
     },
   });
 
@@ -54,7 +84,16 @@ export function InviteStudent({ currentCohorts }: InviteStudentProps) {
   });
 
   const onSubmit = (data: InviteFormValues) => {
-    executeAsync({ ...data, organizationId: sessionData?.session?.activeOrganizationId });
+    console.log('🔍 Submitting invite form:', data);
+    console.log('🔍 Organization ID:', organizationId);
+    
+    if (!organizationId) {
+      console.error('❌ Organization ID not available');
+      return;
+    }
+    
+    console.log('✅ Executing invite action with organizationId:', organizationId);
+    executeAsync({ ...data, organizationId });
   };
 
   return (
@@ -96,7 +135,7 @@ export function InviteStudent({ currentCohorts }: InviteStudentProps) {
             <input
               type="hidden"
               {...register('organizationId')}
-              value={sessionData?.session?.activeOrganizationId}
+              value={organizationId || ''}
             />
             <Button type="submit" mt="md" loading={isExecuting}>
               Invite

@@ -12,11 +12,16 @@ import {
   Table,
   Text,
   useMantineTheme,
+  Modal,
+  Stack,
+  Alert,
+  Button,
 } from '@mantine/core';
 
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 
-import { IconEdit } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconAlertCircle } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 
 import { EditQuestionModal } from './edit-question-modal';
 
@@ -31,10 +36,12 @@ type Question = {
 
 interface QuestionsTableProps {
   data: Array<Question>;
+  onRefresh?: () => void;
 }
 
-export function QuestionsTable({ data }: QuestionsTableProps) {
+export function QuestionsTable({ data, onRefresh }: QuestionsTableProps) {
   const [opened, { open, close }] = useDisclosure(false);
+  const [deleteModalOpen, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const theme = useMantineTheme();
 
@@ -44,6 +51,46 @@ export function QuestionsTable({ data }: QuestionsTableProps) {
   const handleEditClick = (question: Question) => {
     setSelectedQuestion(question);
     open();
+  };
+
+  const handleDeleteClick = (question: Question) => {
+    setSelectedQuestion(question);
+    openDelete();
+  };
+
+  const handleDeleteQuestion = async () => {
+    if (!selectedQuestion) return;
+
+    try {
+      const response = await fetch('/api/admin/questions/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId: selectedQuestion.id }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete question');
+      }
+
+      if (onRefresh) {
+        onRefresh();
+      }
+      closeDelete();
+      setSelectedQuestion(null);
+      notifications.show({
+        title: 'Success',
+        message: 'Question deleted successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      notifications.show({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to delete question',
+        color: 'red',
+      });
+    }
   };
 
   return (
@@ -72,32 +119,35 @@ export function QuestionsTable({ data }: QuestionsTableProps) {
       ) : (
         // Table layout for desktop
         <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Order</Table.Th>
-              <Table.Th>Question</Table.Th>
-              <Table.Th>Category</Table.Th>
-              <Table.Th>Actions</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Question</th>
+              <th>Category</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {data.map(question => (
-              <Table.Tr key={question.id}>
-                <Table.Td>{question.orderNumber}</Table.Td>
-                <Table.Td>{question.text}</Table.Td>
-                <Table.Td>
+              <tr key={question.id}>
+                <td>{question.orderNumber}</td>
+                <td>{question.text}</td>
+                <td>
                   <Badge>{question.category}</Badge>
-                </Table.Td>
-                <Table.Td>
+                </td>
+                <td>
                   <Group>
                     <ActionIcon variant="subtle" onClick={() => handleEditClick(question)}>
                       <IconEdit size={16} />
                     </ActionIcon>
+                    <ActionIcon variant="subtle" color="red" onClick={() => handleDeleteClick(question)}>
+                      <IconTrash size={16} />
+                    </ActionIcon>
                   </Group>
-                </Table.Td>
-              </Table.Tr>
+                </td>
+              </tr>
             ))}
-          </Table.Tbody>
+          </tbody>
         </Table>
       )}
 
@@ -111,8 +161,31 @@ export function QuestionsTable({ data }: QuestionsTableProps) {
           }}
           questionId={selectedQuestion.id}
           initialQuestionText={selectedQuestion.text}
+          onRefresh={onRefresh}
         />
       )}
+
+      {/* Delete Modal */}
+      <Modal
+        opened={deleteModalOpen}
+        onClose={closeDelete}
+        title="Delete Question"
+      >
+        <Stack gap="md">
+          <Alert icon={<IconAlertCircle size="1rem" />} title="Warning" color="red">
+            This will delete the question and all associated data. This action cannot be undone.
+          </Alert>
+          <Text>Are you sure you want to delete this question?</Text>
+          <Group justify="flex-end">
+            <Button variant="light" onClick={closeDelete}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={handleDeleteQuestion}>
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   );
 }
