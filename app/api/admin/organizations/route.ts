@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/db';
-import { organization, member } from '~/db/schema';
+import { organization, member, cohorts } from '~/db/schema';
 import { getCurrentUser } from '~/lib/user-sync';
 import { eq } from 'drizzle-orm';
 
@@ -40,10 +40,11 @@ export async function POST(request: NextRequest) {
     const orgSlug = slug || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     
     // Create new organization
+    const orgId = `org_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const [newOrganization] = await db
       .insert(organization)
       .values({
-        id: `org_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: orgId,
         name,
         slug: orgSlug,
         metadata: description ? JSON.stringify({ description }) : null,
@@ -51,9 +52,40 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    // Create predefined cohorts for the organization
+    const predefinedCohorts = [
+      'Fall 2024 Leadership Cohort',
+      'Spring 2025 Advanced Cohort',
+      'Summer 2025 Intensive Cohort',
+      'Executive Leadership Program',
+      'Culinary Management Cohort'
+    ];
+
+    const createdCohorts = [];
+    for (const cohortName of predefinedCohorts) {
+      const [newCohort] = await db
+        .insert(cohorts)
+        .values({
+          organizationId: orgId,
+          name: cohortName,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .returning();
+      createdCohorts.push(newCohort);
+    }
+
+    console.log('✅ Admin created organization with predefined cohorts:', {
+      organizationId: orgId,
+      organizationName: name,
+      cohortsCreated: createdCohorts.length,
+      cohortNames: createdCohorts.map(c => c.name),
+    });
+
     return NextResponse.json({ 
       organization: newOrganization,
-      message: 'Organization created successfully'
+      cohorts: createdCohorts,
+      message: 'Organization created successfully with predefined cohorts'
     });
   } catch (error) {
     console.error('Error creating organization:', error);

@@ -56,6 +56,19 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
       const result = await response.json();
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (result.error === 'User already has an organization membership') {
+          notifications.show({
+            title: 'Organization Already Exists',
+            message: 'You already have an organization membership. Please refresh the page to see your organization dashboard.',
+            color: 'blue',
+            icon: <IconBuilding size={16} />
+          });
+          // Close modal and reload page
+          close();
+          window.location.reload();
+          return;
+        }
         throw new Error(result.error || 'Failed to create organization');
       }
 

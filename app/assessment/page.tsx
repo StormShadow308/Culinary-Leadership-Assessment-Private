@@ -53,7 +53,7 @@ async function getParticipantInfo(attemptId?: string) {
 export default async function CulinaryLeadershipAssessment({
   searchParams,
 }: {
-  searchParams: Promise<{ attemptId?: string; invite?: string; participant?: string; name?: string; email?: string }>;
+  searchParams: Promise<{ attemptId?: string; invite?: string; participant?: string; name?: string; email?: string; orgId?: string }>;
 }) {
   const assessment = await getChefLeadershipAssessment();
 
@@ -64,6 +64,7 @@ export default async function CulinaryLeadershipAssessment({
   const participantId = params.participant;
   const inviteName = params.name;
   const inviteEmail = params.email;
+  const inviteOrgId = params.orgId;
 
   const participant = await getParticipantInfo(attemptId);
 
@@ -97,6 +98,7 @@ export default async function CulinaryLeadershipAssessment({
             assessmentId={assessment.id}
             participantName={participantName}
             participantEmail={participantEmail}
+            organizationId={inviteOrgId}
           />
         </Flex>
       </Center>

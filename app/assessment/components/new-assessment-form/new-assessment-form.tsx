@@ -17,10 +17,11 @@ type NewAssessmentFormProps = {
   assessmentId: string;
   participantName?: string;
   participantEmail?: string;
+  organizationId?: string;
 };
 
 export function NewAssessmentForm(props: NewAssessmentFormProps) {
-  const { assessmentId, participantEmail, participantName } = props;
+  const { assessmentId, participantEmail, participantName, organizationId } = props;
 
   const router = useRouter();
   const { executeAsync, result, isExecuting } = useAction(newAssessmentAction);
@@ -33,7 +34,7 @@ export function NewAssessmentForm(props: NewAssessmentFormProps) {
   const onSubmit = async (data: NewAssessmentForm) => {
     const forceContinue = participantEmail && participantName ? true : false;
 
-    const response = await executeAsync({ ...data, assessmentId, forceContinue });
+    const response = await executeAsync({ ...data, assessmentId, forceContinue, organizationId });
 
     if (response.data?.error === 'duplicate_email') {
       setError('email', {
@@ -56,6 +57,7 @@ export function NewAssessmentForm(props: NewAssessmentFormProps) {
       forceContinue: true, // We need to bypass the duplicate email check
       resetProgress: true, // Flag to indicate we want to reset progress
       assessmentId,
+      organizationId,
     });
 
     if (response.data?.success) {
@@ -65,7 +67,7 @@ export function NewAssessmentForm(props: NewAssessmentFormProps) {
 
   const handleContinue = async () => {
     const formData = getValues();
-    const response = await executeAsync({ ...formData, forceContinue: true, assessmentId });
+    const response = await executeAsync({ ...formData, forceContinue: true, assessmentId, organizationId });
 
     if (response.data?.success) {
       router.push(`/attempt/${response.data.attemptId}`);

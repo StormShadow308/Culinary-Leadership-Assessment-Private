@@ -7,6 +7,7 @@ import { assessments, attempts, cohorts, participants } from '~/db/schema';
 
 import { actionClient } from '~/lib/action';
 import { sendInvitationEmail, generateInviteLink } from '~/lib/invitation-service';
+import { getCurrentUser } from '~/lib/user-sync';
 
 import { and, eq, sql } from 'drizzle-orm';
 
@@ -16,6 +17,17 @@ export const inviteStudentAction = actionClient
   .schema(inviteFormSchema)
   .action(async ({ parsedInput: { name, email, cohort: cohortName, organizationId, stayOut } }) => {
     try {
+      // Check if user is admin for cohort creation
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        return { error: 'User not authenticated' };
+      }
+
+      // Validate organization ID
+      if (!organizationId) {
+        return { error: 'Organization ID is required' };
+      }
+
       // Get environment variables
       const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -30,7 +42,12 @@ export const inviteStudentAction = actionClient
       if (existingCohort.length > 0) {
         cohortId = existingCohort[0].id;
       } else {
-        // Create new cohort
+        // Only admin users can create new cohorts
+        if (currentUser.role !== 'admin') {
+          return { error: 'Only administrators can create new cohorts. Please select an existing cohort.' };
+        }
+
+        // Create new cohort (admin only)
         const [newCohort] = await db
           .insert(cohorts)
           // @ts-expect-error - TypeScript doesn't recognize all the fields in the object
@@ -157,7 +174,7 @@ export const inviteStudentAction = actionClient
       }
 
       // Generate invitation URL using the invitation service
-      const inviteLink = generateInviteLink(email, BASE_URL);
+      const inviteLink = generateInviteLink(email, organizationId, BASE_URL);
 
       // Get organization name for the invitation email
       const orgData = await db.execute(sql`

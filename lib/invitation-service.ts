@@ -250,8 +250,9 @@ export async function sendInvitationEmail(data: InvitationData): Promise<{ succe
   }
 }
 
-export function generateInviteLink(participantEmail: string, baseUrl: string = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'): string {
-  // Create a unique invite link that redirects to assessment
+export function generateInviteLink(participantEmail: string, organizationId: string, baseUrl: string = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'): string {
+  // Create a unique invite link that redirects to assessment with organization context
   const encodedEmail = encodeURIComponent(participantEmail);
-  return `${baseUrl}/assessment?invite=true&email=${encodedEmail}`;
+  const encodedOrgId = encodeURIComponent(organizationId);
+  return `${baseUrl}/assessment?invite=true&email=${encodedEmail}&orgId=${encodedOrgId}`;
 }

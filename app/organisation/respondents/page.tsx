@@ -1,10 +1,12 @@
 
-import { Group, Paper, Stack, TextInput, Title } from '@mantine/core';
+import { Group, Paper, Stack, TextInput, Title, Alert } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 import { db } from '~/db';
-import { attempts, cohorts, participants, organization } from '~/db/schema';
+import { attempts, cohorts, participants, organization, member } from '~/db/schema';
 
 import { getCurrentUser } from '~/lib/user-sync';
+import { getUserMembership } from '~/lib/optimized-queries';
 
 import { and, eq, inArray, or } from 'drizzle-orm';
 
@@ -27,34 +29,54 @@ export default async function Students(props: StudentsProps) {
     return <div>Unauthorized</div>;
   }
 
-  // Get the organization ID from URL parameter or default to first organization
-  let currentOrgId: string | undefined;
-  
-  // Check if we have orgId in search params (this would come from the organization dashboard)
-  const { orgId } = await props.searchParams;
-  
-  if (orgId) {
-    // Verify the organization exists
-    const targetOrg = await db.select().from(organization).where(eq(organization.id, orgId)).limit(1);
-    if (targetOrg.length > 0) {
-      currentOrgId = orgId;
+  // Check if user is admin or has organization membership
+  const isAdmin = currentUser.role === 'admin';
+  let userMembership = null;
+
+  if (isAdmin) {
+    // Admin users have access to all organizations
+    // For admin, we'll handle orgId from URL parameter
+  } else {
+    // Regular users need organization membership
+    userMembership = await getUserMembership(currentUser.id);
+    
+    if (!userMembership) {
+      return (
+        <Stack>
+          <div>You don't have access to any organization. Please contact your administrator.</div>
+        </Stack>
+      );
     }
   }
+
+  // Get the organization ID from URL parameter or user's membership
+  let currentOrgId: string | undefined;
   
-  // If no valid orgId provided or found, get the first organization
-  if (!currentOrgId) {
-    const organizations = await db.select().from(organization);
-    currentOrgId = organizations[0]?.id;
+  if (isAdmin) {
+    // For admin users, get the first organization if no specific orgId
+    const firstOrg = await db
+      .select()
+      .from(organization)
+      .limit(1);
+    currentOrgId = firstOrg[0]?.id;
+  } else {
+    // Regular users use their membership organization
+    currentOrgId = userMembership.organizationId;
   }
 
-  // For admin users, show all participants from all organizations
-  const isAdmin = currentUser.role === 'admin';
+  // Final validation - ensure we have a valid organization ID
+  if (!currentOrgId) {
+    return (
+      <Stack>
+        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+          No valid organization found. Please contact your administrator.
+        </Alert>
+      </Stack>
+    );
+  }
 
-  // Debug logging
-  console.log('Current user:', currentUser);
-  console.log('Organization ID:', currentOrgId);
 
-  // First get all participants with basic info
+  // First get all participants with basic info - only from user's organization
   const participantsDataWithAssessments = await db
     .select({
       id: participants.id,
@@ -69,43 +91,26 @@ export default async function Students(props: StudentsProps) {
     })
     .from(participants)
     .leftJoin(cohorts, eq(participants.cohortId, cohorts.id))
-    .where(
-      isAdmin 
-        ? undefined // Admin users see all participants
-        : currentOrgId 
-          ? or(
-              eq(participants.organizationId, currentOrgId),
-              eq(participants.organizationId, 'org_default_students')
-            )
-          : eq(participants.organizationId, 'org_default_students')
-    );
+    .where(eq(participants.organizationId, currentOrgId));
 
-  // Debug logging
-  console.log('Participants data:', participantsDataWithAssessments);
 
   // Early return if no participants to avoid unnecessary queries
   if (participantsDataWithAssessments.length === 0) {
-    // Get list of all cohort names for the dropdown
+    // Get list of all cohort names for the dropdown - only from user's organization
     const cohortsData = await db
       .select({ name: cohorts.name })
       .from(cohorts)
-      .where(
-        currentOrgId 
-          ? or(
-              eq(cohorts.organizationId, currentOrgId),
-              eq(cohorts.organizationId, 'org_default_students')
-            )
-          : eq(cohorts.organizationId, 'org_default_students')
-      );
+      .where(eq(cohorts.organizationId, currentOrgId));
 
-    const cohortNames = cohortsData.map(cohort => cohort.name);
+    // Remove duplicates from cohort names to prevent React key conflicts
+    let cohortNames = [...new Set(cohortsData.map(cohort => cohort.name))];
 
     return (
       <Stack h="100%" gap="md">
         <Group justify="space-between">
           <Title order={2}>Students</Title>
           <Group>
-            <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} />
+            <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} isAdmin={isAdmin} />
           </Group>
         </Group>
         <Paper h="100%" withBorder>
@@ -151,9 +156,6 @@ export default async function Students(props: StudentsProps) {
       )
     );
 
-  // Debug logging for assessments
-  console.log('Pre-assessments:', preAssessments);
-  console.log('Post-assessments:', postAssessments);
 
   // Combine all data
   const participantsData = participantsDataWithAssessments.map(participant => {
@@ -169,31 +171,23 @@ export default async function Students(props: StudentsProps) {
     };
   });
 
-  console.log('Final participants data:', participantsData);
 
-  // Get list of all cohort names for the dropdown
+  // Get list of all cohort names for the dropdown - only from user's organization
   const cohortsData = await db
     .select({ name: cohorts.name })
     .from(cohorts)
-    .where(
-      isAdmin 
-        ? undefined // Admin users see all cohorts
-        : currentOrgId 
-          ? or(
-              eq(cohorts.organizationId, currentOrgId),
-              eq(cohorts.organizationId, 'org_default_students')
-            )
-          : eq(cohorts.organizationId, 'org_default_students')
-    );
+    .where(eq(cohorts.organizationId, currentOrgId));
 
-  const cohortNames = cohortsData.map(cohort => cohort.name);
+  // Remove duplicates from cohort names to prevent React key conflicts
+  let cohortNames = [...new Set(cohortsData.map(cohort => cohort.name))];
+
 
   return (
     <Stack h="100%" gap="md">
       <Group justify="space-between">
         <Title order={2}>Respondents</Title>
         <Group>
-          <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} />
+          <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} isAdmin={isAdmin} />
         </Group>
       </Group>
       <Paper

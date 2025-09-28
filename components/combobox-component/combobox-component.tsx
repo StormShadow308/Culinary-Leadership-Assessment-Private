@@ -9,10 +9,12 @@ interface ComboboxComponentProps {
   value: string;
   onChange: (value: string) => void;
   setData: React.Dispatch<React.SetStateAction<Array<string>>>;
+  allowCreate?: boolean;
+  placeholder?: string;
 }
 
 export function ComboboxComponent(props: ComboboxComponentProps) {
-  const { data, setData, label, error, value, onChange } = props;
+  const { data, setData, label, error, value, onChange, allowCreate = true, placeholder } = props;
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -32,8 +34,7 @@ export function ComboboxComponent(props: ComboboxComponentProps) {
   ));
 
   return (
-    <div>
-      <Combobox
+    <Combobox
         store={combobox}
         withinPortal={false}
         onOptionSubmit={val => {
@@ -65,19 +66,18 @@ export function ComboboxComponent(props: ComboboxComponentProps) {
               combobox.closeDropdown();
               setSearch(value || '');
             }}
-            placeholder="Select or create a cohort"
+            placeholder={placeholder || (allowCreate ? "Select or create a cohort" : "Select a cohort")}
             rightSectionPointerEvents="none"
           />
         </Combobox.Target>
         <Combobox.Dropdown>
-          <Combobox.Options>
-            {options}
-            {!exactOptionMatch && search.trim().length > 0 && (
-              <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
-            )}
-          </Combobox.Options>
+              <Combobox.Options>
+                {options}
+                {allowCreate && !exactOptionMatch && search.trim().length > 0 && (
+                  <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
+                )}
+              </Combobox.Options>
         </Combobox.Dropdown>
       </Combobox>
-    </div>
   );
 }

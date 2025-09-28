@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '~/db';
-import { assessments, attempts, organization, participants, responses } from '~/db/schema';
+import { assessments, attempts, cohorts, organization, participants, responses } from '~/db/schema';
 
 import { actionClient } from '~/lib/action';
 
@@ -15,7 +15,7 @@ type Attempt = typeof attempts.$inferSelect;
 export const newAssessmentAction = actionClient
   .schema(newAssessmentSchema)
   .action(
-    async ({ parsedInput: { fullName, email, forceContinue, assessmentId, resetProgress } }) => {
+    async ({ parsedInput: { fullName, email, forceContinue, assessmentId, resetProgress, organizationId } }) => {
       if (!assessmentId) {
         return { error: 'assessment_missing', message: 'Assessment ID is required' };
       }
@@ -71,12 +71,12 @@ export const newAssessmentAction = actionClient
               attempt => attempt.type === 'post_assessment'
             );
 
-            // If they already have a post-assessment and we're not forcing continue, return error
+            // If they already have a post-assessment, allow them to retake it
             if (existingPostAssessment && !forceContinue) {
               return {
                 error: 'duplicate_email',
                 message:
-                  'You have already taken both pre and post assessments. Do you want to continue or start over?',
+                  'You have already taken a post-assessment. Do you want to continue or start over?',
                 participantId: participant.id,
                 attemptId: existingPostAssessment.id,
               };
@@ -115,39 +115,68 @@ export const newAssessmentAction = actionClient
           .where(eq(participants.id, participant.id))
           .execute();
       } else {
-        // Get or create a default organization for students
-        let defaultOrgId: string;
-        const existingOrg = await db
-          .select({ id: organization.id })
-          .from(organization)
-          .where(eq(organization.slug, 'default-students'))
-          .limit(1)
-          .execute();
-
-        if (existingOrg.length > 0) {
-          defaultOrgId = existingOrg[0].id;
+        // Determine organization ID - use from invite or create default
+        let targetOrgId: string;
+        
+        if (organizationId) {
+          // Use organization from invite
+          targetOrgId = organizationId;
         } else {
-          // Create default organization for students
-          const [newOrg] = await db
-            .insert(organization)
-            .values({
-              id: 'org_default_students',
-              name: 'Default Students Organization',
-              createdAt: new Date(),
-            })
-            .returning({ id: organization.id })
+          // Get or create a default organization for independent students
+          const existingOrg = await db
+            .select({ id: organization.id })
+            .from(organization)
+            .where(eq(organization.slug, 'default-students'))
+            .limit(1)
             .execute();
-          defaultOrgId = newOrg.id;
+
+          if (existingOrg.length > 0) {
+            targetOrgId = existingOrg[0].id;
+          } else {
+            // Create default organization for independent students
+            const [newOrg] = await db
+              .insert(organization)
+              .values({
+                id: 'org_default_students',
+                name: 'Independent Students',
+                slug: 'default-students',
+                createdAt: new Date(),
+              })
+              .returning({ id: organization.id })
+              .execute();
+            targetOrgId = newOrg.id;
+
+            // Create predefined cohorts for independent students organization
+            const predefinedCohorts = [
+              'Fall 2024 Leadership Cohort',
+              'Spring 2025 Advanced Cohort',
+              'Summer 2025 Intensive Cohort',
+              'Executive Leadership Program',
+              'Culinary Management Cohort'
+            ];
+
+            for (const cohortName of predefinedCohorts) {
+              await db
+                .insert(cohorts)
+                .values({
+                  organizationId: targetOrgId,
+                  name: cohortName,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                })
+                .execute();
+            }
+          }
         }
 
-        // Create new participant with default organization
+        // Create new participant with determined organization
         const [newParticipant] = await db
           .insert(participants)
           // @ts-expect-error - TypeScript doesn't recognize the values method correctly
           .values({
             email,
             fullName,
-            organizationId: defaultOrgId,
+            organizationId: targetOrgId,
             createdAt: new Date().toISOString(),
             lastActiveAt: new Date().toISOString(),
           })

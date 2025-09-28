@@ -8,6 +8,7 @@ const newAssessmentSchema = z.object({
   forceContinue: z.boolean().optional().default(false),
   resetProgress: z.boolean().optional().default(false),
   assessmentId: z.string().uuid({ message: 'Valid assessment ID is required' }),
+  organizationId: z.string().optional(),
 });
 
 type NewAssessmentForm = z.infer<typeof newAssessmentSchema>;

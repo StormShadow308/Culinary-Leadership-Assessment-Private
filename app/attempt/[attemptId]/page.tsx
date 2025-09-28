@@ -113,9 +113,9 @@ export default async function AttemptQuestionPage({
         <Flex direction="column" gap="md" w="100%">
           <Card padding="lg" radius="md" withBorder maw={1100} mx="auto" shadow="sm">
             <Group>
-              <Image src="/tla-logo.png" alt="TLA Logo" width={75} height={30} />
+              <img src="/tla-logo.png" alt="TLA Logo" width={75} height={30} style={{ objectFit: 'contain' }} />
               <Divider orientation="vertical" />
-              <Image src="/cla-logo.png" alt="CLA Logo" width={75} height={75} />
+              <img src="/cla-logo.png" alt="CLA Logo" width={75} height={75} style={{ objectFit: 'contain' }} />
               <Space m="auto" />
               <Stack gap="0" align="end">
                 <Text size="md">{participant[0]?.participant.fullName}</Text>

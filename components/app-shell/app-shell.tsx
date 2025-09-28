@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import NextImage from 'next/image';
+// NextImage import removed - using regular img tags
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -19,7 +19,7 @@ import {
 
 import { useDisclosure, useHotkeys } from '@mantine/hooks';
 
-import logo from '~/assets/logo.png';
+// Logo will be loaded from public directory
 
 import { UserMenu } from './user-menu';
 
@@ -96,7 +96,7 @@ export function AppShell({ children, links = [] }: AppShellProps) {
             <Burger opened={opened} onClick={toggle} hiddenFrom="lg" size="sm" />
             <Anchor underline="never" c="var(--mantine-color-text)" component={Link} href="/">
               <Group gap="xs">
-                <NextImage src={logo} alt="TLA Logo" width={26} height={26} />
+                <img src="/logo.png" alt="TLA Logo" width={26} height={26} style={{ objectFit: 'contain' }} />
                 <Title mr={16} order={3} fw={600} style={{ cursor: 'pointer' }}>
                   Culinary Assessment
                 </Title>

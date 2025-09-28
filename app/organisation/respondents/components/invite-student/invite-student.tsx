@@ -16,6 +16,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';
 
 
+
 import { ComboboxComponent } from '~/components/combobox-component';
 
 import { inviteStudentAction } from './invite-student.action';
@@ -26,9 +27,10 @@ type InviteFormValues = z.infer<typeof inviteFormSchema>;
 interface InviteStudentProps {
   currentCohorts: Array<string>;
   organizationId?: string;
+  isAdmin?: boolean;
 }
 
-export function InviteStudent({ currentCohorts, organizationId: propOrganizationId }: InviteStudentProps) {
+export function InviteStudent({ currentCohorts, organizationId: propOrganizationId, isAdmin = false }: InviteStudentProps) {
   const [opened, { open, close }] = useDisclosure();
 
   const [cohorts, setCohorts] = useState(currentCohorts);
@@ -36,6 +38,7 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
   // Get organization ID from the current context
   // This should match the logic in the organization dashboard
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+
 
   // Get organization ID from props, URL parameters, or default
   useEffect(() => {
@@ -56,8 +59,8 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
       console.log('✅ Using orgId from URL:', orgId);
       setOrganizationId(orgId);
     } else {
-      console.log('🔧 Using fallback organization ID');
-      setOrganizationId('org-culinary-leadership-academy');
+      console.log('❌ No organization ID found in props or URL');
+      setOrganizationId(null);
     }
   }, [propOrganizationId]);
 
@@ -88,7 +91,8 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
     console.log('🔍 Organization ID:', organizationId);
     
     if (!organizationId) {
-      console.error('❌ Organization ID not available');
+      console.error('❌ Organization ID not available - cannot invite student');
+      alert('Error: Organization context not found. Please refresh the page and try again.');
       return;
     }
     
@@ -129,6 +133,8 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
                   error={errors.cohort?.message}
                   value={field.value}
                   onChange={field.onChange}
+                  allowCreate={isAdmin}
+                  placeholder={isAdmin ? "Select or create a cohort" : "Select a cohort"}
                 />
               )}
             />

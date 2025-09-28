@@ -64,29 +64,42 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Create a default cohort for the organization
-    const [defaultCohort] = await db
-      .insert(cohorts)
-      .values({
-        organizationId: orgId,
-        name: 'General',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .returning();
+    // Create predefined cohorts for the organization
+    const predefinedCohorts = [
+      'Fall 2024 Leadership Cohort',
+      'Spring 2025 Advanced Cohort',
+      'Summer 2025 Intensive Cohort',
+      'Executive Leadership Program',
+      'Culinary Management Cohort'
+    ];
+
+    const createdCohorts = [];
+    for (const cohortName of predefinedCohorts) {
+      const [newCohort] = await db
+        .insert(cohorts)
+        .values({
+          organizationId: orgId,
+          name: cohortName,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .returning();
+      createdCohorts.push(newCohort);
+    }
 
     console.log('✅ Organization created successfully:', {
       organizationId: orgId,
       organizationName: name,
       userId: currentUser.id,
-      userEmail: currentUser.email
+      cohortsCreated: createdCohorts.length,
+      cohortNames: createdCohorts.map(c => c.name),
     });
 
     return NextResponse.json({ 
       organization: newOrganization,
       membership: newMembership,
-      defaultCohort: defaultCohort,
-      message: 'Organization created successfully'
+      cohorts: createdCohorts,
+      message: 'Organization created successfully with predefined cohorts'
     });
   } catch (error) {
     console.error('Error creating organization:', error);

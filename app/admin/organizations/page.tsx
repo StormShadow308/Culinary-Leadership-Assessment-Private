@@ -11,7 +11,8 @@ import {
   ActionIcon, 
   Modal, 
   Stack,
-  Alert
+  Alert,
+  Card
 } from '@mantine/core';
 import { IconTrash, IconEye, IconAlertCircle } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -62,6 +63,7 @@ export default function AdminOrganizations() {
     setDeleteModalOpen(true);
   };
 
+
   const confirmDeleteOrganization = async () => {
     if (!orgToDelete) return;
 
@@ -108,6 +110,24 @@ export default function AdminOrganizations() {
           {organizations.length} organizations total
         </Text>
       </Group>
+
+      {/* Independent Students Section */}
+      <Card withBorder>
+        <Group justify="space-between" align="center">
+          <Stack gap="xs">
+            <Text fw={500} size="lg">Independent Students (N/A Organization)</Text>
+            <Text size="sm" c="dimmed">
+              Students who signed up independently without an organization invite
+            </Text>
+          </Stack>
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/organisation?orgId=org_default_students')}
+          >
+            View Independent Students
+          </Button>
+        </Group>
+      </Card>
 
       <Table striped highlightOnHover>
         <thead>

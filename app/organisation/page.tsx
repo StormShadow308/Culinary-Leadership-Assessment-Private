@@ -7,6 +7,7 @@ import { db } from '~/db';
 import { attempts, cohorts, participants, organization, member } from '~/db/schema';
 
 import { getCurrentUser } from '~/lib/user-sync';
+import { getUserMembership } from '~/lib/optimized-queries';
 
 import CohortFilter from '~/app/organisation/components/cohort-filter';
 import CreateOrganizationModal from '~/app/organisation/components/create-organization-modal';
@@ -101,57 +102,28 @@ export default async function Organisation(props: OrganisationProps) {
     return <div>Unauthorized</div>;
   }
 
-  // Check if user has organization membership or is admin
-  let userMembership: any[] = [];
-  let isAdmin = false;
+  // Check if user is admin or has organization membership
+  const isAdmin = currentUser.role === 'admin';
+  let userMembership = null;
 
-  if (currentUser.role === 'admin') {
+  if (isAdmin) {
     // Admin users have access to all organizations
-    isAdmin = true;
-    // Get the first organization for admin users
-    const firstOrg = await db
-      .select()
-      .from(organization)
-      .limit(1);
-    
-    if (firstOrg.length > 0) {
-      userMembership = [{
-        organizationId: firstOrg[0].id,
-        role: 'admin',
-        organizationName: firstOrg[0].name,
-        organizationSlug: firstOrg[0].slug,
-        organizationMetadata: firstOrg[0].metadata,
-      }];
-    }
+    // For admin, we'll handle orgId from URL parameter
   } else {
     // Regular users need organization membership
-    userMembership = await db
-      .select({
-        organizationId: member.organizationId,
-        role: member.role,
-        organizationName: organization.name,
-        organizationSlug: organization.slug,
-        organizationMetadata: organization.metadata,
-      })
-      .from(member)
-      .innerJoin(organization, eq(member.organizationId, organization.id))
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
+    userMembership = await getUserMembership(currentUser.id);
+    
+    if (!userMembership) {
+      return (
+        <Stack>
+          <Alert icon={<IconAlertCircle size={16} />} title="Access Denied" color="red">
+            You don't have access to any organization. Please contact your administrator.
+          </Alert>
+          <CreateOrganizationModal />
+        </Stack>
+      );
+    }
   }
-
-  // If user doesn't have organization membership and is not admin, show create organization option
-  if (userMembership.length === 0 && !isAdmin) {
-    return (
-      <Stack>
-        <Alert icon={<IconAlertCircle size={16} />} title="No Organization Found" color="blue">
-          You don't have an organization membership yet. Create a new organization to get started.
-        </Alert>
-        <CreateOrganizationModal />
-      </Stack>
-    );
-  }
-
-  const membership = userMembership[0];
   
   // Get the organization ID from URL parameter or user's membership
   let currentOrgId: string | undefined;
@@ -163,20 +135,39 @@ export default async function Organisation(props: OrganisationProps) {
       .from(organization)
       .where(eq(organization.id, orgId))
       .limit(1);
+    
     if (targetOrg.length > 0) {
-      // Admin users have access to all organizations
-      if (isAdmin) {
+      // Check if this is the independent students organization
+      const isIndependentStudentsOrg = orgId === 'org_default_students' || targetOrg[0].slug === 'default-students';
+      
+      if (isIndependentStudentsOrg) {
+        // Independent students organization is only accessible by admin
+        if (isAdmin) {
+          currentOrgId = orgId;
+        } else {
+          return (
+            <Stack>
+              <Alert icon={<IconAlertCircle size={16} />} title="Access Denied" color="red">
+                Independent students data is only accessible via admin dashboard.
+              </Alert>
+            </Stack>
+          );
+        }
+      } else if (isAdmin) {
+        // Admin users have access to all regular organizations
         currentOrgId = orgId;
       } else {
-        // Regular users need membership
-        const userAccess = await db
-          .select()
-          .from(member)
-          .where(and(eq(member.userId, currentUser.id), eq(member.organizationId, orgId)))
-          .limit(1);
-        
-        if (userAccess.length > 0) {
+        // Regular users can only access their own organization
+        if (userMembership && userMembership.organizationId === orgId) {
           currentOrgId = orgId;
+        } else {
+          return (
+            <Stack>
+              <Alert icon={<IconAlertCircle size={16} />} title="Access Denied" color="red">
+                You don't have access to this organization. You can only view your own organization's data.
+              </Alert>
+            </Stack>
+          );
         }
       }
     }
@@ -184,8 +175,38 @@ export default async function Organisation(props: OrganisationProps) {
   
   // If no valid orgId provided or found, use user's organization
   if (!currentOrgId) {
-    currentOrgId = membership.organizationId;
+    if (isAdmin) {
+      // For admin, get the first organization if no specific orgId
+      const firstOrg = await db
+        .select()
+        .from(organization)
+        .limit(1);
+      currentOrgId = firstOrg[0]?.id;
+    } else {
+      // Regular users use their membership organization
+      currentOrgId = userMembership.organizationId;
+    }
   }
+
+  // Final validation - ensure we have a valid organization ID
+  if (!currentOrgId) {
+    return (
+      <Stack>
+        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+          No valid organization found. Please contact your administrator.
+        </Alert>
+      </Stack>
+    );
+  }
+
+  // Fetch current organization data
+  const currentOrg = await db
+    .select()
+    .from(organization)
+    .where(eq(organization.id, currentOrgId))
+    .limit(1);
+
+  const currentOrgData = currentOrg[0];
 
   const orgCohorts = await db
     .select({ name: cohorts.name, id: cohorts.id })
@@ -472,8 +493,10 @@ export default async function Organisation(props: OrganisationProps) {
   // Parse organization description from metadata
   let organizationDescription = null;
   try {
-    if (membership.organizationMetadata) {
-      const metadata = JSON.parse(membership.organizationMetadata);
+    if (currentOrgData?.metadata) {
+      const metadata = typeof currentOrgData.metadata === 'string' 
+        ? JSON.parse(currentOrgData.metadata) 
+        : currentOrgData.metadata;
       organizationDescription = metadata.description || null;
     }
   } catch (error) {
@@ -486,16 +509,28 @@ export default async function Organisation(props: OrganisationProps) {
       <Card padding="lg" radius="md" withBorder>
         <Group justify="space-between" align="flex-start">
           <Stack gap="xs">
-            <Title order={2}>{membership.organizationName}</Title>
+            <Title order={2}>
+              {isAdmin && currentOrgId === 'org_default_students' 
+                ? 'Independent Students (N/A Organization)' 
+                : isAdmin 
+                  ? `Admin Dashboard - ${currentOrgData?.name || 'Organization'}`
+                  : currentOrgData?.name || userMembership?.organizationName}
+            </Title>
             {organizationDescription && (
               <Text size="sm" c="dimmed">
                 {organizationDescription}
               </Text>
             )}
             <Text size="xs" c="dimmed">
-              Role: {membership.role} • Organization ID: {membership.organizationId}
-              {isAdmin && (
-                <Text component="span" c="blue" fw={500}> • Admin Access</Text>
+              {isAdmin ? (
+                <>
+                  Role: Admin • Organization ID: {currentOrgId}
+                  <Text component="span" c="blue" fw={500}> • Admin Access</Text>
+                </>
+              ) : (
+                <>
+                  Role: {userMembership?.role} • Organization ID: {userMembership?.organizationId}
+                </>
               )}
             </Text>
           </Stack>
