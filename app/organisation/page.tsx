@@ -11,6 +11,7 @@ import { getUserMembership } from '~/lib/optimized-queries';
 
 import CohortFilter from '~/app/organisation/components/cohort-filter';
 import CreateOrganizationModal from '~/app/organisation/components/create-organization-modal';
+import { AdminOrgSelector } from './components/admin-org-selector';
 
 import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -173,15 +174,17 @@ export default async function Organisation(props: OrganisationProps) {
     }
   }
   
-  // If no valid orgId provided or found, use user's organization
+  // If no valid orgId provided or found, handle based on user type
   if (!currentOrgId) {
     if (isAdmin) {
-      // For admin, get the first organization if no specific orgId
-      const firstOrg = await db
-        .select()
-        .from(organization)
-        .limit(1);
-      currentOrgId = firstOrg[0]?.id;
+      // Admin users must explicitly select an organization
+      return (
+        <Stack>
+          <Alert icon={<IconAlertCircle size={16} />} title="Organization Selection Required" color="blue">
+            Please select an organization to view its data. Use the organization selector in the navigation.
+          </Alert>
+        </Stack>
+      );
     } else {
       // Regular users use their membership organization
       currentOrgId = userMembership.organizationId;
@@ -198,6 +201,7 @@ export default async function Organisation(props: OrganisationProps) {
       </Stack>
     );
   }
+
 
   // Fetch current organization data
   const currentOrg = await db
@@ -505,6 +509,9 @@ export default async function Organisation(props: OrganisationProps) {
 
   return (
     <Stack>
+      {/* Admin Organization Selector */}
+      {isAdmin && <AdminOrgSelector currentOrgId={currentOrgId} />}
+      
       {/* Organization Header */}
       <Card padding="lg" radius="md" withBorder>
         <Group justify="space-between" align="flex-start">

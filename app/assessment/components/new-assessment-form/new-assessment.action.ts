@@ -57,13 +57,13 @@ export const newAssessmentAction = actionClient
 
         // Determine assessment type based on existing attempts
         if (existingAttempts.length > 0) {
-          // Check if there's a completed pre-assessment
-          const hasCompletedPreAssessment = existingAttempts.some(
-            attempt => attempt.type === 'pre_assessment' && attempt.status === 'completed'
+          // Check if there's ANY completed assessment (pre or post)
+          const hasCompletedAssessment = existingAttempts.some(
+            attempt => attempt.status === 'completed'
           );
 
-          // If they have a completed pre-assessment, this should be a post-assessment
-          if (hasCompletedPreAssessment) {
+          // If they have ANY completed assessment, this should be a post-assessment
+          if (hasCompletedAssessment) {
             assessmentType = 'post_assessment';
 
             // Check if they already have a post-assessment
@@ -82,7 +82,7 @@ export const newAssessmentAction = actionClient
               };
             }
           } else {
-            // If no completed pre-assessment, this should still be a pre-assessment
+            // If no completed assessment, this should be a pre-assessment
             assessmentType = 'pre_assessment';
 
             // Find the existing pre-assessment attempt
