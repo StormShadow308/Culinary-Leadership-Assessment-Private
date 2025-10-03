@@ -27,6 +27,12 @@
     "skipLibCheck": true,
 
     /**
+     * Allow synthetic default imports from modules with no default export
+     * Enables compatibility with CommonJS modules that don't have default exports
+     */
+    "allowSyntheticDefaultImports": true,
+
+    /**
      * Enable all strict type checking options
      * When set to false, disables strict null checks, strict function types,
      * strict property initialization, and other strict flags
@@ -59,9 +65,9 @@
 
     /**
      * Specify how TypeScript looks up modules
-     * 'node' strategy mimics Node.js resolution mechanism
+     * 'bundler' strategy is optimized for modern bundlers like Webpack, Vite, etc.
      */
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
 
     /**
      * Allow importing JSON files as modules

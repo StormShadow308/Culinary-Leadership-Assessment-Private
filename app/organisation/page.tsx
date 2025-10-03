@@ -12,6 +12,7 @@ import { getUserMembership } from '~/lib/optimized-queries';
 import CohortFilter from '~/app/organisation/components/cohort-filter';
 import CreateOrganizationModal from '~/app/organisation/components/create-organization-modal';
 import { AdminOrgSelector } from './components/admin-org-selector';
+import { AdminOrgWrapper } from './components/admin-org-wrapper';
 
 import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -177,13 +178,13 @@ export default async function Organisation(props: OrganisationProps) {
   // If no valid orgId provided or found, handle based on user type
   if (!currentOrgId) {
     if (isAdmin) {
-      // Admin users must explicitly select an organization
+      // Admin users must explicitly select an organization - use wrapper
       return (
-        <Stack>
+        <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={false}>
           <Alert icon={<IconAlertCircle size={16} />} title="Organization Selection Required" color="blue">
-            Please select an organization to view its data. Use the organization selector in the navigation.
+            Please select an organization from the dropdown above to view its data.
           </Alert>
-        </Stack>
+        </AdminOrgWrapper>
       );
     } else {
       // Regular users use their membership organization
@@ -510,10 +511,10 @@ export default async function Organisation(props: OrganisationProps) {
   return (
     <Stack>
       {/* Admin Organization Selector */}
-      {isAdmin && <AdminOrgSelector currentOrgId={currentOrgId} />}
-      
-      {/* Organization Header */}
-      <Card padding="lg" radius="md" withBorder>
+      {isAdmin ? (
+        <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={true}>
+          {/* Organization Header */}
+          <Card padding="lg" radius="md" withBorder>
         <Group justify="space-between" align="flex-start">
           <Stack gap="xs">
             <Title order={2}>
@@ -617,6 +618,105 @@ export default async function Organisation(props: OrganisationProps) {
             {/* Top Performing Respondents */}
             <TopPerformingRespondents respondents={topRespondents} />
           </SimpleGrid>
+        </>
+      )}
+        </AdminOrgWrapper>
+      ) : (
+        <>
+          {/* Organization Header */}
+          <Card padding="lg" radius="md" withBorder>
+            <Group justify="space-between" align="flex-start">
+              <Stack gap="xs">
+                <Title order={2}>
+                  {currentOrgData?.name || userMembership?.organizationName}
+                </Title>
+                {organizationDescription && (
+                  <Text size="sm" c="dimmed">
+                    {organizationDescription}
+                  </Text>
+                )}
+                <Text size="xs" c="dimmed">
+                  Role: {userMembership?.role} • Organization ID: {userMembership?.organizationId}
+                </Text>
+              </Stack>
+              <Group>
+                <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
+              </Group>
+            </Group>
+          </Card>
+          <SimpleGrid cols={{ base: 1, sm: 3 }}>
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between" align="center">
+                <Text fw={500} size="lg">
+                  Total Respondents
+                </Text>
+                <IconUsers size={24} />
+              </Group>
+              <Text size="xl" fw={700} mt="md">
+                {totalRespondents}
+              </Text>
+              <Text size="sm" c="dimmed" mt="sm">
+                Total participants across all cohorts
+              </Text>
+            </Card>
+            {/* Average Score Card */}
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between" align="center">
+                <Text fw={500} size="lg">
+                  Average Score
+                </Text>
+                <IconChartBar size={24} />
+              </Group>
+              <Group align="flex-end" mt="md">
+                <Text size="xl" fw={700}>
+                  {Number(averageScore).toFixed(1)}%
+                </Text>
+              </Group>
+              <Text size="sm" c="dimmed" mt="sm">
+                Average pre-assessment score
+              </Text>
+            </Card>
+            {/* Completion Rate Card */}
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between" align="center">
+                <Text fw={500} size="lg">
+                  Completion Rate
+                </Text>
+                <IconCheckbox size={24} />
+              </Group>
+              <Group align="flex-end" mt="md">
+                <Text size="xl" fw={700}>
+                  {completionRate.toFixed(1)}%
+                </Text>
+                <Text size="sm" c="dimmed">
+                  ({completedAttempts}/{totalAttempts})
+                </Text>
+              </Group>
+              <Text size="sm" c="dimmed" mt="sm">
+                Pre-assessments completed vs. started
+              </Text>
+            </Card>
+          </SimpleGrid>
+          {completedAttempts > 0 && (
+            <>
+              {/* Full width proficiency levels table */}
+              <ProficiencyLevelsTable
+                proficiencyData={proficiencyDistribution}
+                totalRespondents={completedAttempts}
+              />
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                {/* Proficiency Levels Chart */}
+                <ProficiencyLevelsChart attempts={attemptScores} />
+                {/* Skill Set Score Chart */}
+                <SkillSetScoreChart skillSetData={categoryData} />
+              </SimpleGrid>
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                <CohortScoringCurve attempts={attemptScores} />
+                {/* Top Performing Respondents */}
+                <TopPerformingRespondents respondents={topRespondents} />
+              </SimpleGrid>
+            </>
+          )}
         </>
       )}
     </Stack>

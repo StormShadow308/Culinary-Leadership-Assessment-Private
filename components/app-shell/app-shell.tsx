@@ -22,6 +22,7 @@ import { useDisclosure, useHotkeys } from '@mantine/hooks';
 // Logo will be loaded from public directory
 
 import { UserMenu } from './user-menu';
+import { SmartLogo } from './smart-logo';
 
 const THEME_HOT_KEY = 'mod+J';
 
@@ -34,9 +35,10 @@ export type NavLink = {
 interface AppShellProps {
   children: React.ReactNode;
   links?: Array<NavLink>;
+  headerContent?: React.ReactNode;
 }
 
-export function AppShell({ children, links = [] }: AppShellProps) {
+export function AppShell({ children, links = [], headerContent }: AppShellProps) {
   const [opened, { toggle, close }] = useDisclosure();
 
   const { setColorScheme, colorScheme } = useMantineColorScheme();
@@ -94,16 +96,12 @@ export function AppShell({ children, links = [] }: AppShellProps) {
         <Group justify="space-between" h="100%" px="md">
           <Group>
             <Burger opened={opened} onClick={toggle} hiddenFrom="lg" size="sm" />
-            <Anchor underline="never" c="var(--mantine-color-text)" component={Link} href="/">
-              <Group gap="xs">
-                <img src="/logo.png" alt="TLA Logo" width={26} height={26} style={{ objectFit: 'contain' }} />
-                <Title mr={16} order={3} fw={600} style={{ cursor: 'pointer' }}>
-                  Culinary Assessment
-                </Title>
-              </Group>
-            </Anchor>
+            <SmartLogo />
           </Group>
-          <UserMenu />
+          <Group gap="md">
+            {headerContent}
+            <UserMenu />
+          </Group>
         </Group>
       </MantineAppShell.Header>
       <MantineAppShell.Navbar p="md">

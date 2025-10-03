@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Select, 
   Group, 
@@ -10,56 +10,35 @@ import {
   ActionIcon,
   Tooltip,
   Card,
-  Stack
+  Stack,
+  Button
 } from '@mantine/core';
-import { IconBuilding, IconRefresh } from '@tabler/icons-react';
-
-interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  participantCount?: number;
-}
+import { IconBuilding, IconRefresh, IconExternalLink } from '@tabler/icons-react';
+import { useGlobalOrg } from './global-org-context';
 
 interface AdminOrgSelectorProps {
   currentOrgId?: string;
+  showNavigationButtons?: boolean;
 }
 
-export function AdminOrgSelector({ currentOrgId }: AdminOrgSelectorProps) {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(currentOrgId || null);
+export function AdminOrgSelector({ currentOrgId, showNavigationButtons = true }: AdminOrgSelectorProps) {
+  const { 
+    selectedOrgId, 
+    setSelectedOrgId, 
+    organizations, 
+    loading, 
+    refreshOrganizations,
+    isInitialized
+  } = useGlobalOrg();
   
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Fetch organizations
-  const fetchOrganizations = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/admin/organizations');
-      if (response.ok) {
-        const data = await response.json();
-        setOrganizations(data.organizations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching organizations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load organizations on mount
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
 
   // Update selected organization when currentOrgId changes
   useEffect(() => {
-    if (currentOrgId) {
+    if (currentOrgId && currentOrgId !== selectedOrgId) {
       setSelectedOrgId(currentOrgId);
     }
-  }, [currentOrgId]);
+  }, [currentOrgId, selectedOrgId, setSelectedOrgId]);
 
   const handleOrganizationChange = (orgId: string | null) => {
     if (!orgId) return;
@@ -67,19 +46,51 @@ export function AdminOrgSelector({ currentOrgId }: AdminOrgSelectorProps) {
     setSelectedOrgId(orgId);
     
     // Get current path and update with new orgId
-    const currentPath = window.location.pathname;
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('orgId', orgId);
     
-    // Navigate to the same page with new orgId
-    router.push(newUrl.pathname + newUrl.search);
+    // Use router.replace to update URL and then refresh to reload server component
+    router.replace(newUrl.pathname + newUrl.search);
+    // Force refresh to reload server component with new orgId
+    setTimeout(() => {
+      router.refresh();
+    }, 100);
   };
 
   const handleRefresh = () => {
-    fetchOrganizations();
+    refreshOrganizations();
+  };
+
+  const navigateToOrgPage = (path: string) => {
+    if (!selectedOrgId) return;
+    const newUrl = new URL(window.location.href);
+    newUrl.pathname = path;
+    newUrl.searchParams.set('orgId', selectedOrgId);
+    router.push(newUrl.pathname + newUrl.search);
+    // Force refresh to reload server component with new orgId
+    setTimeout(() => {
+      router.refresh();
+    }, 100);
   };
 
   const selectedOrg = organizations.find(org => org.id === selectedOrgId);
+
+  // Show loading state until context is initialized
+  if (!isInitialized) {
+    return (
+      <Card withBorder p="md" mb="md">
+        <Stack gap="sm">
+          <Group justify="space-between" align="center">
+            <Group gap="sm" align="center">
+              <IconBuilding size={20} />
+              <Text size="lg" fw={600}>Organization Selector</Text>
+            </Group>
+          </Group>
+          <Text size="sm" c="dimmed">Loading organizations...</Text>
+        </Stack>
+      </Card>
+    );
+  }
 
   return (
     <Card withBorder p="md" mb="md">
@@ -123,6 +134,27 @@ export function AdminOrgSelector({ currentOrgId }: AdminOrgSelectorProps) {
             </Badge>
           )}
         </Group>
+        
+        {selectedOrgId && showNavigationButtons && (
+          <Group gap="sm" mt="xs">
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconExternalLink size={14} />}
+              onClick={() => navigateToOrgPage('/organisation')}
+            >
+              View Dashboard
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconExternalLink size={14} />}
+              onClick={() => navigateToOrgPage('/organisation/respondents')}
+            >
+              View Respondents
+            </Button>
+          </Group>
+        )}
         
         {!selectedOrgId && (
           <Text size="sm" c="dimmed">

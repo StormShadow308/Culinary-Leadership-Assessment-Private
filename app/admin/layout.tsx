@@ -1,6 +1,8 @@
 import { IconHome, IconQuestionMark, IconUsers, IconBuilding, IconSchool, IconUserCheck, IconClipboardList, IconFileText } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
+import { GlobalOrgProvider } from '~/app/organisation/components/global-org-context';
+import { AdminGlobalOrgSelector } from './components/admin-global-org-selector';
 
 const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
   {
@@ -46,5 +48,14 @@ const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
 ];
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell links={ADMIN_DASHBOARD_LINKS}>{children}</AppShell>;
+  return (
+    <GlobalOrgProvider>
+      <AppShell 
+        links={ADMIN_DASHBOARD_LINKS}
+        headerContent={<AdminGlobalOrgSelector />}
+      >
+        {children}
+      </AppShell>
+    </GlobalOrgProvider>
+  );
 }

@@ -14,6 +14,7 @@ import { InviteStudent } from './components/invite-student';
 import StudentsTable, { type ReportData } from './components/students-table';
 import { SearchableStudentsTable } from './components/searchable-students-table';
 import { AdminOrgSelector } from '../components/admin-org-selector';
+import { AdminOrgWrapper } from '../components/admin-org-wrapper';
 
 function assertReportData(data: unknown): ReportData | null {
   if (!data || typeof data !== 'object') return null;
@@ -103,13 +104,13 @@ export default async function Students(props: StudentsProps) {
   // If no valid orgId provided or found, handle based on user type
   if (!currentOrgId) {
     if (isAdmin) {
-      // Admin users must explicitly select an organization
+      // Admin users must explicitly select an organization - use wrapper
       return (
-        <Stack>
+        <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={false}>
           <Alert icon={<IconAlertCircle size={16} />} title="Organization Selection Required" color="blue">
-            Please select an organization to view its data. Use the organization selector in the navigation.
+            Please select an organization from the dropdown above to view its data.
           </Alert>
-        </Stack>
+        </AdminOrgWrapper>
       );
     } else {
       // Regular users use their membership organization
@@ -239,22 +240,41 @@ export default async function Students(props: StudentsProps) {
   return (
     <Stack h="100%" gap="md">
       {/* Admin Organization Selector */}
-      {isAdmin && <AdminOrgSelector currentOrgId={currentOrgId} />}
-      
-      <Group justify="space-between">
+      {isAdmin ? (
+        <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={true}>
+          <Group justify="space-between">
         <Title order={2}>Respondents</Title>
         <Group>
           <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} isAdmin={isAdmin} />
         </Group>
-      </Group>
-      <Paper
-        style={{ height: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column' }}
-        withBorder
-      >
-        <div style={{ overflow: 'auto', flex: 1, borderRadius: 6 }}>
-          <SearchableStudentsTable data={participantsData} />
-        </div>
-      </Paper>
+          </Group>
+          <Paper
+            style={{ height: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column' }}
+            withBorder
+          >
+            <div style={{ overflow: 'auto', flex: 1, borderRadius: 6 }}>
+              <SearchableStudentsTable data={participantsData} />
+            </div>
+          </Paper>
+        </AdminOrgWrapper>
+      ) : (
+        <>
+          <Group justify="space-between">
+            <Title order={2}>Respondents</Title>
+            <Group>
+              <InviteStudent currentCohorts={cohortNames} organizationId={currentOrgId} isAdmin={isAdmin} />
+            </Group>
+          </Group>
+          <Paper
+            style={{ height: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column' }}
+            withBorder
+          >
+            <div style={{ overflow: 'auto', flex: 1, borderRadius: 6 }}>
+              <SearchableStudentsTable data={participantsData} />
+            </div>
+          </Paper>
+        </>
+      )}
     </Stack>
   );
 }
