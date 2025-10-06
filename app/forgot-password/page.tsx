@@ -12,7 +12,8 @@ import {
   Title, 
   Text,
   Card,
-  Center
+  Center,
+  Box
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -82,62 +83,111 @@ export default function ForgotPasswordPage() {
 
   if (isSuccess) {
     return (
-      <Center h="100vh">
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
-          <Stack gap="md" align="center">
-            <IconCheck size="3rem" color="green" />
-            <Title order={2} ta="center">Check Your Email</Title>
-            <Text ta="center" c="dimmed">
-            We&apos;ve sent password reset instructions to your email address. 
-            Please check your inbox and follow the link to reset your password.
-            </Text>
-            <Button component={Link} href="/sign-in" fullWidth>
-              Back to Sign In
-            </Button>
-          </Stack>
-        </Card>
-      </Center>
+      <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <Center>
+          <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%', backgroundColor: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            <Stack gap="md" align="center">
+              <Box 
+                style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  backgroundColor: '#4caf50', 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  marginBottom: '16px'
+                }}
+              >
+                <IconCheck size="2rem" color="white" />
+              </Box>
+              <Title order={2} ta="center" c="dark">Check Your Email</Title>
+              <Text ta="center" c="dimmed">
+              We&apos;ve sent password reset instructions to your email address. 
+              Please check your inbox and follow the link to reset your password.
+              </Text>
+              <Button 
+                component={Link} 
+                href="/sign-in" 
+                fullWidth
+                size="md"
+                style={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none'
+                }}
+              >
+                Back to Sign In
+              </Button>
+            </Stack>
+          </Card>
+        </Center>
+      </Box>
     );
   }
 
   return (
-    <Center h="100vh">
-      <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
-        <Stack gap="md">
-          <Title order={2} ta="center">Forgot Password</Title>
-          <Text ta="center" c="dimmed">
-            Enter your email address and we&apos;ll send you instructions to reset your password.
-          </Text>
-
-          <form onSubmit={handleSubmit(handleForgotPassword)}>
-            <Stack gap="md">
-              <TextInput
-                label="Email"
-                placeholder="Enter your email address"
-                type="email"
-                {...register('email')}
-                error={formState.errors.email?.message}
-                required
-              />
-              
-              <Button 
-                type="submit" 
-                loading={isLoading} 
-                fullWidth
+    <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      <Center>
+        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%', backgroundColor: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+          <Stack gap="md">
+            {/* Logo */}
+            <Box ta="center" mb="md">
+              <Box 
+                style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  backgroundColor: '#667eea', 
+                  borderRadius: '50%', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  marginBottom: '16px'
+                }}
               >
-                Send Reset Instructions
-              </Button>
-            </Stack>
-          </form>
+                <Text size="xl" fw="bold" c="white">N</Text>
+              </Box>
+              <Title order={2} ta="center" c="dark">Forgot Password</Title>
+              <Text ta="center" c="dimmed" size="sm">
+                Enter your email address and we&apos;ll send you instructions to reset your password.
+              </Text>
+            </Box>
 
-          <Text ta="center" size="sm">
-            Remember your password?{' '}
-            <Link href="/sign-in" style={{ color: 'var(--mantine-color-blue-6)' }}>
-              Sign in
-            </Link>
-          </Text>
-        </Stack>
-      </Card>
-    </Center>
+            <form onSubmit={handleSubmit(handleForgotPassword)}>
+              <Stack gap="md">
+                <TextInput
+                  label="Email *"
+                  placeholder="Enter your email address"
+                  type="email"
+                  {...register('email')}
+                  error={formState.errors.email?.message}
+                  required
+                  size="md"
+                />
+                
+                <Button 
+                  type="submit" 
+                  loading={isLoading} 
+                  fullWidth
+                  size="md"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none'
+                  }}
+                >
+                  Send Reset Instructions
+                </Button>
+              </Stack>
+            </form>
+
+            <Text ta="center" size="sm" mt="md">
+              Remember your password?{' '}
+              <Link href="/sign-in" style={{ color: 'var(--mantine-color-blue-6)' }}>
+                Sign in
+              </Link>
+            </Text>
+          </Stack>
+        </Card>
+      </Center>
+    </Box>
   );
 }

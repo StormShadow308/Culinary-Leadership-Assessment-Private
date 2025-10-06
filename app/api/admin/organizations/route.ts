@@ -1,24 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/db';
-import { organization, member, cohorts } from '~/db/schema';
+import { organization, member, cohorts, participants } from '~/db/schema';
 import { getCurrentUser } from '~/lib/user-sync';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 
 export async function GET() {
   try {
+    console.log('🔍 Fetching organizations...');
+    
     // Check if user is admin
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    console.log('👤 Current user:', currentUser ? { id: currentUser.id, email: currentUser.email, role: currentUser.role } : 'null');
+    
+    if (!currentUser) {
+      console.log('❌ No user found - authentication failed');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+    
+    if (currentUser.role !== 'admin') {
+      console.log('❌ User is not admin:', currentUser.role);
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    console.log('✅ User authorized, fetching organizations...');
 
     // Get all organizations
     const organizations = await db.select().from(organization);
+    console.log(`📊 Found ${organizations.length} organizations`);
+    
+    // Get participant counts for each organization
+    const organizationsWithCounts = await Promise.all(
+      organizations.map(async (org) => {
+        const [participantCountResult] = await db
+          .select({ count: count() })
+          .from(participants)
+          .where(eq(participants.organizationId, org.id));
+        
+        return {
+          ...org,
+          participantCount: participantCountResult?.count || 0
+        };
+      })
+    );
 
-    return NextResponse.json({ organizations });
+    console.log('✅ Organizations with counts fetched successfully');
+    return NextResponse.json({ organizations: organizationsWithCounts });
   } catch (error) {
-    console.error('Error fetching organizations:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('❌ Error fetching organizations:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 

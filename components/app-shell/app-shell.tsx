@@ -124,9 +124,15 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
               >
                 <Group gap="md">
                   {link.icon && (
-                    <Flex c={active ? 'var(--mantine-primary-color-light-color)' : 'inherit'}>
+                    <Box 
+                      style={{ 
+                        color: active ? 'var(--mantine-primary-color-light-color)' : 'inherit',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
                       {link.icon}
-                    </Flex>
+                    </Box>
                   )}
                   <Box>{link.label}</Box>
                 </Group>

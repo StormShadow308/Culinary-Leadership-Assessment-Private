@@ -138,32 +138,34 @@ export function SignUpForm() {
           </Alert>
         )}
         <TextInput
-          label="Name"
+          label="Name *"
           placeholder="Your name"
           autoComplete="name"
           {...register('name')}
           error={formState.errors.name?.message}
           required
+          size="md"
         />
         <TextInput
-          label="Email"
+          label="Email *"
           placeholder="Your email"
           autoComplete="email"
           {...register('email')}
           error={formState.errors.email?.message}
           required
+          size="md"
         />
         <PasswordInput
-          label="Password"
-          type="password"
+          label="Password *"
           placeholder="Your password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           {...register('password')}
           error={formState.errors.password?.message}
           required
+          size="md"
         />
         <Select
-          label="Continue as"
+          label="Continue as *"
           data={[
             { value: 'student', label: 'Student' },
             { value: 'organization', label: 'Organization' },
@@ -171,8 +173,19 @@ export function SignUpForm() {
           value={role}
           onChange={value => setRole((value as 'student' | 'organization') ?? 'organization')}
           required
+          size="md"
         />
-        <Button mt="md" type="submit" loading={formState.isSubmitting} fullWidth>
+        <Button 
+          mt="md" 
+          type="submit" 
+          loading={formState.isSubmitting} 
+          fullWidth
+          size="md"
+          style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none'
+          }}
+        >
           Sign up
         </Button>
       </Stack>

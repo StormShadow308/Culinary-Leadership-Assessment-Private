@@ -1,4 +1,43 @@
-html,
-body {
-  height: 100%;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Select Option Styling */
+.custom-select-option[data-selected] {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.custom-select-option[data-selected]:hover {
+  background-color: #45a049 !important;
+  color: white !important;
+}
+
+/* Custom ScrollArea Styling */
+.custom-scrollbar[data-orientation="vertical"] {
+  width: 8px !important;
+  left: 0px !important;
+  right: auto !important;
+}
+
+.custom-scrollbar[data-orientation="horizontal"] {
+  height: 8px !important;
+  bottom: 0px !important;
+  top: auto !important;
+}
+
+.custom-scrollbar-thumb {
+  background-color: var(--mantine-color-gray-4) !important;
+}
+
+.custom-scrollbar-thumb:hover {
+  background-color: var(--mantine-color-gray-5) !important;
+}
+
+.custom-scrollbar-track {
+  background-color: var(--mantine-color-gray-1) !important;
+}
+
+.custom-scrollbar-viewport {
+  padding-right: 8px !important;
 }

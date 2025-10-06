@@ -1,7 +1,8 @@
-import { IconLayoutDashboard, IconSchool } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconSchool, IconListCheck } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
 import { GlobalOrgProvider } from './components/global-org-context';
+import { AnswerProvider } from '~/app/contexts/answer-context';
 
 const ORGANISATION_DASHBOARD_LINKS: Array<NavLink> = [
   {
@@ -14,6 +15,11 @@ const ORGANISATION_DASHBOARD_LINKS: Array<NavLink> = [
     label: 'Respondents',
     icon: <IconSchool />,
   },
+  {
+    href: '/organisation/answers',
+    label: 'Answers',
+    icon: <IconListCheck />,
+  },
 ];
 
 export default function OrganisationDashboardLayout({ 
@@ -23,9 +29,11 @@ export default function OrganisationDashboardLayout({
 }) {
   return (
     <GlobalOrgProvider>
-      <AppShell links={ORGANISATION_DASHBOARD_LINKS}>
-        {children}
-      </AppShell>
+      <AnswerProvider>
+        <AppShell links={ORGANISATION_DASHBOARD_LINKS}>
+          {children}
+        </AppShell>
+      </AnswerProvider>
     </GlobalOrgProvider>
   );
 }

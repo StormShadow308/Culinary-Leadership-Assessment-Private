@@ -13,6 +13,8 @@ import CohortFilter from '~/app/organisation/components/cohort-filter';
 import CreateOrganizationModal from '~/app/organisation/components/create-organization-modal';
 import { AdminOrgSelector } from './components/admin-org-selector';
 import { AdminOrgWrapper } from './components/admin-org-wrapper';
+import { AnalysisDashboard } from '~/components/analysis-dashboard';
+import { FilteredOrganizationDashboard } from './components/filtered-organization-dashboard';
 
 import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -117,11 +119,22 @@ export default async function Organisation(props: OrganisationProps) {
     
     if (!userMembership) {
       return (
-        <Stack>
-          <Alert icon={<IconAlertCircle size={16} />} title="Access Denied" color="red">
-            You don't have access to any organization. Please contact your administrator.
+        <Stack gap="md">
+          <Alert icon={<IconAlertCircle size={16} />} title="No Organization Found" color="orange">
+            <Text size="sm">
+              You don't have access to any organization yet. As an organization user, you need to create an organization first.
+            </Text>
           </Alert>
-          <CreateOrganizationModal />
+          
+          <Card padding="lg" radius="md" withBorder>
+            <Stack gap="md">
+              <Title order={3}>Get Started</Title>
+              <Text size="sm" c="dimmed">
+                Create your organization to start managing participants and cohorts. You'll be the owner of this organization.
+              </Text>
+              <CreateOrganizationModal />
+            </Stack>
+          </Card>
         </Stack>
       );
     }
@@ -308,7 +321,7 @@ export default async function Organisation(props: OrganisationProps) {
     );
   }
 
-  // Fetch average overall score from completed attempts for this organization
+  // Fetch average overall score from completed pre-assessment attempts for this organization
   const [avgScoreResult] = await db
     .select({
       avgScore: avg(sql<number>`(attempts.report_data->>'overallPercentage')::float`),
@@ -324,7 +337,23 @@ export default async function Organisation(props: OrganisationProps) {
 
   const averageScore = avgScoreResult?.avgScore || 0;
 
-  // Fetch completion rate (completed attempts / total attempts) for this organization
+  // Fetch average overall score from completed post-assessment attempts for this organization
+  const [avgPostScoreResult] = await db
+    .select({
+      avgScore: avg(sql<number>`(attempts.report_data->>'overallPercentage')::float`),
+    })
+    .from(attempts)
+    .where(
+      and(
+        eq(attempts.status, 'completed'),
+        eq(attempts.type, 'post_assessment'),
+        inArray(attempts.participantId, participantIds)
+      )
+    );
+
+  const averagePostScore = avgPostScoreResult?.avgScore || 0;
+
+  // Fetch completion rate (completed attempts / total attempts) for pre-assessments
   const [totalAttemptsResult] = await db
     .select({ count: count() })
     .from(attempts)
@@ -347,7 +376,30 @@ export default async function Organisation(props: OrganisationProps) {
   const completedAttempts = completedAttemptsResult?.count || 0;
   const completionRate = totalAttempts > 0 ? (completedAttempts / totalAttempts) * 100 : 0;
 
-  // Fetch category scores data for LineChart for this organization
+  // Fetch completion rate for post-assessments
+  const [totalPostAttemptsResult] = await db
+    .select({ count: count() })
+    .from(attempts)
+    .where(
+      and(eq(attempts.type, 'post_assessment'), inArray(attempts.participantId, participantIds))
+    );
+
+  const [completedPostAttemptsResult] = await db
+    .select({ count: count() })
+    .from(attempts)
+    .where(
+      and(
+        eq(attempts.status, 'completed'),
+        eq(attempts.type, 'post_assessment'),
+        inArray(attempts.participantId, participantIds)
+      )
+    );
+
+  const totalPostAttempts = totalPostAttemptsResult?.count || 0;
+  const completedPostAttempts = completedPostAttemptsResult?.count || 0;
+  const postCompletionRate = totalPostAttempts > 0 ? (completedPostAttempts / totalPostAttempts) * 100 : 0;
+
+  // Fetch category scores data for LineChart for pre-assessments
   const categoryScores = await db
     .select({
       reportData: sql<ReportData>`attempts.report_data`,
@@ -361,10 +413,24 @@ export default async function Organisation(props: OrganisationProps) {
       )
     );
 
-  // Process the category data
+  // Fetch category scores data for LineChart for post-assessments
+  const postCategoryScores = await db
+    .select({
+      reportData: sql<ReportData>`attempts.report_data`,
+    })
+    .from(attempts)
+    .where(
+      and(
+        eq(attempts.status, 'completed'),
+        eq(attempts.type, 'post_assessment'),
+        inArray(attempts.participantId, participantIds)
+      )
+    );
+
+  // Process the pre-assessment category data
   const categoryMap = new Map<string, CategoryScoreData>();
 
-  // First, collect all category scores from all reports
+  // First, collect all category scores from all pre-assessment reports
   categoryScores.forEach((result: CategoryScoreResult) => {
     const reportData = result.reportData;
     if (reportData && reportData.categoryResults) {
@@ -396,7 +462,42 @@ export default async function Organisation(props: OrganisationProps) {
     }
   );
 
-  // Fetch attempt data for proficiency levels and PieChart for this organization
+  // Process the post-assessment category data
+  const postCategoryMap = new Map<string, CategoryScoreData>();
+
+  // First, collect all category scores from all post-assessment reports
+  postCategoryScores.forEach((result: CategoryScoreResult) => {
+    const reportData = result.reportData;
+    if (reportData && reportData.categoryResults) {
+      reportData.categoryResults.forEach((catResult: CategoryResult) => {
+        const existingData = postCategoryMap.get(catResult.category) || {
+          scores: [],
+          total: catResult.total,
+        };
+        existingData.scores.push(catResult.score);
+        postCategoryMap.set(catResult.category, existingData);
+      });
+    }
+  });
+
+  // Then calculate the average score for each post-assessment category
+  const postCategoryData = Array.from(postCategoryMap.entries()).map(
+    ([category, data]: [string, CategoryScoreData]) => {
+      const scores = data.scores;
+      const averageScore =
+        scores.length > 0
+          ? scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length
+          : 0;
+
+      return {
+        skillSet: category,
+        averageScore,
+        totalPossible: data.total,
+      };
+    }
+  );
+
+  // Fetch attempt data for proficiency levels and PieChart for pre-assessments
   const attemptData = await db
     .select({
       reportData: sql<ReportData>`attempts.report_data`,
@@ -410,11 +511,25 @@ export default async function Organisation(props: OrganisationProps) {
       )
     );
 
+  // Fetch attempt data for proficiency levels and PieChart for post-assessments
+  const postAttemptData = await db
+    .select({
+      reportData: sql<ReportData>`attempts.report_data`,
+    })
+    .from(attempts)
+    .where(
+      and(
+        eq(attempts.status, 'completed'),
+        eq(attempts.type, 'post_assessment'),
+        inArray(attempts.participantId, participantIds)
+      )
+    );
+
   // Debug logging for attempt data
   console.log('Attempt data:', attemptData);
   console.log('Category scores:', categoryScores);
 
-  // Extract total scores from attempt data
+  // Extract total scores from pre-assessment attempt data
   const attemptScores = attemptData
     .map(attempt => ({
       totalScore: attempt.reportData?.totalScore || 0,
@@ -422,9 +537,18 @@ export default async function Organisation(props: OrganisationProps) {
     }))
     .filter(score => score.totalScore !== null);
 
-  console.log('Attempt scores:', attemptScores);
+  // Extract total scores from post-assessment attempt data
+  const postAttemptScores = postAttemptData
+    .map(attempt => ({
+      totalScore: attempt.reportData?.totalScore || 0,
+      totalPossible: attempt.reportData?.totalPossible || 40, // Default to 40 if missing
+    }))
+    .filter(score => score.totalScore !== null);
 
-  // Calculate proficiency levels distribution
+  console.log('Pre-attempt scores:', attemptScores);
+  console.log('Post-attempt scores:', postAttemptScores);
+
+  // Calculate proficiency levels distribution for pre-assessments
   const proficiencyDistribution = PROFICIENCY_LEVELS.map(level => {
     const respondentsInLevel = attemptScores.filter(
       score => score.totalScore >= level.lowerBound && score.totalScore <= level.upperBound
@@ -439,7 +563,22 @@ export default async function Organisation(props: OrganisationProps) {
     };
   });
 
-  // Fetch top 5 performing respondents
+  // Calculate proficiency levels distribution for post-assessments
+  const postProficiencyDistribution = PROFICIENCY_LEVELS.map(level => {
+    const respondentsInLevel = postAttemptScores.filter(
+      score => score.totalScore >= level.lowerBound && score.totalScore <= level.upperBound
+    ).length;
+
+    const percentage = completedPostAttempts > 0 ? (respondentsInLevel / completedPostAttempts) * 100 : 0;
+
+    return {
+      ...level,
+      count: respondentsInLevel,
+      percentage,
+    };
+  });
+
+  // Fetch top 5 performing respondents for pre-assessments
   const topRespondentsData = await db
     .select({
       id: participants.id,
@@ -461,21 +600,44 @@ export default async function Organisation(props: OrganisationProps) {
     .orderBy(desc(sql`(attempts.report_data->>'totalScore')::int`))
     .limit(5);
 
+  // Fetch top 5 performing respondents for post-assessments
+  const topPostRespondentsData = await db
+    .select({
+      id: participants.id,
+      name: participants.fullName,
+      cohortId: participants.cohortId,
+      attemptId: attempts.id,
+      reportData: sql<ReportData>`attempts.report_data`,
+    })
+    .from(attempts)
+    .innerJoin(participants, eq(attempts.participantId, participants.id))
+    .where(
+      and(
+        eq(participants.organizationId, currentOrgId),
+        selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0,
+        eq(attempts.status, 'completed'),
+        eq(attempts.type, 'post_assessment')
+      )
+    )
+    .orderBy(desc(sql`(attempts.report_data->>'totalScore')::int`))
+    .limit(5);
+
   // Get cohort names for each respondent
-  const cohortIds = topRespondentsData
-    .map(respondent => respondent.cohortId)
-    .filter(Boolean) as string[];
+  const allCohortIds = [
+    ...topRespondentsData.map(respondent => respondent.cohortId),
+    ...topPostRespondentsData.map(respondent => respondent.cohortId)
+  ].filter(Boolean) as string[];
 
   let cohortNameMap: Record<string, string> = {};
 
-  if (cohortIds.length > 0) {
+  if (allCohortIds.length > 0) {
     const cohortData = await db
       .select({
         id: cohorts.id,
         name: cohorts.name,
       })
       .from(cohorts)
-      .where(inArray(cohorts.id, cohortIds));
+      .where(inArray(cohorts.id, allCohortIds));
 
     cohortNameMap = cohortData.reduce(
       (acc, cohort) => {
@@ -486,8 +648,17 @@ export default async function Organisation(props: OrganisationProps) {
     );
   }
 
-  // Format top respondents data for the component
+  // Format top respondents data for pre-assessments
   const topRespondents = topRespondentsData.map(respondent => ({
+    id: respondent.id,
+    name: respondent.name || 'Anonymous',
+    cohortName: respondent.cohortId ? cohortNameMap[respondent.cohortId] || null : null,
+    score: respondent.reportData?.totalScore || 0,
+    totalPossible: respondent.reportData?.totalPossible || 40,
+  }));
+
+  // Format top respondents data for post-assessments
+  const topPostRespondents = topPostRespondentsData.map(respondent => ({
     id: respondent.id,
     name: respondent.name || 'Anonymous',
     cohortName: respondent.cohortId ? cohortNameMap[respondent.cohortId] || null : null,
@@ -513,211 +684,60 @@ export default async function Organisation(props: OrganisationProps) {
       {/* Admin Organization Selector */}
       {isAdmin ? (
         <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={true}>
-          {/* Organization Header */}
-          <Card padding="lg" radius="md" withBorder>
-        <Group justify="space-between" align="flex-start">
-          <Stack gap="xs">
-            <Title order={2}>
-              {isAdmin && currentOrgId === 'org_default_students' 
-                ? 'Independent Students (N/A Organization)' 
-                : isAdmin 
-                  ? `Admin Dashboard - ${currentOrgData?.name || 'Organization'}`
-                  : currentOrgData?.name || userMembership?.organizationName}
-            </Title>
-            {organizationDescription && (
-              <Text size="sm" c="dimmed">
-                {organizationDescription}
-              </Text>
-            )}
-            <Text size="xs" c="dimmed">
-              {isAdmin ? (
-                <>
-                  Role: Admin • Organization ID: {currentOrgId}
-                  <Text component="span" c="blue" fw={500}> • Admin Access</Text>
-                </>
-              ) : (
-                <>
-                  Role: {userMembership?.role} • Organization ID: {userMembership?.organizationId}
-                </>
-              )}
-            </Text>
-          </Stack>
-          <Group>
-            <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
-          </Group>
-        </Group>
-      </Card>
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
-        <Card padding="lg" radius="md" withBorder>
-          <Group justify="space-between" align="center">
-            <Text fw={500} size="lg">
-              Total Respondents
-            </Text>
-            <IconUsers size={24} />
-          </Group>
-          <Text size="xl" fw={700} mt="md">
-            {totalRespondents}
-          </Text>
-          <Text size="sm" c="dimmed" mt="sm">
-            Total participants across all cohorts
-          </Text>
-        </Card>
-        {/* Average Score Card */}
-        <Card padding="lg" radius="md" withBorder>
-          <Group justify="space-between" align="center">
-            <Text fw={500} size="lg">
-              Average Score
-            </Text>
-            <IconChartBar size={24} />
-          </Group>
-          <Group align="flex-end" mt="md">
-            <Text size="xl" fw={700}>
-              {Number(averageScore).toFixed(1)}%
-            </Text>
-          </Group>
-          <Text size="sm" c="dimmed" mt="sm">
-            Average pre-assessment score
-          </Text>
-        </Card>
-        {/* Completion Rate Card */}
-        <Card padding="lg" radius="md" withBorder>
-          <Group justify="space-between" align="center">
-            <Text fw={500} size="lg">
-              Completion Rate
-            </Text>
-            <IconCheckbox size={24} />
-          </Group>
-          <Group align="flex-end" mt="md">
-            <Text size="xl" fw={700}>
-              {completionRate.toFixed(1)}%
-            </Text>
-            <Text size="sm" c="dimmed">
-              ({completedAttempts}/{totalAttempts})
-            </Text>
-          </Group>
-          <Text size="sm" c="dimmed" mt="sm">
-            Pre-assessments completed vs. started
-          </Text>
-        </Card>
-      </SimpleGrid>
-      {completedAttempts > 0 && (
-        <>
-          {/* Full width proficiency levels table */}
-          <ProficiencyLevelsTable
-            proficiencyData={proficiencyDistribution}
-            totalRespondents={completedAttempts}
+          <FilteredOrganizationDashboard
+            totalRespondents={totalRespondents}
+            averageScore={averageScore}
+            completionRate={completionRate}
+            completedAttempts={completedAttempts}
+            totalAttempts={totalAttempts}
+            proficiencyDistribution={proficiencyDistribution}
+            attemptScores={attemptScores}
+            categoryData={categoryData}
+            topRespondents={topRespondents}
+            // Post-assessment data
+            averagePostScore={averagePostScore}
+            postCompletionRate={postCompletionRate}
+            completedPostAttempts={completedPostAttempts}
+            totalPostAttempts={totalPostAttempts}
+            postProficiencyDistribution={postProficiencyDistribution}
+            postAttemptScores={postAttemptScores}
+            postCategoryData={postCategoryData}
+            topPostRespondents={topPostRespondents}
+            currentOrgData={currentOrgData}
+            userMembership={userMembership}
+            isAdmin={isAdmin}
+            currentOrgId={currentOrgId}
+            orgCohorts={orgCohorts}
+            selectedCohort={selectedCohort}
           />
-          <SimpleGrid cols={{ base: 1, md: 2 }}>
-            {/* Proficiency Levels Chart */}
-            <ProficiencyLevelsChart attempts={attemptScores} />
-            {/* Skill Set Score Chart */}
-            <SkillSetScoreChart skillSetData={categoryData} />
-          </SimpleGrid>
-          <SimpleGrid cols={{ base: 1, md: 2 }}>
-            <CohortScoringCurve attempts={attemptScores} />
-            {/* Top Performing Respondents */}
-            <TopPerformingRespondents respondents={topRespondents} />
-          </SimpleGrid>
-        </>
-      )}
         </AdminOrgWrapper>
       ) : (
-        <>
-          {/* Organization Header */}
-          <Card padding="lg" radius="md" withBorder>
-            <Group justify="space-between" align="flex-start">
-              <Stack gap="xs">
-                <Title order={2}>
-                  {currentOrgData?.name || userMembership?.organizationName}
-                </Title>
-                {organizationDescription && (
-                  <Text size="sm" c="dimmed">
-                    {organizationDescription}
-                  </Text>
-                )}
-                <Text size="xs" c="dimmed">
-                  Role: {userMembership?.role} • Organization ID: {userMembership?.organizationId}
-                </Text>
-              </Stack>
-              <Group>
-                <CohortFilter cohorts={orgCohorts} selected={selectedCohort} />
-              </Group>
-            </Group>
-          </Card>
-          <SimpleGrid cols={{ base: 1, sm: 3 }}>
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between" align="center">
-                <Text fw={500} size="lg">
-                  Total Respondents
-                </Text>
-                <IconUsers size={24} />
-              </Group>
-              <Text size="xl" fw={700} mt="md">
-                {totalRespondents}
-              </Text>
-              <Text size="sm" c="dimmed" mt="sm">
-                Total participants across all cohorts
-              </Text>
-            </Card>
-            {/* Average Score Card */}
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between" align="center">
-                <Text fw={500} size="lg">
-                  Average Score
-                </Text>
-                <IconChartBar size={24} />
-              </Group>
-              <Group align="flex-end" mt="md">
-                <Text size="xl" fw={700}>
-                  {Number(averageScore).toFixed(1)}%
-                </Text>
-              </Group>
-              <Text size="sm" c="dimmed" mt="sm">
-                Average pre-assessment score
-              </Text>
-            </Card>
-            {/* Completion Rate Card */}
-            <Card padding="lg" radius="md" withBorder>
-              <Group justify="space-between" align="center">
-                <Text fw={500} size="lg">
-                  Completion Rate
-                </Text>
-                <IconCheckbox size={24} />
-              </Group>
-              <Group align="flex-end" mt="md">
-                <Text size="xl" fw={700}>
-                  {completionRate.toFixed(1)}%
-                </Text>
-                <Text size="sm" c="dimmed">
-                  ({completedAttempts}/{totalAttempts})
-                </Text>
-              </Group>
-              <Text size="sm" c="dimmed" mt="sm">
-                Pre-assessments completed vs. started
-              </Text>
-            </Card>
-          </SimpleGrid>
-          {completedAttempts > 0 && (
-            <>
-              {/* Full width proficiency levels table */}
-              <ProficiencyLevelsTable
-                proficiencyData={proficiencyDistribution}
-                totalRespondents={completedAttempts}
-              />
-              <SimpleGrid cols={{ base: 1, md: 2 }}>
-                {/* Proficiency Levels Chart */}
-                <ProficiencyLevelsChart attempts={attemptScores} />
-                {/* Skill Set Score Chart */}
-                <SkillSetScoreChart skillSetData={categoryData} />
-              </SimpleGrid>
-              <SimpleGrid cols={{ base: 1, md: 2 }}>
-                <CohortScoringCurve attempts={attemptScores} />
-                {/* Top Performing Respondents */}
-                <TopPerformingRespondents respondents={topRespondents} />
-              </SimpleGrid>
-            </>
-          )}
-        </>
+        <FilteredOrganizationDashboard
+          totalRespondents={totalRespondents}
+          averageScore={averageScore}
+          completionRate={completionRate}
+          completedAttempts={completedAttempts}
+          totalAttempts={totalAttempts}
+          proficiencyDistribution={proficiencyDistribution}
+          attemptScores={attemptScores}
+          categoryData={categoryData}
+          topRespondents={topRespondents}
+          // Post-assessment data
+          averagePostScore={averagePostScore}
+          postCompletionRate={postCompletionRate}
+          completedPostAttempts={completedPostAttempts}
+          totalPostAttempts={totalPostAttempts}
+          postProficiencyDistribution={postProficiencyDistribution}
+          postAttemptScores={postAttemptScores}
+          postCategoryData={postCategoryData}
+          topPostRespondents={topPostRespondents}
+          currentOrgData={currentOrgData}
+          userMembership={userMembership}
+          isAdmin={isAdmin}
+          currentOrgId={currentOrgId}
+          orgCohorts={orgCohorts}
+          selectedCohort={selectedCohort}
+        />
       )}
     </Stack>
   );

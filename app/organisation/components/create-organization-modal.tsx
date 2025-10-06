@@ -43,6 +43,7 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
     }
 
     setIsLoading(true);
+    console.log('🚀 Creating organization:', formData);
 
     try {
       const response = await fetch('/api/organization/create', {
@@ -54,6 +55,7 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
       });
 
       const result = await response.json();
+      console.log('📡 Organization creation response:', { status: response.status, result });
 
       if (!response.ok) {
         // Handle specific error cases
@@ -69,12 +71,23 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
           window.location.reload();
           return;
         }
+        
+        if (result.error === 'Only organization users can create organizations') {
+          notifications.show({
+            title: 'Access Denied',
+            message: 'Only organization users can create organizations. Please contact your administrator.',
+            color: 'red',
+            icon: <IconX size={16} />
+          });
+          return;
+        }
+        
         throw new Error(result.error || 'Failed to create organization');
       }
 
       notifications.show({
         title: 'Success',
-        message: 'Organization created successfully!',
+        message: 'Organization created successfully! You will be redirected to your dashboard.',
         color: 'green',
         icon: <IconCheck size={16} />
       });
@@ -86,7 +99,9 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
       close();
       
       // Reload page to show the new organization
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
 
     } catch (error) {
       console.error('Error creating organization:', error);
@@ -135,7 +150,8 @@ export default function CreateOrganizationModal({ opened, onClose }: CreateOrgan
             <Alert color="blue" icon={<IconBuilding size={16} />}>
               <Text size="sm">
                 Create a new organization to start managing participants and cohorts. 
-                You'll be the owner of this organization.
+                You'll be the owner of this organization and will automatically receive 
+                all 8 predefined cohorts for your organization.
               </Text>
             </Alert>
 

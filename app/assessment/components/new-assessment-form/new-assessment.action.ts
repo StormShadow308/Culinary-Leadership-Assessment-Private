@@ -2,6 +2,7 @@
 
 import { db } from '~/db';
 import { assessments, attempts, cohorts, organization, participants, responses } from '~/db/schema';
+import { getCurrentUser } from '~/lib/user-sync';
 
 import { actionClient } from '~/lib/action';
 
@@ -146,25 +147,29 @@ export const newAssessmentAction = actionClient
               .execute();
             targetOrgId = newOrg.id;
 
-            // Create predefined cohorts for independent students organization
-            const predefinedCohorts = [
-              'Fall 2024 Leadership Cohort',
-              'Spring 2025 Advanced Cohort',
-              'Summer 2025 Intensive Cohort',
-              'Executive Leadership Program',
-              'Culinary Management Cohort'
-            ];
+            // Only admins can create cohorts
+            const currentUser = await getCurrentUser();
+            if (currentUser && currentUser.role === 'admin') {
+              // Create predefined cohorts for independent students organization (admin only)
+              const predefinedCohorts = [
+                'Fall 2024 Leadership Cohort',
+                'Spring 2025 Advanced Cohort',
+                'Summer 2025 Intensive Cohort',
+                'Executive Leadership Program',
+                'Culinary Management Cohort'
+              ];
 
-            for (const cohortName of predefinedCohorts) {
-              await db
-                .insert(cohorts)
-                .values({
-                  organizationId: targetOrgId,
-                  name: cohortName,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                })
-                .execute();
+              for (const cohortName of predefinedCohorts) {
+                await db
+                  .insert(cohorts)
+                  .values({
+                    organizationId: targetOrgId,
+                    name: cohortName,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  })
+                  .execute();
+              }
             }
           }
         }

@@ -1,7 +1,8 @@
-import { IconHome, IconQuestionMark, IconUsers, IconBuilding, IconSchool, IconUserCheck, IconClipboardList, IconFileText } from '@tabler/icons-react';
+import { IconHome, IconQuestionMark, IconUsers, IconBuilding, IconSchool, IconUserCheck, IconClipboardList, IconFileText, IconTable, IconListCheck } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
 import { GlobalOrgProvider } from '~/app/organisation/components/global-org-context';
+import { AnswerProvider } from '~/app/contexts/answer-context';
 import { AdminGlobalOrgSelector } from './components/admin-global-org-selector';
 
 const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
@@ -9,6 +10,16 @@ const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
     href: '/admin',
     label: 'Overview',
     icon: <IconHome />,
+  },
+  {
+    href: '/admin/all-clients',
+    label: "All Client's Data",
+    icon: <IconTable />,
+  },
+  {
+    href: '/admin/answers',
+    label: 'Answers',
+    icon: <IconListCheck />,
   },
   {
     href: '/admin/users',
@@ -50,12 +61,14 @@ const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <GlobalOrgProvider>
-      <AppShell 
-        links={ADMIN_DASHBOARD_LINKS}
-        headerContent={<AdminGlobalOrgSelector />}
-      >
-        {children}
-      </AppShell>
+      <AnswerProvider>
+        <AppShell 
+          links={ADMIN_DASHBOARD_LINKS}
+          headerContent={<AdminGlobalOrgSelector />}
+        >
+          {children}
+        </AppShell>
+      </AnswerProvider>
     </GlobalOrgProvider>
   );
 }

@@ -112,23 +112,24 @@ export function SignInForm() {
           </Alert>
         )}
         <TextInput
-          label="Email"
+          label="Email *"
           placeholder="Your email"
           autoComplete="email"
           {...register('email')}
           error={formState.errors.email?.message}
           required
+          size="md"
         />
         <PasswordInput
-          label="Password"
-          type="password"
+          label="Password *"
           placeholder="Your password"
           {...register('password')}
           error={formState.errors.password?.message}
           required
+          size="md"
         />
         <Select
-          label="Continue as"
+          label="Continue as *"
           data={[
             { value: 'student', label: 'Student' },
             { value: 'organization', label: 'Organization' },
@@ -136,16 +137,27 @@ export function SignInForm() {
           value={role}
           onChange={value => setRole((value as 'student' | 'organization') ?? 'organization')}
           required
+          size="md"
         />
-              <Button mt="md" type="submit" loading={formState.isSubmitting} fullWidth>
-                Sign in
-              </Button>
-              
-              <Text ta="center" size="sm">
-                <Link href="/forgot-password" style={{ color: 'var(--mantine-color-blue-6)' }}>
-                  Forgot your password?
-                </Link>
-              </Text>
+        <Button 
+          mt="md" 
+          type="submit" 
+          loading={formState.isSubmitting} 
+          fullWidth
+          size="md"
+          style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none'
+          }}
+        >
+          Sign in
+        </Button>
+        
+        <Text ta="center" size="sm" mt="sm">
+          <Link href="/forgot-password" style={{ color: 'var(--mantine-color-blue-6)' }}>
+            Forgot your password?
+          </Link>
+        </Text>
             </Stack>
           </form>
         );

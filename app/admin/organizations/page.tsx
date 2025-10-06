@@ -37,15 +37,23 @@ export default function AdminOrganizations() {
 
   const fetchOrganizations = async () => {
     try {
+      console.log('🔍 Fetching organizations from client...');
       const response = await fetch('/api/admin/organizations');
-      if (!response.ok) throw new Error('Failed to fetch organizations');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error:', response.status, errorData);
+        throw new Error(`API Error ${response.status}: ${errorData.error || 'Unknown error'}`);
+      }
+      
       const data = await response.json();
+      console.log('✅ Organizations fetched successfully:', data);
       setOrganizations(data.organizations);
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error('❌ Error fetching organizations:', error);
       notifications.show({
         title: 'Error',
-        message: 'Failed to fetch organizations',
+        message: error instanceof Error ? error.message : 'Failed to fetch organizations',
         color: 'red',
       });
     } finally {

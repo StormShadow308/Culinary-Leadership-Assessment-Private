@@ -13,7 +13,8 @@ import {
   Text,
   Card,
   Center,
-  Alert
+  Alert,
+  Box
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
