@@ -1,6 +1,6 @@
 'use client';
 
-import { useGlobalOrg } from './global-org-context';
+import { useOrgContext } from './use-org-context';
 import { AdminOrgSelector } from './admin-org-selector';
 import { Alert, Stack } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
@@ -16,7 +16,7 @@ export function AdminOrgWrapper({
   currentOrgId, 
   showNavigationButtons = true 
 }: AdminOrgWrapperProps) {
-  const { isInitialized, selectedOrgId, organizations } = useGlobalOrg();
+  const { isInitialized, selectedOrgId, organizations } = useOrgContext();
 
   // Show loading state until context is initialized
   if (!isInitialized) {

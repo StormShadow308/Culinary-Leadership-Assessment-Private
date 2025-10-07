@@ -33,7 +33,11 @@ export default async function Admin(props: AdminProps) {
 
   // If an organization is selected, get organization-specific data
   let orgSpecificData = null;
+  let isOrgSpecificView = false;
+  
   if (orgId) {
+    isOrgSpecificView = true;
+    
     // Get organization-specific participant count
     const [orgParticipantCount] = await db.select({ count: count() })
       .from(participants)
@@ -90,30 +94,30 @@ export default async function Admin(props: AdminProps) {
     },
     {
       title: 'Cohorts',
-      value: orgSpecificData ? orgSpecificData.cohortCount : cohortCount.count,
+      value: isOrgSpecificView ? orgSpecificData?.cohortCount : cohortCount.count,
       icon: IconChartBar,
       color: 'orange',
       href: '/admin/cohorts',
-      description: orgSpecificData ? 'Organization cohorts' : 'Program cohorts',
-      trend: orgSpecificData ? 'Organization specific' : '3 active programs'
+      description: isOrgSpecificView ? 'Organization cohorts' : 'Program cohorts',
+      trend: isOrgSpecificView ? 'Organization specific' : '3 active programs'
     },
     {
       title: 'Participants',
-      value: orgSpecificData ? orgSpecificData.participantCount : participantCount.count,
+      value: isOrgSpecificView ? orgSpecificData?.participantCount : participantCount.count,
       icon: IconUsers,
       color: 'purple',
       href: '/admin/participants',
-      description: orgSpecificData ? 'Organization participants' : 'Total participants',
-      trend: orgSpecificData ? 'Organization specific' : 'All registered users'
+      description: isOrgSpecificView ? 'Organization participants' : 'Total participants',
+      trend: isOrgSpecificView ? 'Organization specific' : 'All registered users'
     },
     {
       title: 'Assessment Attempts',
-      value: orgSpecificData ? orgSpecificData.attemptCount : attemptCount.count,
+      value: isOrgSpecificView ? orgSpecificData?.attemptCount : attemptCount.count,
       icon: IconQuestionMark,
       color: 'teal',
       href: '/admin/attempts',
-      description: orgSpecificData ? 'Organization attempts' : 'Total attempts',
-      trend: orgSpecificData ? 'Organization specific' : 'All assessment attempts'
+      description: isOrgSpecificView ? 'Organization attempts' : 'Total attempts',
+      trend: isOrgSpecificView ? 'Organization specific' : 'All assessment attempts'
     }
   ];
 
@@ -122,9 +126,13 @@ export default async function Admin(props: AdminProps) {
       <Group justify="space-between" align="center">
         <Title order={2}>
           Admin Dashboard
-          {orgSpecificData && (
-            <Text component="span" size="sm" c="dimmed" ml="sm">
+          {isOrgSpecificView ? (
+            <Text component="span" size="sm" c="blue" ml="sm">
               (Organization View)
+            </Text>
+          ) : (
+            <Text component="span" size="sm" c="dimmed" ml="sm">
+              (System Overview)
             </Text>
           )}
         </Title>

@@ -42,6 +42,9 @@ export default function CohortFilter(props: CohortFilterProps) {
       data={options}
       defaultValue={props.selected || ''}
       onChange={change}
+      maxDropdownHeight={200}
+      searchable
+      clearable
     />
   );
 }

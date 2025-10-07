@@ -3,14 +3,44 @@ import { db } from '~/db';
 import { organization, participants, attempts, cohorts } from '~/db/schema';
 import { getCurrentUser } from '~/lib/user-sync';
 import { eq, and, sql } from 'drizzle-orm';
+import { SessionManager } from '~/lib/session-manager';
+import { DataIsolationService } from '~/lib/data-isolation';
+import { RateLimiter } from '~/lib/rate-limiter';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     console.log('🔍 Fetching all clients data...');
     
-    // Check if user is admin
+    // Rate limiting check
+    const rateLimitResult = await RateLimiter.checkRateLimit(request as any, 'admin');
+    if (!rateLimitResult.allowed) {
+      console.log('🚫 Rate limit exceeded for admin API');
+      return NextResponse.json(
+        { 
+          error: 'Too many requests. Please try again later.',
+          retryAfter: rateLimitResult.retryAfter 
+        }, 
+        { 
+          status: 429,
+          headers: RateLimiter.getRateLimitHeaders(
+            rateLimitResult.allowed,
+            rateLimitResult.remaining,
+            rateLimitResult.resetTime
+          )
+        }
+      );
+    }
+    
+    // Check if user is admin using the original method
+    console.log('🔍 Calling getCurrentUser()...');
     const currentUser = await getCurrentUser();
-    console.log('👤 Current user:', currentUser ? { id: currentUser.id, email: currentUser.email, role: currentUser.role } : 'null');
+    console.log('👤 Current user result:', currentUser);
+    console.log('👤 Current user details:', currentUser ? { 
+      id: currentUser.id, 
+      email: currentUser.email, 
+      role: currentUser.role,
+      name: currentUser.name 
+    } : 'null');
     
     if (!currentUser) {
       console.log('❌ No user found - authentication failed');
@@ -21,6 +51,8 @@ export async function GET() {
       console.log('❌ User is not admin:', currentUser.role);
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
+    
+    console.log('✅ Admin user authenticated:', currentUser.email);
 
     console.log('✅ User authorized, fetching organizations...');
 
@@ -372,7 +404,33 @@ export async function GET() {
       console.log(`  ${index + 1}. ${client.client} - ${client.cohort}`);
     });
     
-    return NextResponse.json({ clients: finalData });
+    // Sanitize data to prevent information leakage
+    const sanitizedData = DataIsolationService.sanitizeData(finalData, {
+      user: {
+        id: currentUser.id,
+        email: currentUser.email,
+        role: currentUser.role
+      },
+      isAdmin: true,
+      isOrganization: false,
+      isStudent: false,
+      canAccessOrganization: () => true
+    });
+    
+    // Log data access for audit
+    console.log(`📊 Data access logged: User ${currentUser.email} accessed all-clients data`);
+    
+    // Record successful request for rate limiting
+    RateLimiter.recordSuccess(request as any, 'admin');
+    
+    return NextResponse.json({ 
+      clients: sanitizedData,
+      meta: {
+        total: sanitizedData.length,
+        user: currentUser.email,
+        timestamp: new Date().toISOString()
+      }
+    });
   } catch (error) {
     console.error('❌ Error fetching all clients data:', error);
     console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');

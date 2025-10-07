@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { 
   Select, 
   Group, 
@@ -24,16 +25,46 @@ export function AdminGlobalOrgSelector() {
   } = useGlobalOrg();
   
   const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check user role on mount
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const user = await response.json();
+          setUserRole(user.role);
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error);
+      }
+    };
+    checkUserRole();
+  }, []);
+
+  // Don't render if not admin
+  if (userRole && userRole !== 'admin') {
+    return null;
+  }
 
   const handleOrganizationChange = (orgId: string | null) => {
-    if (!orgId) return;
-    
-    setSelectedOrgId(orgId);
-    
-    // Update URL with orgId but don't navigate away from admin dashboard
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('orgId', orgId);
-    router.replace(newUrl.pathname + newUrl.search);
+    if (orgId === '') {
+      // Clear organization selection - show system overview
+      setSelectedOrgId(null);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('orgId');
+      router.replace(newUrl.pathname + newUrl.search);
+    } else if (orgId) {
+      setSelectedOrgId(orgId);
+      
+      // Update URL with orgId but don't navigate away from admin dashboard
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('orgId', orgId);
+      router.replace(newUrl.pathname + newUrl.search);
+    }
   };
 
   const handleRefresh = () => {
@@ -58,6 +89,17 @@ export function AdminGlobalOrgSelector() {
     );
   }
 
+  // If no organizations are available, show admin-only message
+  if (organizations.length === 0) {
+    return (
+      <Group gap="sm" align="center">
+        <IconBuilding size={16} />
+        <Text size="sm" fw={500}>Admin View:</Text>
+        <Text size="sm" c="blue">System Overview</Text>
+      </Group>
+    );
+  }
+
   return (
     <Group gap="sm" align="center">
       <IconBuilding size={16} />
@@ -66,14 +108,17 @@ export function AdminGlobalOrgSelector() {
         placeholder="Select organization"
         value={selectedOrgId}
         onChange={handleOrganizationChange}
-        data={organizations.map(org => ({
-          value: org.id,
-          label: org.name,
-        }))}
+        data={[
+          { value: '', label: 'System Overview (All Data)' },
+          ...organizations.map(org => ({
+            value: org.id,
+            label: org.name,
+          }))
+        ]}
         searchable
-        clearable={false}
+        clearable={true}
         size="sm"
-        style={{ minWidth: 200 }}
+        style={{ minWidth: 250 }}
         disabled={loading}
       />
       {selectedOrg && (

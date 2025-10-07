@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Combobox, InputBase, useCombobox } from '@mantine/core';
+import { Combobox, InputBase, useCombobox, ScrollArea } from '@mantine/core';
 
 interface ComboboxComponentProps {
   data: Array<string>;
@@ -18,6 +18,9 @@ export function ComboboxComponent(props: ComboboxComponentProps) {
 
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
+    onDropdownOpen: () => {
+      combobox.updateSelectedOptionIndex();
+    },
   });
 
   const [search, setSearch] = useState(value || '');
@@ -66,17 +69,44 @@ export function ComboboxComponent(props: ComboboxComponentProps) {
               combobox.closeDropdown();
               setSearch(value || '');
             }}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                combobox.openDropdown();
+                combobox.selectFirstOption();
+              } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                combobox.openDropdown();
+                combobox.selectLastOption();
+              } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (combobox.dropdownOpened) {
+                  combobox.selectOption(combobox.selectedOptionIndex);
+                } else {
+                  combobox.openDropdown();
+                }
+              } else if (event.key === 'Escape') {
+                combobox.closeDropdown();
+              }
+            }}
             placeholder={placeholder || (allowCreate ? "Select or create a cohort" : "Select a cohort")}
             rightSectionPointerEvents="none"
           />
         </Combobox.Target>
         <Combobox.Dropdown>
-              <Combobox.Options>
-                {options}
-                {allowCreate && !exactOptionMatch && search.trim().length > 0 && (
-                  <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
-                )}
-              </Combobox.Options>
+          <ScrollArea.Autosize mah={200} type="scroll" scrollbarSize={6}>
+            <Combobox.Options>
+              {options}
+              {allowCreate && !exactOptionMatch && search.trim().length > 0 && (
+                <Combobox.Option value="$create">+ Create {search}</Combobox.Option>
+              )}
+              {filteredOptions.length === 0 && !allowCreate && (
+                <Combobox.Option value="" disabled>
+                  No cohorts found
+                </Combobox.Option>
+              )}
+            </Combobox.Options>
+          </ScrollArea.Autosize>
         </Combobox.Dropdown>
       </Combobox>
   );

@@ -4,13 +4,46 @@ import { db } from '~/db';
 import { user as userSchema, participants, cohorts } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateAndSendPasscode } from '~/lib/passcode-service';
+import { SyncService } from '~/lib/sync-service';
+import { RateLimiter } from '~/lib/rate-limiter';
+import { SessionManager } from '~/lib/session-manager';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 Registration request received');
+    
+    // Rate limiting check
+    const rateLimitResult = await RateLimiter.checkRateLimit(request, 'anonymous');
+    if (!rateLimitResult.allowed) {
+      console.log('🚫 Rate limit exceeded for registration');
+      return NextResponse.json(
+        { 
+          error: 'Too many registration attempts. Please try again later.',
+          retryAfter: rateLimitResult.retryAfter 
+        }, 
+        { 
+          status: 429,
+          headers: RateLimiter.getRateLimitHeaders(
+            rateLimitResult.allowed,
+            rateLimitResult.remaining,
+            rateLimitResult.resetTime
+          )
+        }
+      );
+    }
+
     const { email, password, name, role = 'student' } = await request.json();
+    console.log('📝 Registration data:', { email, name, role });
 
     if (!email || !password || !name) {
+      console.log('❌ Missing required fields');
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate role
+    if (!['student', 'organization', 'admin'].includes(role)) {
+      console.log('❌ Invalid role:', role);
+      return NextResponse.json({ error: 'Invalid role specified' }, { status: 400 });
     }
 
     // Create Supabase admin client for user creation
@@ -25,6 +58,8 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log('🔍 Checking for existing user with email:', email);
+
     // Check if user already exists in local database
     const existingUser = await db
       .select()
@@ -33,10 +68,54 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingUser.length > 0) {
+      console.log('❌ User already exists in local database:', email);
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
+    // Also check if user exists in Supabase (in case of incomplete deletion)
+    console.log('🔍 Checking Supabase for orphaned user...');
+    try {
+      // Use listUsers and filter by email since getUserByEmail doesn't exist
+      const { data: supabaseUsers, error: supabaseCheckError } = await supabase.auth.admin.listUsers();
+      
+      if (supabaseCheckError) {
+        console.error('❌ Error checking Supabase users:', supabaseCheckError);
+        return NextResponse.json({ 
+          error: 'Unable to verify user status. Please try again later.',
+          details: supabaseCheckError.message 
+        }, { status: 500 });
+      } 
+      
+      // Find user by email in the list
+      const supabaseUser = supabaseUsers.users.find(user => user.email === email);
+      
+      if (supabaseUser) {
+        console.log('⚠️ User exists in Supabase but not in local database - cleaning up orphaned user...');
+        
+        // User exists in Supabase but not locally, delete from Supabase first
+        const { error: cleanupError } = await supabase.auth.admin.deleteUser(supabaseUser.id);
+        if (cleanupError) {
+          console.error('❌ Error cleaning up orphaned Supabase user:', cleanupError);
+          return NextResponse.json({ 
+            error: 'User exists in system but cannot be cleaned up. Please contact support.',
+            details: cleanupError.message 
+          }, { status: 400 });
+        } else {
+          console.log('✅ Successfully cleaned up orphaned Supabase user');
+        }
+      } else {
+        console.log('✅ No existing user found in Supabase');
+      }
+    } catch (supabaseCheckError) {
+      console.error('❌ Supabase check failed:', supabaseCheckError);
+      return NextResponse.json({ 
+        error: 'Unable to verify user status. Please try again later.',
+        details: supabaseCheckError instanceof Error ? supabaseCheckError.message : 'Unknown error'
+      }, { status: 500 });
+    }
+
     // Create user in Supabase using admin API to avoid email confirmation
+    console.log('🔐 Creating user in Supabase...');
     const { data: supabaseData, error: supabaseError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -52,13 +131,30 @@ export async function POST(request: NextRequest) {
     });
 
     if (supabaseError) {
-      console.error('Supabase user creation error:', supabaseError);
-      return NextResponse.json({ error: supabaseError.message }, { status: 400 });
+      console.error('❌ Supabase user creation error:', supabaseError);
+      
+      // Handle specific Supabase errors
+      if (supabaseError.message.includes('already registered') || 
+          supabaseError.message.includes('User already registered')) {
+        console.log('⚠️ User already exists in Supabase - this should have been caught earlier');
+        return NextResponse.json({ 
+          error: 'User already exists. Please try signing in instead.',
+          code: 'USER_ALREADY_EXISTS'
+        }, { status: 400 });
+      }
+      
+      return NextResponse.json({ 
+        error: 'Failed to create user account',
+        details: supabaseError.message 
+      }, { status: 400 });
     }
 
     if (!supabaseData.user) {
+      console.log('❌ Supabase user creation returned no user data');
       return NextResponse.json({ error: 'Failed to create user' }, { status: 400 });
     }
+
+    console.log('✅ User successfully created in Supabase:', supabaseData.user.id);
 
     // Generate passcode for email verification
     const passcodeResult = await generateAndSendPasscode({
@@ -121,6 +217,38 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ User created successfully in both Supabase and database');
       console.log('👤 User:', email, 'Role:', role);
+
+      // Create session for the new user
+      console.log('🔐 Creating session for new user...');
+      try {
+        const sessionContext = await SessionManager.getSessionContext();
+        if (sessionContext) {
+          console.log('✅ Session created for new user');
+        } else {
+          console.warn('⚠️ Failed to create session for new user');
+        }
+      } catch (sessionError) {
+        console.warn('⚠️ Session creation failed:', sessionError);
+        // Don't fail registration, but log the session error
+      }
+
+      // Validate sync after user creation
+      console.log('🔍 Validating sync after user creation...');
+      try {
+        const syncValidation = await SyncService.validateDataIntegrity();
+        if (!syncValidation.isValid) {
+          console.warn('⚠️ Data integrity issues detected after user creation:', syncValidation.issues);
+          // Don't fail registration, but log the issues
+        } else {
+          console.log('✅ Data integrity validated - systems are in sync');
+        }
+      } catch (syncError) {
+        console.warn('⚠️ Sync validation failed after user creation:', syncError);
+        // Don't fail registration, but log the sync error
+      }
+
+      // Record successful registration for rate limiting
+      RateLimiter.recordSuccess(request, 'anonymous');
 
       return NextResponse.json({ 
         success: true, 

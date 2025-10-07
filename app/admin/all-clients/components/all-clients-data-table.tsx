@@ -20,6 +20,7 @@ import {
   Divider,
   Card
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { DatePickerInput } from '@mantine/dates';
 import {
   IconSearch,
@@ -158,6 +159,7 @@ export function AllClientsDataTable() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [editingRow, setEditingRow] = useState<ClientData | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Fetch data from API only on initial load
@@ -167,7 +169,12 @@ export function AllClientsDataTable() {
         setLoading(true);
         console.log('🔍 Fetching clients data from API...');
         
-        const response = await fetch('/api/admin/all-clients');
+        const response = await fetch('/api/admin/all-clients', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         console.log('📡 API Response status:', response.status);
         
         if (response.ok) {
@@ -177,15 +184,21 @@ export function AllClientsDataTable() {
         } else {
           const errorText = await response.text();
           console.error('❌ API Error:', response.status, errorText);
-          // Fallback to mock data if API fails
-          console.log('🔄 Using mock data as fallback');
-          setData(mockData);
+          notifications.show({
+            title: 'Error fetching data',
+            message: `Failed to load client data: ${errorText}`,
+            color: 'red',
+          });
+          setData([]);
         }
       } catch (error) {
         console.error('❌ Network error fetching clients data:', error);
-        // Fallback to mock data if API fails
-        console.log('🔄 Using mock data as fallback due to network error');
-        setData(mockData);
+        notifications.show({
+          title: 'Network Error',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+          color: 'red',
+        });
+        setData([]);
       } finally {
         setLoading(false);
       }
@@ -413,50 +426,91 @@ export function AllClientsDataTable() {
 
       {/* Data Table Container */}
         <Card withBorder padding={0} radius="md">
-          {/* Scroll Navigation Controls */}
-          <Group justify="space-between" p="sm" style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
+          {/* Enhanced Scroll Navigation Controls */}
+          <Group justify="space-between" p="sm" style={{ borderBottom: '1px solid var(--mantine-color-gray-2)', backgroundColor: '#f8f9fa' }}>
             <Group gap="xs">
-              <Text size="sm" c="dimmed">Table Navigation:</Text>
+              <Text size="sm" c="dimmed" fw={500}>Table Navigation:</Text>
               <Button
                 size="xs"
-                variant="light"
+                variant="filled"
+                color="blue"
                 leftSection={<IconChevronUp size={12} />}
-                onClick={() => scrollAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => {
+                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+                  scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 Top
               </Button>
               <Button
                 size="xs"
-                variant="light"
+                variant="filled"
+                color="blue"
                 leftSection={<IconChevronDown size={12} />}
-                onClick={() => scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current?.scrollHeight, behavior: 'smooth' })}
+                onClick={() => {
+                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+                  scrollContainer?.scrollTo({ 
+                    top: scrollContainer?.scrollHeight, 
+                    behavior: 'smooth' 
+                  });
+                }}
               >
                 Bottom
               </Button>
             </Group>
             <Group gap="xs">
-              <Text size="sm" c="dimmed">Horizontal:</Text>
+              <Text size="sm" c="dimmed" fw={500}>Horizontal:</Text>
               <Button
                 size="xs"
-                variant="light"
+                variant="filled"
+                color="green"
                 leftSection={<IconChevronUp size={12} style={{ transform: 'rotate(-90deg)' }} />}
-                onClick={() => scrollAreaRef.current?.scrollTo({ left: 0, behavior: 'smooth' })}
+                onClick={() => {
+                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+                  scrollContainer?.scrollTo({ left: 0, behavior: 'smooth' });
+                }}
               >
                 Left
               </Button>
               <Button
                 size="xs"
-                variant="light"
+                variant="filled"
+                color="green"
                 leftSection={<IconChevronDown size={12} style={{ transform: 'rotate(90deg)' }} />}
-                onClick={() => scrollAreaRef.current?.scrollTo({ left: scrollAreaRef.current?.scrollWidth, behavior: 'smooth' })}
+                onClick={() => {
+                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+                  scrollContainer?.scrollTo({ 
+                    left: scrollContainer?.scrollWidth, 
+                    behavior: 'smooth' 
+                  });
+                }}
               >
                 Right
               </Button>
             </Group>
+            <Group gap="xs">
+              <Text size="sm" c="dimmed" fw={500}>Quick Actions:</Text>
+              <Button
+                size="xs"
+                variant="light"
+                color="orange"
+                onClick={() => {
+                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+                  scrollContainer?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                }}
+              >
+                Reset View
+              </Button>
+            </Group>
+            <Group gap="xs">
+              <Text size="xs" c="dimmed">
+                Position: {Math.round(scrollPosition.x)}, {Math.round(scrollPosition.y)}
+              </Text>
+            </Group>
             <Tooltip 
-              label="Keyboard shortcuts: Arrow keys to scroll, Ctrl+Home/End for corners, Page Up/Down for large jumps"
+              label="Keyboard shortcuts: Arrow keys for scrolling, Ctrl+Home/End for top/bottom, Page Up/Down for faster scrolling, Click table to focus for keyboard navigation"
               multiline
-              w={300}
+              w={350}
             >
               <Text size="xs" c="dimmed" style={{ cursor: 'help', textDecoration: 'underline' }}>
                 ⌨️ Keyboard Help
@@ -467,18 +521,22 @@ export function AllClientsDataTable() {
           <ScrollArea 
             ref={scrollAreaRef}
             type="scroll" 
-            scrollbarSize={8} 
+            scrollbarSize={10} 
             offsetScrollbars={false}
             style={{ 
-              maxHeight: '65vh',
-              width: '100%'
+              maxHeight: '70vh',
+              width: '100%',
+              minHeight: '400px'
             }}
-            scrollHideDelay={1000}
+            scrollHideDelay={2000}
             classNames={{
               scrollbar: 'custom-scrollbar',
               thumb: 'custom-scrollbar-thumb',
               track: 'custom-scrollbar-track',
               viewport: 'custom-scrollbar-viewport',
+            }}
+            onScrollPositionChange={(position) => {
+              setScrollPosition(position);
             }}
           >
         {loading ? (
@@ -486,7 +544,19 @@ export function AllClientsDataTable() {
             <Text>Loading client data...</Text>
           </Stack>
         ) : (
-          <Table striped highlightOnHover style={{ minWidth: '1400px' }}>
+          <Table 
+            striped 
+            highlightOnHover 
+            style={{ 
+              minWidth: '1400px',
+              cursor: 'pointer'
+            }}
+            onFocus={() => {
+              // Ensure the table can receive focus for keyboard navigation
+              console.log('Table focused - keyboard navigation enabled');
+            }}
+            tabIndex={0}
+          >
           <Table.Thead>
             <Table.Tr>
               <Table.Th style={{ width: '200px', minWidth: '200px' }}>
@@ -619,6 +689,8 @@ export function AllClientsDataTable() {
                       { value: 'Culinary H', label: 'H' },
                     ]}
                     style={{ width: '60px', maxWidth: '60px' }}
+                    maxDropdownHeight={150}
+                    searchable
                     styles={{
                       input: {
                         fontSize: '10px',

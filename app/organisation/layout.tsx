@@ -1,7 +1,7 @@
 import { IconLayoutDashboard, IconSchool, IconListCheck } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
-import { GlobalOrgProvider } from './components/global-org-context';
+import { SmartOrgProvider } from './components/smart-org-provider';
 import { AnswerProvider } from '~/app/contexts/answer-context';
 
 const ORGANISATION_DASHBOARD_LINKS: Array<NavLink> = [
@@ -28,12 +28,12 @@ export default function OrganisationDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <GlobalOrgProvider>
+    <SmartOrgProvider>
       <AnswerProvider>
         <AppShell links={ORGANISATION_DASHBOARD_LINKS}>
           {children}
         </AppShell>
       </AnswerProvider>
-    </GlobalOrgProvider>
+    </SmartOrgProvider>
   );
 }

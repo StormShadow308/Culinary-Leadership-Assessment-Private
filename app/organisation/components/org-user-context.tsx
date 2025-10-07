@@ -10,7 +10,7 @@ interface Organization {
   participantCount?: number;
 }
 
-interface GlobalOrgContextType {
+interface OrgUserContextType {
   selectedOrgId: string | null;
   setSelectedOrgId: (orgId: string | null) => void;
   organizations: Organization[];
@@ -21,13 +21,13 @@ interface GlobalOrgContextType {
   isInitialized: boolean;
 }
 
-const GlobalOrgContext = createContext<GlobalOrgContextType | undefined>(undefined);
+const OrgUserContext = createContext<OrgUserContextType | undefined>(undefined);
 
-interface GlobalOrgProviderProps {
+interface OrgUserProviderProps {
   children: ReactNode;
 }
 
-function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
+function OrgUserProviderInner({ children }: OrgUserProviderProps) {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,28 +56,12 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
     }
   }, [searchParams, selectedOrgId, isInitialized]);
 
-  // Fetch organizations (only for admin users)
+  // Fetch user's organization (for organization users)
   const refreshOrganizations = async () => {
     setLoading(true);
     try {
-      // First check if user is admin
-      const userResponse = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
-      
-      if (!userResponse.ok) {
-        setOrganizations([]);
-        return;
-      }
-      
-      const user = await userResponse.json();
-      if (user.role !== 'admin') {
-        setOrganizations([]);
-        return;
-      }
-
-      // Only fetch organizations if user is admin
-      const response = await fetch('/api/admin/organizations', {
+      // Get user's organization membership
+      const response = await fetch('/api/organization/my-organization', {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -86,26 +70,34 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
       
       if (response.ok) {
         const data = await response.json();
-        setOrganizations(data.organizations || []);
+        if (data.organization) {
+          setOrganizations([data.organization]);
+          // Auto-select the user's organization if no orgId in URL
+          if (!selectedOrgId) {
+            setSelectedOrgId(data.organization.id);
+          }
+        } else {
+          setOrganizations([]);
+        }
       } else {
-        console.error('Failed to fetch organizations:', response.status);
+        console.error('Failed to fetch user organization:', response.status);
         setOrganizations([]);
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error('Error fetching user organization:', error);
       setOrganizations([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load organizations on mount
+  // Load user's organization on mount
   useEffect(() => {
     refreshOrganizations();
   }, []);
 
   return (
-    <GlobalOrgContext.Provider
+    <OrgUserContext.Provider
       value={{
         selectedOrgId,
         setSelectedOrgId,
@@ -118,22 +110,22 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
       }}
     >
       {children}
-    </GlobalOrgContext.Provider>
+    </OrgUserContext.Provider>
   );
 }
 
-export function GlobalOrgProvider({ children }: GlobalOrgProviderProps) {
+export function OrgUserProvider({ children }: OrgUserProviderProps) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <GlobalOrgProviderInner>{children}</GlobalOrgProviderInner>
+      <OrgUserProviderInner>{children}</OrgUserProviderInner>
     </Suspense>
   );
 }
 
-export function useGlobalOrg() {
-  const context = useContext(GlobalOrgContext);
+export function useOrgUser() {
+  const context = useContext(OrgUserContext);
   if (context === undefined) {
-    throw new Error('useGlobalOrg must be used within a GlobalOrgProvider');
+    throw new Error('useOrgUser must be used within an OrgUserProvider');
   }
   return context;
 }

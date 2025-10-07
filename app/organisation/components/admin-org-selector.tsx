@@ -14,7 +14,7 @@ import {
   Button
 } from '@mantine/core';
 import { IconBuilding, IconRefresh, IconExternalLink } from '@tabler/icons-react';
-import { useGlobalOrg } from './global-org-context';
+import { useOrgContext } from './use-org-context';
 
 interface AdminOrgSelectorProps {
   currentOrgId?: string;
@@ -29,7 +29,7 @@ export function AdminOrgSelector({ currentOrgId, showNavigationButtons = true }:
     loading, 
     refreshOrganizations,
     isInitialized
-  } = useGlobalOrg();
+  } = useOrgContext();
   
   const router = useRouter();
 

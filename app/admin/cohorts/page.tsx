@@ -87,7 +87,14 @@ export default function AdminCohorts() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create cohort');
+        let errorMessage = error.error || 'Failed to create cohort';
+        
+        // Handle specific error codes
+        if (error.code === 'COHORT_EXISTS') {
+          errorMessage = 'A cohort with this name already exists in this organization';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -125,7 +132,14 @@ export default function AdminCohorts() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update cohort');
+        let errorMessage = error.error || 'Failed to update cohort';
+        
+        // Handle specific error codes
+        if (error.code === 'COHORT_EXISTS') {
+          errorMessage = 'Another cohort with this name already exists in this organization';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -276,6 +290,8 @@ export default function AdminCohorts() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
+            maxDropdownHeight={200}
+            searchable
           />
           <Select
             label="Organization"
@@ -284,7 +300,15 @@ export default function AdminCohorts() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '' })}
             required
+            maxDropdownHeight={200}
+            searchable
           />
+          <Alert icon={<IconAlertCircle size="1rem" />} color="blue" variant="light">
+            <Text size="sm">
+              Cohort names must be unique within each organization. 
+              You cannot create multiple cohorts with the same name in the same organization.
+            </Text>
+          </Alert>
           <Group justify="flex-end">
             <Button variant="light" onClick={() => setCreateModalOpen(false)}>
               Cancel
@@ -309,6 +333,8 @@ export default function AdminCohorts() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
+            maxDropdownHeight={200}
+            searchable
           />
           <Select
             label="Organization"
@@ -317,7 +343,15 @@ export default function AdminCohorts() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '' })}
             required
+            maxDropdownHeight={200}
+            searchable
           />
+          <Alert icon={<IconAlertCircle size="1rem" />} color="blue" variant="light">
+            <Text size="sm">
+              Cohort names must be unique within each organization. 
+              You cannot create multiple cohorts with the same name in the same organization.
+            </Text>
+          </Alert>
           <Group justify="flex-end">
             <Button variant="light" onClick={() => setEditModalOpen(false)}>
               Cancel
