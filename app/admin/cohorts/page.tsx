@@ -26,6 +26,7 @@ interface Cohort {
   organizationName: string;
   createdAt: string;
   updatedAt: string;
+  participantCount: number;
 }
 
 interface Organization {
@@ -228,6 +229,7 @@ export default function AdminCohorts() {
           <tr>
             <th>Name</th>
             <th>Organization</th>
+            <th>Participants</th>
             <th>Created</th>
             <th>Updated</th>
             <th>Actions</th>
@@ -245,6 +247,14 @@ export default function AdminCohorts() {
                 </Badge>
               </td>
               <td>
+                <Badge 
+                  color={cohort.participantCount > 0 ? 'green' : 'gray'}
+                  variant="light"
+                >
+                  {cohort.participantCount} participant{cohort.participantCount !== 1 ? 's' : ''}
+                </Badge>
+              </td>
+              <td>
                 <Text size="sm">
                   {new Date(cohort.createdAt).toLocaleDateString()}
                 </Text>
@@ -259,7 +269,12 @@ export default function AdminCohorts() {
                   <ActionIcon variant="light" color="blue" onClick={() => openEditModal(cohort)}>
                     <IconEdit size="1rem" />
                   </ActionIcon>
-                  <ActionIcon variant="light" color="red" onClick={() => openDeleteModal(cohort)}>
+                  <ActionIcon 
+                    variant="light" 
+                    color="red" 
+                    onClick={() => openDeleteModal(cohort)}
+                    title={cohort.participantCount > 0 ? "Warning: This cohort has participants" : "Delete cohort"}
+                  >
                     <IconTrash size="1rem" />
                   </ActionIcon>
                 </Group>
@@ -372,6 +387,12 @@ export default function AdminCohorts() {
         <Stack gap="md">
           <Alert icon={<IconAlertCircle size="1rem" />} title="Warning" color="red">
             This will delete the cohort and all associated data. This action cannot be undone.
+            {selectedCohort?.participantCount > 0 && (
+              <Text size="sm" mt="xs" fw={500}>
+                ⚠️ This cohort has {selectedCohort.participantCount} participant{selectedCohort.participantCount !== 1 ? 's' : ''}. 
+                All participants and their data will be permanently deleted.
+              </Text>
+            )}
           </Alert>
           <Text>Are you sure you want to delete &quot;{selectedCohort?.name}&quot;?</Text>
           <Group justify="flex-end">

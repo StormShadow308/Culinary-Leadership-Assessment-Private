@@ -42,12 +42,8 @@ export const inviteStudentAction = actionClient
       if (existingCohort.length > 0) {
         cohortId = existingCohort[0].id;
       } else {
-        // Only admin users can create new cohorts
-        if (currentUser.role !== 'admin') {
-          return { error: 'Only administrators can create new cohorts. Please select an existing cohort.' };
-        }
-
-        // Create new cohort (admin only)
+        // Organization users can now create new cohorts
+        // Create new cohort
         const [newCohort] = await db
           .insert(cohorts)
           // @ts-expect-error - TypeScript doesn't recognize all the fields in the object

@@ -39,13 +39,196 @@
 }
 
 .custom-scrollbar-track {
-  background-color: var(--mantine-color-gray-1) !important;
+  background-color: var(--mantine-color-dark-6) !important;
   border-radius: 5px !important;
+}
+
+/* Dark mode specific scrollbar styling */
+[data-mantine-color-scheme="dark"] .custom-scrollbar-thumb {
+  background-color: var(--mantine-color-blue-6) !important;
+}
+
+[data-mantine-color-scheme="dark"] .custom-scrollbar-thumb:hover {
+  background-color: var(--mantine-color-blue-5) !important;
+}
+
+[data-mantine-color-scheme="dark"] .custom-scrollbar-track {
+  background-color: var(--mantine-color-dark-5) !important;
+}
+
+/* Light mode specific scrollbar styling */
+[data-mantine-color-scheme="light"] .custom-scrollbar-thumb {
+  background-color: var(--mantine-color-blue-4) !important;
+}
+
+[data-mantine-color-scheme="light"] .custom-scrollbar-thumb:hover {
+  background-color: var(--mantine-color-blue-5) !important;
+}
+
+[data-mantine-color-scheme="light"] .custom-scrollbar-track {
+  background-color: var(--mantine-color-gray-2) !important;
 }
 
 .custom-scrollbar-viewport {
   padding-right: 10px !important;
   padding-bottom: 10px !important;
+}
+
+/* Table alternating row colors for dark mode */
+[data-mantine-color-scheme="dark"] .mantine-Table-tbody .mantine-Table-tr:nth-child(even) {
+  background-color: var(--mantine-color-dark-9) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-tbody .mantine-Table-tr:nth-child(even):hover {
+  background-color: var(--mantine-color-dark-6) !important;
+}
+
+/* Light mode alternating row colors */
+[data-mantine-color-scheme="light"] .mantine-Table-tbody .mantine-Table-tr:nth-child(even) {
+  background-color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-Table-tbody .mantine-Table-tr:nth-child(even):hover {
+  background-color: var(--mantine-color-gray-1) !important;
+}
+
+/* Ensure all table elements are visible in light mode */
+[data-mantine-color-scheme="light"] .mantine-Table-root {
+  background-color: var(--mantine-color-white) !important;
+  color: var(--mantine-color-dark-7) !important;
+  border: 1px solid var(--mantine-color-gray-3) !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-Table-thead {
+  background-color: var(--mantine-color-gray-1) !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-Table-tbody {
+  background-color: var(--mantine-color-white) !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-Table-th {
+  background-color: var(--mantine-color-gray-1) !important;
+  color: var(--mantine-color-dark-7) !important;
+  border-color: var(--mantine-color-gray-3) !important;
+  font-weight: 600 !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-Table-td {
+  background-color: transparent !important;
+  color: var(--mantine-color-dark-6) !important;
+  border-color: var(--mantine-color-gray-3) !important;
+}
+
+/* Card component light mode styling */
+[data-mantine-color-scheme="light"] .mantine-Card-root {
+  background-color: var(--mantine-color-white) !important;
+  border-color: var(--mantine-color-gray-3) !important;
+}
+
+/* ScrollArea light mode styling */
+[data-mantine-color-scheme="light"] .mantine-ScrollArea-root {
+  background-color: var(--mantine-color-white) !important;
+  border-color: var(--mantine-color-gray-3) !important;
+}
+
+[data-mantine-color-scheme="light"] .mantine-ScrollArea-viewport {
+  background-color: var(--mantine-color-white) !important;
+}
+
+/* Hover effects for both themes */
+[data-mantine-color-scheme="light"] .mantine-Table-tbody .mantine-Table-tr:hover {
+  background-color: var(--mantine-color-gray-1) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-tbody .mantine-Table-tr:hover {
+  background-color: var(--mantine-color-dark-6) !important;
+}
+
+/* Text colors for better contrast */
+[data-mantine-color-scheme="light"] .mantine-Text-root {
+  color: var(--mantine-color-dark-7) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Text-root {
+  color: var(--mantine-color-gray-0) !important;
+}
+
+/* Badge styling for both themes */
+[data-mantine-color-scheme="light"] .mantine-Badge-root {
+  background-color: var(--mantine-color-gray-1) !important;
+  color: var(--mantine-color-dark-7) !important;
+  border: 1px solid var(--mantine-color-gray-3) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Badge-root {
+  background-color: var(--mantine-color-dark-6) !important;
+  color: var(--mantine-color-gray-0) !important;
+  border: 1px solid var(--mantine-color-dark-5) !important;
+}
+
+/* Sort icon colors for both themes */
+[data-mantine-color-scheme="light"] .mantine-Table-th svg {
+  color: var(--mantine-color-gray-6) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-th svg {
+  color: var(--mantine-color-gray-4) !important;
+}
+
+/* Input field styling for both themes */
+[data-mantine-color-scheme="light"] .mantine-TextInput-input {
+  background-color: var(--mantine-color-white) !important;
+  color: var(--mantine-color-dark-7) !important;
+  border-color: var(--mantine-color-gray-3) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-TextInput-input {
+  background-color: var(--mantine-color-dark-7) !important;
+  color: var(--mantine-color-gray-0) !important;
+  border-color: var(--mantine-color-dark-5) !important;
+}
+
+/* Ensure all table elements are visible in dark mode */
+[data-mantine-color-scheme="dark"] .mantine-Table-root {
+  background-color: var(--mantine-color-dark-8) !important;
+  color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-thead {
+  background-color: var(--mantine-color-dark-7) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-tbody {
+  background-color: var(--mantine-color-dark-8) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-th {
+  background-color: var(--mantine-color-dark-7) !important;
+  color: var(--mantine-color-gray-0) !important;
+  border-color: var(--mantine-color-dark-5) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-td {
+  background-color: transparent !important;
+  color: var(--mantine-color-gray-1) !important;
+  border-color: var(--mantine-color-dark-5) !important;
+}
+
+/* Card component dark mode styling */
+[data-mantine-color-scheme="dark"] .mantine-Card-root {
+  background-color: var(--mantine-color-dark-8) !important;
+  border-color: var(--mantine-color-dark-6) !important;
+}
+
+/* ScrollArea dark mode styling */
+[data-mantine-color-scheme="dark"] .mantine-ScrollArea-root {
+  background-color: var(--mantine-color-dark-8) !important;
+  border-color: var(--mantine-color-dark-6) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mantine-ScrollArea-viewport {
+  background-color: var(--mantine-color-dark-8) !important;
 }
 
 /* Enhanced table scrolling */

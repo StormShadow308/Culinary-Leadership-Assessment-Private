@@ -4,11 +4,17 @@ import { cookies } from 'next/headers';
 
 import { db } from './db';
 import { member as memberTable, user as userTable } from './db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { isDatabaseConnected, executeWithHealthCheck } from './lib/db-connection';
 
 // Simple in-memory cache for user data (in production, use Redis)
 const userCache = new Map<string, { role: string; isOrgMember: boolean; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Database connection status
+let dbConnectionHealthy = true;
+let lastDbCheck = 0;
+const DB_CHECK_INTERVAL = 30000; // Check every 30 seconds
 
 // Cache cleanup function
 setInterval(() => {
@@ -19,6 +25,35 @@ setInterval(() => {
     }
   }
 }, 60000); // Clean up every minute
+
+// Database health check function with timeout
+async function checkDatabaseHealth(): Promise<boolean> {
+  const now = Date.now();
+  if (now - lastDbCheck < DB_CHECK_INTERVAL) {
+    return dbConnectionHealthy;
+  }
+  
+  try {
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database health check timeout')), 5000);
+    });
+    
+    await Promise.race([
+      db.execute(sql`SELECT 1`),
+      timeoutPromise
+    ]);
+    
+    dbConnectionHealthy = true;
+    lastDbCheck = now;
+    return true;
+  } catch (error) {
+    console.warn('Database health check failed:', error);
+    dbConnectionHealthy = false;
+    lastDbCheck = now;
+    return false;
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url);
@@ -68,26 +103,65 @@ export async function middleware(request: NextRequest) {
         userRole = cached.role;
         isOrgMember = cached.isOrgMember;
       } else {
-        // Get user from local database with optimized query
-        const [localUser] = await db
-          .select({
-            id: userTable.id,
-            role: userTable.role,
-          })
-          .from(userTable)
-          .where(eq(userTable.email, user.email!))
-          .limit(1);
+        // Check database health first
+        const isDbHealthy = await checkDatabaseHealth();
         
-        if (localUser) {
-          userRole = localUser.role;
-          
-          // Check membership with optimized query
-          const [membership] = await db
-            .select({ id: memberTable.id })
-            .from(memberTable)
-            .where(eq(memberTable.userId, localUser.id))
-            .limit(1);
-          isOrgMember = !!membership;
+        if (isDbHealthy) {
+          try {
+            // Add timeout to database queries
+            const queryTimeout = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Database query timeout')), 3000);
+            });
+            
+            const userQuery = db
+              .select({
+                id: userTable.id,
+                role: userTable.role,
+              })
+              .from(userTable)
+              .where(eq(userTable.email, user.email!))
+              .limit(1);
+            
+            const userResult = await Promise.race([userQuery, queryTimeout]) as any[];
+            const localUser = userResult[0];
+            
+            if (localUser) {
+              userRole = localUser.role;
+              
+              // Check membership with timeout
+              const membershipQuery = db
+                .select({ id: memberTable.id })
+                .from(memberTable)
+                .where(eq(memberTable.userId, localUser.id))
+                .limit(1);
+              
+              const membershipResult = await Promise.race([membershipQuery, queryTimeout]) as any[];
+              isOrgMember = !!membershipResult[0];
+            }
+          } catch (dbError) {
+            console.warn('Database query failed in middleware, using fallback:', dbError);
+            dbConnectionHealthy = false;
+            
+            // Fallback to Supabase metadata
+            if (user.user_metadata?.role) {
+              userRole = user.user_metadata.role;
+            } else if (user.app_metadata?.role) {
+              userRole = user.app_metadata.role;
+            } else {
+              userRole = 'student';
+            }
+            isOrgMember = false;
+          }
+        } else {
+          // Database is not healthy, use Supabase metadata fallback
+          if (user.user_metadata?.role) {
+            userRole = user.user_metadata.role;
+          } else if (user.app_metadata?.role) {
+            userRole = user.app_metadata.role;
+          } else {
+            userRole = 'student';
+          }
+          isOrgMember = false;
         }
         
         // Cache the result
@@ -99,7 +173,18 @@ export async function middleware(request: NextRequest) {
       }
     } catch (error) {
       console.error('Middleware error:', error);
-      // Continue with default values on error
+      
+      // Fallback: Try to determine role from Supabase user metadata
+      if (user.user_metadata?.role) {
+        userRole = user.user_metadata.role;
+      } else if (user.app_metadata?.role) {
+        userRole = user.app_metadata.role;
+      } else {
+        // Default to student if no role found
+        userRole = 'student';
+      }
+      
+      isOrgMember = false;
     }
   }
 

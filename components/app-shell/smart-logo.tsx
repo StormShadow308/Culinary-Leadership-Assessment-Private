@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { Group, Title, Anchor } from '@mantine/core';
-import { useGlobalOrg } from '~/app/organisation/components/global-org-context';
+import { useOrgContext } from '~/app/organisation/components/use-org-context';
 
 interface SmartLogoProps {
   className?: string;
@@ -11,7 +11,7 @@ interface SmartLogoProps {
 export function SmartLogo({ className }: SmartLogoProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { selectedOrgId } = useGlobalOrg();
+  const { selectedOrgId } = useOrgContext();
 
   const handleLogoClick = () => {
     // Only navigate if we're not already on the appropriate dashboard

@@ -39,6 +39,30 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
   // This should match the logic in the organization dashboard
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
+  // Fetch cohorts when organization ID changes
+  useEffect(() => {
+    if (organizationId) {
+      fetchCohorts();
+    }
+  }, [organizationId]);
+
+  const fetchCohorts = async () => {
+    try {
+      const response = await fetch('/api/organization/cohorts/list', {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCohorts(data.cohorts.map((cohort: any) => cohort.name));
+      } else {
+        console.error('Failed to fetch cohorts');
+      }
+    } catch (error) {
+      console.error('Error fetching cohorts:', error);
+    }
+  };
+
 
   // Get organization ID from props, URL parameters, or default
   useEffect(() => {
@@ -133,8 +157,8 @@ export function InviteStudent({ currentCohorts, organizationId: propOrganization
                   error={errors.cohort?.message}
                   value={field.value}
                   onChange={field.onChange}
-                  allowCreate={isAdmin}
-                  placeholder={isAdmin ? "Select or create a cohort" : "Select a cohort"}
+                  allowCreate={true}
+                  placeholder="Select or create a cohort"
                 />
               )}
             />

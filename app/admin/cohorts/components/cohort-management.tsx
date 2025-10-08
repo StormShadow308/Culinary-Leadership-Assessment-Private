@@ -32,8 +32,10 @@ interface Cohort {
   id: string;
   name: string;
   organizationId: string;
+  organizationName: string;
   createdAt: string;
   updatedAt: string;
+  participantCount: number;
 }
 
 interface Organization {
@@ -252,6 +254,7 @@ export function CohortManagement() {
               <Table.Tr>
                 <Table.Th>Name</Table.Th>
                 <Table.Th>Organization</Table.Th>
+                <Table.Th>Participants</Table.Th>
                 <Table.Th>Created</Table.Th>
                 <Table.Th>Updated</Table.Th>
                 <Table.Th>Actions</Table.Th>
@@ -265,7 +268,15 @@ export function CohortManagement() {
                   </Table.Td>
                   <Table.Td>
                     <Badge variant="light" color="blue">
-                      {getOrganizationName(cohort.organizationId)}
+                      {cohort.organizationName || getOrganizationName(cohort.organizationId)}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge 
+                      color={cohort.participantCount > 0 ? 'green' : 'gray'}
+                      variant="light"
+                    >
+                      {cohort.participantCount} participant{cohort.participantCount !== 1 ? 's' : ''}
                     </Badge>
                   </Table.Td>
                   <Table.Td>

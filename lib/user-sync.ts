@@ -57,6 +57,7 @@ export async function syncUserFromSupabase(supabaseUser: unknown) {
   }
 }
 
+
 export async function getCurrentUser() {
   try {
     console.log('🔍 getCurrentUser: Creating Supabase client...');

@@ -1,4 +1,4 @@
-import { IconLayoutDashboard, IconSchool, IconListCheck } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconSchool, IconListCheck, IconUsers } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
 import { SmartOrgProvider } from './components/smart-org-provider';
@@ -9,6 +9,11 @@ const ORGANISATION_DASHBOARD_LINKS: Array<NavLink> = [
     href: '/organisation',
     label: 'Overview',
     icon: <IconLayoutDashboard />,
+  },
+  {
+    href: '/organisation/cohorts',
+    label: 'Cohorts',
+    icon: <IconUsers />,
   },
   {
     href: '/organisation/respondents',

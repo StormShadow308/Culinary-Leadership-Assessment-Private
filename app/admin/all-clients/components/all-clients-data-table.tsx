@@ -28,7 +28,6 @@ import {
   IconEdit,
   IconTrash,
   IconPlus,
-  IconChevronUp,
   IconChevronDown,
   IconSortAscending,
   IconSortDescending,
@@ -159,8 +158,8 @@ export function AllClientsDataTable() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [editingRow, setEditingRow] = useState<ClientData | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
-  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
 
   // Fetch data from API only on initial load
   useEffect(() => {
@@ -180,25 +179,117 @@ export function AllClientsDataTable() {
         if (response.ok) {
           const result = await response.json();
           console.log('✅ API Response data:', result);
+          console.log('🔍 Clients data:', result.clients);
+          console.log('🔍 Data length:', result.clients?.length || 0);
           setData(result.clients || []);
         } else {
           const errorText = await response.text();
           console.error('❌ API Error:', response.status, errorText);
+          console.log('🔍 Using fallback data due to API error');
+          // Use fallback data if API fails
+          setData([
+            {
+              id: '1',
+              client: 'Culinary Leadership Academy',
+              cohort: 'AUTUMN 2024',
+              keyAnswer: 'A',
+              datePreProgram: '2024-09-01',
+              datePostProgram: '2024-12-01',
+              retainRate: 85,
+              preResilience: 3.5,
+              preTeamDynamics: 4.2,
+              preDecisionMaking: 3.8,
+              preSelfAwareness: 4.0,
+              preCommunication: 3.9,
+              preOverallScore: 19.4,
+              postResilience: 4.1,
+              postTeamDynamics: 4.5,
+              postDecisionMaking: 4.3,
+              postSelfAwareness: 4.2,
+              postCommunication: 4.4,
+              postOverallScore: 21.5,
+            },
+            {
+              id: '2',
+              client: 'Galtec Organization',
+              cohort: 'SPRING 2025',
+              keyAnswer: 'B',
+              datePreProgram: '2025-03-01',
+              datePostProgram: null,
+              retainRate: 0,
+              preResilience: 2.8,
+              preTeamDynamics: 3.1,
+              preDecisionMaking: 2.9,
+              preSelfAwareness: 3.0,
+              preCommunication: 2.7,
+              preOverallScore: 14.5,
+              postResilience: 0.0,
+              postTeamDynamics: 0.0,
+              postDecisionMaking: 0.0,
+              postSelfAwareness: 0.0,
+              postCommunication: 0.0,
+              postOverallScore: 0.0,
+            }
+          ]);
           notifications.show({
-            title: 'Error fetching data',
-            message: `Failed to load client data: ${errorText}`,
-            color: 'red',
+            title: 'API Error - Using Sample Data',
+            message: `Failed to load real data: ${errorText}`,
+            color: 'orange',
           });
-          setData([]);
         }
       } catch (error) {
         console.error('❌ Network error fetching clients data:', error);
+        console.log('🔍 Using fallback data due to network error');
+        // Use fallback data if network fails
+        setData([
+          {
+            id: '1',
+            client: 'Culinary Leadership Academy',
+            cohort: 'AUTUMN 2024',
+            keyAnswer: 'A',
+            datePreProgram: '2024-09-01',
+            datePostProgram: '2024-12-01',
+            retainRate: 85,
+            preResilience: 3.5,
+            preTeamDynamics: 4.2,
+            preDecisionMaking: 3.8,
+            preSelfAwareness: 4.0,
+            preCommunication: 3.9,
+            preOverallScore: 19.4,
+            postResilience: 4.1,
+            postTeamDynamics: 4.5,
+            postDecisionMaking: 4.3,
+            postSelfAwareness: 4.2,
+            postCommunication: 4.4,
+            postOverallScore: 21.5,
+          },
+          {
+            id: '2',
+            client: 'Galtec Organization',
+            cohort: 'SPRING 2025',
+            keyAnswer: 'B',
+            datePreProgram: '2025-03-01',
+            datePostProgram: null,
+            retainRate: 0,
+            preResilience: 2.8,
+            preTeamDynamics: 3.1,
+            preDecisionMaking: 2.9,
+            preSelfAwareness: 3.0,
+            preCommunication: 2.7,
+            preOverallScore: 14.5,
+            postResilience: 0.0,
+            postTeamDynamics: 0.0,
+            postDecisionMaking: 0.0,
+            postSelfAwareness: 0.0,
+            postCommunication: 0.0,
+            postOverallScore: 0.0,
+          }
+        ]);
         notifications.show({
-          title: 'Network Error',
-          message: error instanceof Error ? error.message : 'An unexpected error occurred',
-          color: 'red',
+          title: 'Network Error - Using Sample Data',
+          message: 'Failed to fetch client data, showing sample data',
+          color: 'orange',
         });
-        setData([]);
       } finally {
         setLoading(false);
       }
@@ -207,69 +298,6 @@ export function AllClientsDataTable() {
     fetchData();
   }, []);
 
-  // Keyboard navigation support
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!scrollAreaRef.current) return;
-      
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (!scrollContainer) return;
-
-      const scrollStep = 100;
-      const { key, ctrlKey } = event;
-
-      // Only handle keyboard shortcuts when not in input fields
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      switch (key) {
-        case 'ArrowUp':
-          event.preventDefault();
-          scrollContainer.scrollBy({ top: -scrollStep, behavior: 'smooth' });
-          break;
-        case 'ArrowDown':
-          event.preventDefault();
-          scrollContainer.scrollBy({ top: scrollStep, behavior: 'smooth' });
-          break;
-        case 'ArrowLeft':
-          event.preventDefault();
-          scrollContainer.scrollBy({ left: -scrollStep, behavior: 'smooth' });
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          scrollContainer.scrollBy({ left: scrollStep, behavior: 'smooth' });
-          break;
-        case 'Home':
-          if (ctrlKey) {
-            event.preventDefault();
-            scrollContainer.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-          }
-          break;
-        case 'End':
-          if (ctrlKey) {
-            event.preventDefault();
-            scrollContainer.scrollTo({ 
-              top: scrollContainer.scrollHeight, 
-              left: scrollContainer.scrollWidth, 
-              behavior: 'smooth' 
-            });
-          }
-          break;
-        case 'PageUp':
-          event.preventDefault();
-          scrollContainer.scrollBy({ top: -300, behavior: 'smooth' });
-          break;
-        case 'PageDown':
-          event.preventDefault();
-          scrollContainer.scrollBy({ top: 300, behavior: 'smooth' });
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -363,8 +391,8 @@ export function AllClientsDataTable() {
   };
 
   const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <IconChevronDown size={16} color="#666" />;
-    return sortDirection === 'asc' ? <IconSortAscending size={16} color="#1976d2" /> : <IconSortDescending size={16} color="#1976d2" />;
+    if (sortField !== field) return <IconChevronDown size={16} />;
+    return sortDirection === 'asc' ? <IconSortAscending size={16} color="var(--mantine-color-blue-6)" /> : <IconSortDescending size={16} color="var(--mantine-color-blue-6)" />;
   };
 
   const formatDate = (dateString: string | null) => {
@@ -383,7 +411,13 @@ export function AllClientsDataTable() {
 
 
   return (
-    <Stack gap="md">
+    <Stack 
+      gap="md" 
+      style={{ 
+        backgroundColor: 'transparent',
+        minHeight: '100vh'
+      }}
+    >
       {/* Summary Statistics */}
       <Group gap="md" wrap="wrap">
         <Badge size="lg" variant="light" color="blue">
@@ -425,137 +459,72 @@ export function AllClientsDataTable() {
 
 
       {/* Data Table Container */}
-        <Card withBorder padding={0} radius="md">
-          {/* Enhanced Scroll Navigation Controls */}
-          <Group justify="space-between" p="sm" style={{ borderBottom: '1px solid var(--mantine-color-gray-2)', backgroundColor: '#f8f9fa' }}>
-            <Group gap="xs">
-              <Text size="sm" c="dimmed" fw={500}>Table Navigation:</Text>
-              <Button
-                size="xs"
-                variant="filled"
-                color="blue"
-                leftSection={<IconChevronUp size={12} />}
-                onClick={() => {
-                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-                  scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              >
-                Top
-              </Button>
-              <Button
-                size="xs"
-                variant="filled"
-                color="blue"
-                leftSection={<IconChevronDown size={12} />}
-                onClick={() => {
-                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-                  scrollContainer?.scrollTo({ 
-                    top: scrollContainer?.scrollHeight, 
-                    behavior: 'smooth' 
-                  });
-                }}
-              >
-                Bottom
-              </Button>
-            </Group>
-            <Group gap="xs">
-              <Text size="sm" c="dimmed" fw={500}>Horizontal:</Text>
-              <Button
-                size="xs"
-                variant="filled"
-                color="green"
-                leftSection={<IconChevronUp size={12} style={{ transform: 'rotate(-90deg)' }} />}
-                onClick={() => {
-                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-                  scrollContainer?.scrollTo({ left: 0, behavior: 'smooth' });
-                }}
-              >
-                Left
-              </Button>
-              <Button
-                size="xs"
-                variant="filled"
-                color="green"
-                leftSection={<IconChevronDown size={12} style={{ transform: 'rotate(90deg)' }} />}
-                onClick={() => {
-                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-                  scrollContainer?.scrollTo({ 
-                    left: scrollContainer?.scrollWidth, 
-                    behavior: 'smooth' 
-                  });
-                }}
-              >
-                Right
-              </Button>
-            </Group>
-            <Group gap="xs">
-              <Text size="sm" c="dimmed" fw={500}>Quick Actions:</Text>
-              <Button
-                size="xs"
-                variant="light"
-                color="orange"
-                onClick={() => {
-                  const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-                  scrollContainer?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-                }}
-              >
-                Reset View
-              </Button>
-            </Group>
-            <Group gap="xs">
-              <Text size="xs" c="dimmed">
-                Position: {Math.round(scrollPosition.x)}, {Math.round(scrollPosition.y)}
-              </Text>
-            </Group>
-            <Tooltip 
-              label="Keyboard shortcuts: Arrow keys for scrolling, Ctrl+Home/End for top/bottom, Page Up/Down for faster scrolling, Click table to focus for keyboard navigation"
-              multiline
-              w={350}
-            >
-              <Text size="xs" c="dimmed" style={{ cursor: 'help', textDecoration: 'underline' }}>
-                ⌨️ Keyboard Help
-              </Text>
-            </Tooltip>
-          </Group>
+        <Card 
+          withBorder 
+          padding={0} 
+          radius="md"
+        >
 
           <ScrollArea 
             ref={scrollAreaRef}
             type="scroll" 
-            scrollbarSize={10} 
+            scrollbarSize={8} 
             offsetScrollbars={false}
             style={{ 
-              maxHeight: '70vh',
+              height: '70vh',
               width: '100%',
-              minHeight: '400px'
+              borderRadius: '8px'
             }}
-            scrollHideDelay={2000}
+            scrollHideDelay={1000}
             classNames={{
               scrollbar: 'custom-scrollbar',
               thumb: 'custom-scrollbar-thumb',
               track: 'custom-scrollbar-track',
               viewport: 'custom-scrollbar-viewport',
             }}
-            onScrollPositionChange={(position) => {
-              setScrollPosition(position);
-            }}
           >
         {loading ? (
           <Stack align="center" py="xl">
             <Text>Loading client data...</Text>
           </Stack>
+        ) : data.length === 0 ? (
+          <Stack align="center" py="xl">
+            <Text c="dimmed">No client data available</Text>
+            <Text size="sm" c="dimmed">Check the API connection or data source</Text>
+            <Text size="xs" c="dimmed">Debug: Data length = {data.length}</Text>
+          </Stack>
         ) : (
           <Table 
             striped 
             highlightOnHover 
+            withTableBorder 
+            withColumnBorders
             style={{ 
               minWidth: '1400px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              borderCollapse: 'separate',
+              borderSpacing: 0
             }}
-            onFocus={() => {
-              // Ensure the table can receive focus for keyboard navigation
-              console.log('Table focused - keyboard navigation enabled');
+            styles={{
+              thead: {
+                position: 'sticky',
+                top: 0,
+                zIndex: 10
+              },
+              tr: {
+                '&:hover': {
+                  backgroundColor: 'var(--mantine-color-gray-1) !important'
+                }
+              },
+              th: {
+                padding: '12px 16px',
+                fontSize: '14px'
+              },
+              td: {
+                padding: '12px 16px',
+                fontSize: '13px'
+              }
             }}
-            tabIndex={0}
           >
           <Table.Thead>
             <Table.Tr>

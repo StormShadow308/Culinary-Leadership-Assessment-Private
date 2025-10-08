@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/db';
-import { cohorts } from '~/db/schema';
+import { cohorts, organization, participants } from '~/db/schema';
 import { getCurrentUser } from '~/lib/user-sync';
 import { eq, and, sql } from 'drizzle-orm';
 
@@ -12,16 +12,22 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get all cohorts with organization names
+    // Get all cohorts with organization names and participant counts
     const cohortsData = await db
       .select({
         id: cohorts.id,
         name: cohorts.name,
         organizationId: cohorts.organizationId,
+        organizationName: organization.name,
         createdAt: cohorts.createdAt,
         updatedAt: cohorts.updatedAt,
+        participantCount: sql<number>`COUNT(${participants.id})`.as('participantCount')
       })
-      .from(cohorts);
+      .from(cohorts)
+      .leftJoin(organization, eq(cohorts.organizationId, organization.id))
+      .leftJoin(participants, eq(cohorts.id, participants.cohortId))
+      .groupBy(cohorts.id, cohorts.name, cohorts.organizationId, organization.name, cohorts.createdAt, cohorts.updatedAt)
+      .orderBy(cohorts.createdAt);
 
     return NextResponse.json({ cohorts: cohortsData });
   } catch (error) {
