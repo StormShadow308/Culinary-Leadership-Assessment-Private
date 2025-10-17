@@ -21,7 +21,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "prepare": "husky",
-    "start": "next start"
+    "start": "node server.js"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx,mjs,cjs}": "eslint --fix",

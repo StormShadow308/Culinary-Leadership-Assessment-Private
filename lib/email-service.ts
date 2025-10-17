@@ -202,7 +202,7 @@ export function getWelcomeEmailTemplate(data: WelcomeEmailData): EmailTemplate {
             </ul>
             
             <div style="text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/sign-in" class="button">Sign In to Your Account</a>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/sign-in" class="button">Sign In to Your Account</a>
             </div>
             
             <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>

@@ -29,7 +29,7 @@ export const inviteStudentAction = actionClient
       }
 
       // Get environment variables
-      const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
       // Check if cohort exists or create it
       let cohortId: string;
