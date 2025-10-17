@@ -3,6 +3,9 @@ import { IconRefresh, IconCheck, IconX, IconAlertTriangle, IconDatabase, IconClo
 import { getCurrentUser } from '~/lib/user-sync';
 import { SyncDashboard } from './components/sync-dashboard';
 
+// Force dynamic rendering for pages that use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function AdminSync() {
   const currentUser = await getCurrentUser();
 

@@ -14,6 +14,8 @@ export default {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
+  // Force dynamic rendering for pages that use cookies
+  trailingSlash: false,
   // Security headers
   async headers() {
     return [

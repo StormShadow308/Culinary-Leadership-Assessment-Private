@@ -3,6 +3,9 @@ import { getCurrentUser } from '~/lib/user-sync';
 import { getUserMembership } from '~/lib/optimized-queries';
 import { AnswersDataTable } from './components/answers-data-table';
 
+// Force dynamic rendering for pages that use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function OrganisationAnswers() {
   const currentUser = await getCurrentUser();
 

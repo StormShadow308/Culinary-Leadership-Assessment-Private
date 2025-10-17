@@ -7,6 +7,9 @@ import { count, avg, eq, sql } from 'drizzle-orm';
 import Link from 'next/link';
 import { AnalysisDashboard } from '~/components/analysis-dashboard';
 
+// Force dynamic rendering for pages that use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function AdminOverview() {
   const currentUser = await getCurrentUser();
   

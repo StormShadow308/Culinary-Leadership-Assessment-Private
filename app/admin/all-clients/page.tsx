@@ -2,6 +2,9 @@ import { Card, Group, Stack, Title } from '@mantine/core';
 import { getCurrentUser } from '~/lib/user-sync';
 import { AllClientsDataTable } from './components/all-clients-data-table';
 
+// Force dynamic rendering for pages that use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function AllClientsData() {
   const currentUser = await getCurrentUser();
 
