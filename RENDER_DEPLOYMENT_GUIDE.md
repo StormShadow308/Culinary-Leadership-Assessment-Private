@@ -38,7 +38,7 @@ Ensure your repository has:
 ### 2.2 Create Web Service
 1. Click "New +" → "Web Service"
 2. Connect your GitHub repository
-3. Select the repository: `culinary-leadership-assessment`
+3. Select the repository: `Culinary-Leadership-Assessment-Private`
 
 ## Step 3: Configure Render Service
 
@@ -47,7 +47,7 @@ Ensure your repository has:
 Name: culinary-leadership-assessment
 Environment: Node
 Region: Oregon (US West) or closest to your users
-Branch: main
+Branch: oct8-middleware-ui-restore
 Root Directory: (leave empty - code is in root)
 Runtime: Node
 Build Command: npm install && npm run build
