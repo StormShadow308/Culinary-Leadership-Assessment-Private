@@ -20,12 +20,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "prepare": "husky",
     "start": "node server.js"
-  },
-  "lint-staged": {
-    "**/*.{js,jsx,ts,tsx,mjs,cjs}": "eslint --fix",
-    "**/*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
