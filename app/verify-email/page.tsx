@@ -244,127 +244,111 @@ function VerifyEmailForm() {
   }
 
   return (
-    <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Center>
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%', backgroundColor: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-          <Stack gap="md">
-            {/* Logo */}
-            <Box ta="center" mb="md">
-              <Box 
-                style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  backgroundColor: '#667eea', 
-                  borderRadius: '50%', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  marginBottom: '16px'
-                }}
-              >
-                <Text size="xl" fw="bold" c="white">N</Text>
-              </Box>
-              <Title order={2} ta="center" c="dark">
-                {type === 'registration' ? 'Verify Your Email' : 'Enter Verification Code'}
-              </Title>
-              <Text ta="center" c="dimmed" size="sm">
-                {type === 'registration' 
-                  ? 'We sent a 6-digit verification code to your email address. Please enter it below to complete your registration.'
-                  : 'We sent a 6-digit verification code to your email address. Please enter it below to reset your password.'
-                }
-              </Text>
-            </Box>
+    <Center h="100vh" style={{ minHeight: '100vh' }}>
+      <Box
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
+      >
+        <Stack gap="md" align="center">
+          <Title order={2} ta="center">
+            {type === 'registration' ? 'Verify Your Email' : 'Enter Verification Code'}
+          </Title>
+          <Text c="dimmed" ta="center">
+            {type === 'registration' 
+              ? 'We sent a 6-digit verification code to your email address. Please enter it below to complete your registration.'
+              : 'We sent a 6-digit verification code to your email address. Please enter it below to reset your password.'
+            }
+          </Text>
 
-            <Alert icon={<IconAlertCircle size="1rem" />} color="blue">
-              <Text size="sm">
-                <strong>Email:</strong> {email}
-              </Text>
-            </Alert>
-
-            <form onSubmit={handleSubmit(handleVerifyCode)}>
-              <Stack gap="md">
-                <TextInput
-                  label="Verification Code *"
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                  {...register('code')}
-                  error={formState.errors.code?.message}
-                  required
-                  size="md"
-                />
-                
-                <Button 
-                  type="submit" 
-                  loading={isLoading} 
-                  fullWidth
-                  size="md"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none'
-                  }}
-                >
-                  {type === 'registration' ? 'Verify Email' : 'Verify Code'}
-                </Button>
-              </Stack>
-            </form>
-
-            <Text ta="center" size="sm" c="dimmed" mt="sm">
-              Didn&apos;t receive the code?{' '}
-              <Button 
-                variant="subtle" 
-                size="sm" 
-                onClick={handleResendCode}
-                disabled={isLoading}
-                c="blue"
-              >
-                Resend Code
-              </Button>
+          <Alert 
+            icon={<IconAlertCircle size="1rem" />} 
+            color="blue"
+          >
+            <Text size="sm">
+              <strong>Email:</strong> {email}
             </Text>
+          </Alert>
 
-            <Text ta="center" size="sm">
+          <form onSubmit={handleSubmit(handleVerifyCode)}>
+            <Stack gap="md">
+              <TextInput
+                label="Verification Code *"
+                placeholder="Enter 6-digit code"
+                maxLength={6}
+                {...register('code')}
+                error={formState.errors.code?.message}
+                required
+                size="md"
+              />
+              
               <Button 
-                variant="subtle" 
-                size="sm" 
-                onClick={() => router.push('/sign-in')}
-                c="blue"
+                type="submit" 
+                loading={isLoading} 
+                fullWidth
+                size="md"
               >
-                Back to Sign In
+                {type === 'registration' ? 'Verify Email' : 'Verify Code'}
               </Button>
-            </Text>
-          </Stack>
-        </Card>
-      </Center>
-    </Box>
+            </Stack>
+          </form>
+
+          <Text ta="center" size="sm" mt="sm">
+            Didn&apos;t receive the code?{' '}
+            <Button 
+              variant="subtle" 
+              size="sm" 
+              onClick={handleResendCode}
+              disabled={isLoading}
+            >
+              Resend Code
+            </Button>
+          </Text>
+
+          <Text ta="center" size="sm">
+            <Button 
+              variant="subtle" 
+              size="sm" 
+              onClick={() => router.push('/sign-in')}
+            >
+              Back to Sign In
+            </Button>
+          </Text>
+        </Stack>
+      </Box>
+    </Center>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-        <Center>
-          <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%', backgroundColor: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-            <Stack gap="md" align="center">
-              <Box 
-                style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  backgroundColor: '#667eea', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  marginBottom: '16px'
-                }}
-              >
-                <Text size="xl" fw="bold" c="white">N</Text>
-              </Box>
-              <Title order={2} ta="center" c="dark">Loading...</Title>
-              <Text ta="center" c="dimmed">Please wait while we load the verification form.</Text>
-            </Stack>
-          </Card>
-        </Center>
-      </Box>
+      <Center h="100vh" style={{ minHeight: '100vh' }}>
+        <Box
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <Stack gap="md" align="center">
+            <Title order={2} ta="center">Loading...</Title>
+            <Text ta="center" c="dimmed">Please wait while we load the verification form.</Text>
+          </Stack>
+        </Box>
+      </Center>
     }>
       <VerifyEmailForm />
     </Suspense>

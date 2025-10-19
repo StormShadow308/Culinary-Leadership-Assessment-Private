@@ -145,10 +145,6 @@ export function SignInForm() {
           loading={formState.isSubmitting} 
           fullWidth
           size="md"
-          style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            border: 'none'
-          }}
         >
           Sign in
         </Button>
@@ -158,7 +154,7 @@ export function SignInForm() {
             Forgot your password?
           </Link>
         </Text>
-            </Stack>
-          </form>
-        );
-      }
+      </Stack>
+    </form>
+  );
+}

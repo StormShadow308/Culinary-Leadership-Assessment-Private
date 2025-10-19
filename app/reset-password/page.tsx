@@ -104,8 +104,19 @@ function ResetPasswordForm() {
 
   if (isSuccess) {
     return (
-      <Center h="100vh">
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
+      <Center h="100vh" style={{ minHeight: '100vh' }}>
+        <Box
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <Stack gap="md" align="center">
             <IconCheck size="3rem" color="green" />
             <Title order={2} ta="center">Password Updated</Title>
@@ -113,40 +124,69 @@ function ResetPasswordForm() {
               Your password has been updated successfully. You will be redirected to the sign-in page.
             </Text>
           </Stack>
-        </Card>
+        </Box>
       </Center>
     );
   }
 
   if (!email) {
     return (
-      <Center h="100vh">
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
+      <Center h="100vh" style={{ minHeight: '100vh' }}>
+        <Box
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <Stack gap="md" align="center">
             <IconAlertCircle size="3rem" color="red" />
             <Title order={2} ta="center">Invalid Reset Link</Title>
             <Text ta="center" c="dimmed">
               This password reset link is invalid or has expired. Please request a new one.
             </Text>
-            <Button onClick={() => router.push('/forgot-password')} fullWidth>
+            <Button 
+              onClick={() => router.push('/forgot-password')} 
+              fullWidth
+              size="md"
+            >
               Request New Reset Link
             </Button>
           </Stack>
-        </Card>
+        </Box>
       </Center>
     );
   }
 
   return (
-    <Center h="100vh">
-      <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
-        <Stack gap="md">
+    <Center h="100vh" style={{ minHeight: '100vh' }}>
+      <Box
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
+      >
+        <Stack gap="md" align="center">
           <Title order={2} ta="center">Reset Password</Title>
           <Text ta="center" c="dimmed">
             Enter your new password below.
           </Text>
           
-          <Alert icon={<IconAlertCircle size="1rem" />} color="blue">
+          <Alert 
+            icon={<IconAlertCircle size="1rem" />} 
+            color="blue"
+          >
             <Text size="sm">
               <strong>Email:</strong> {email}
             </Text>
@@ -160,6 +200,7 @@ function ResetPasswordForm() {
                 {...register('password')}
                 error={formState.errors.password?.message}
                 required
+                size="md"
               />
               
               <PasswordInput
@@ -168,19 +209,21 @@ function ResetPasswordForm() {
                 {...register('confirmPassword')}
                 error={formState.errors.confirmPassword?.message}
                 required
+                size="md"
               />
               
               <Button 
                 type="submit" 
                 loading={isLoading} 
                 fullWidth
+                size="md"
               >
                 Update Password
               </Button>
             </Stack>
           </form>
         </Stack>
-      </Card>
+      </Box>
     </Center>
   );
 }
@@ -188,13 +231,24 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <Center h="100vh">
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%' }}>
+      <Center h="100vh" style={{ minHeight: '100vh' }}>
+        <Box
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
           <Stack gap="md" align="center">
             <Title order={2} ta="center">Loading...</Title>
             <Text ta="center" c="dimmed">Please wait while we load the reset form.</Text>
           </Stack>
-        </Card>
+        </Box>
       </Center>
     }>
       <ResetPasswordForm />

@@ -126,68 +126,56 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Center>
-        <Card padding="xl" radius="md" withBorder style={{ maxWidth: 400, width: '100%', backgroundColor: 'white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-          <Stack gap="md">
-            {/* Logo */}
-            <Box ta="center" mb="md">
-              <Box 
-                style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  backgroundColor: '#667eea', 
-                  borderRadius: '50%', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  marginBottom: '16px'
-                }}
+    <Center h="100vh" style={{ minHeight: '100vh' }}>
+      <Box
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
+      >
+        <Stack gap="md" align="center">
+          <Title order={2} ta="center">Forgot Password</Title>
+          <Text c="dimmed" ta="center">
+            Enter your email address and we&apos;ll send you instructions to reset your password.
+          </Text>
+
+          <form onSubmit={handleSubmit(handleForgotPassword)}>
+            <Stack gap="md">
+              <TextInput
+                label="Email *"
+                placeholder="Enter your email address"
+                type="email"
+                {...register('email')}
+                error={formState.errors.email?.message}
+                required
+                size="md"
+              />
+              
+              <Button 
+                type="submit" 
+                loading={isLoading} 
+                fullWidth
+                size="md"
               >
-                <Text size="xl" fw="bold" c="white">N</Text>
-              </Box>
-              <Title order={2} ta="center" c="dark">Forgot Password</Title>
-              <Text ta="center" c="dimmed" size="sm">
-                Enter your email address and we&apos;ll send you instructions to reset your password.
-              </Text>
-            </Box>
+                Send Reset Instructions
+              </Button>
+            </Stack>
+          </form>
 
-            <form onSubmit={handleSubmit(handleForgotPassword)}>
-              <Stack gap="md">
-                <TextInput
-                  label="Email *"
-                  placeholder="Enter your email address"
-                  type="email"
-                  {...register('email')}
-                  error={formState.errors.email?.message}
-                  required
-                  size="md"
-                />
-                
-                <Button 
-                  type="submit" 
-                  loading={isLoading} 
-                  fullWidth
-                  size="md"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none'
-                  }}
-                >
-                  Send Reset Instructions
-                </Button>
-              </Stack>
-            </form>
-
-            <Text ta="center" size="sm" mt="md">
-              Remember your password?{' '}
-              <Link href="/sign-in" style={{ color: 'var(--mantine-color-blue-6)' }}>
-                Sign in
-              </Link>
-            </Text>
-          </Stack>
-        </Card>
-      </Center>
-    </Box>
+          <Text ta="center" size="sm" mt="md">
+            Remember your password?{' '}
+            <Link href="/sign-in" style={{ color: 'var(--mantine-color-blue-6)' }}>
+              Sign in
+            </Link>
+          </Text>
+        </Stack>
+      </Box>
+    </Center>
   );
 }

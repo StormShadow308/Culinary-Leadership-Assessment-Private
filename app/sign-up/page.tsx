@@ -6,39 +6,31 @@ import { SignUpForm } from './components/sign-up-form';
 
 export default function SignUpPage() {
   return (
-    <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Center>
-        <Stack maw="100%" w={400} p="xl" style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-          {/* Logo */}
-          <Box ta="center" mb="md">
-            <Box 
-              style={{ 
-                width: '60px', 
-                height: '60px', 
-                backgroundColor: '#667eea', 
-                borderRadius: '50%', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                marginBottom: '16px'
-              }}
-            >
-              <Text size="xl" fw="bold" c="white">N</Text>
-            </Box>
-            <Title order={2} c="dark">Sign up</Title>
-            <Text c="dimmed" size="sm">Welcome! Create an account to get started.</Text>
-          </Box>
-          
+    <Center h="100vh" style={{ minHeight: '100vh' }}>
+      <Box
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          padding: '2rem',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}
+      >
+        <Stack maw="100%" w={350} align="center">
+          <Title order={2}>Sign up</Title>
+          <Text c="dimmed">Welcome! Create an account to get started.</Text>
           <SignUpForm />
-          
-          <Text size="sm" ta="center" mt="md">
+          <Text size="sm" ta="center">
             Already have an account?{' '}
-            <Anchor component={Link} href="/sign-in" c="blue">
+            <Anchor component={Link} href="/sign-in">
               Click here to sign in
             </Anchor>
           </Text>
         </Stack>
-      </Center>
-    </Box>
+      </Box>
+    </Center>
   );
 }
