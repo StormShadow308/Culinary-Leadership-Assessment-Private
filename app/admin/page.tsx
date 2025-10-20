@@ -122,9 +122,17 @@ export default async function Admin(props: AdminProps) {
   ];
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <Title order={2}>
+    <div className="responsive-container">
+      <Group justify="space-between" align="center" wrap="wrap" style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <Title 
+          order={2}
+          style={{
+            fontSize: 'var(--font-xl)',
+            marginBottom: 'var(--spacing-sm)',
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
           Admin Dashboard
           {isOrgSpecificView ? (
             <Text component="span" size="sm" c="blue" ml="sm">
@@ -136,16 +144,28 @@ export default async function Admin(props: AdminProps) {
             </Text>
           )}
         </Title>
-        <Group gap="sm" align="center">
+        <Group gap="sm" align="center" style={{ flexShrink: 0 }}>
           <LastUpdatedIndicator />
         </Group>
       </Group>
 
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+      <SimpleGrid 
+        cols={{ base: 1, sm: 2, lg: 3 }} 
+        spacing="md"
+      >
         {stats.map((stat) => (
-          <Card key={stat.title} padding="lg" radius="md" withBorder>
-            <Group justify="space-between" align="flex-start">
-              <div style={{ flex: 1 }}>
+          <Card 
+            key={stat.title} 
+            padding="lg" 
+            radius="md" 
+            withBorder
+            style={{ 
+              height: 'fit-content',
+              minHeight: '200px',
+            }}
+          >
+            <Group justify="space-between" align="flex-start" wrap="wrap">
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Text size="xs" tt="uppercase" fw={700} c="dimmed">
                   {stat.title}
                 </Text>
@@ -164,7 +184,12 @@ export default async function Admin(props: AdminProps) {
                   {stat.trend}
                 </Badge>
               </div>
-              <stat.icon size="2.5rem" stroke={1.5} color={`var(--mantine-color-${stat.color}-6)`} />
+              <stat.icon 
+                size="2.5rem" 
+                stroke={1.5} 
+                color={`var(--mantine-color-${stat.color}-6)`} 
+                style={{ flexShrink: 0 }}
+              />
             </Group>
             <Button
               component={Link}
@@ -179,7 +204,6 @@ export default async function Admin(props: AdminProps) {
           </Card>
         ))}
       </SimpleGrid>
-
-    </Stack>
+    </div>
   );
 }

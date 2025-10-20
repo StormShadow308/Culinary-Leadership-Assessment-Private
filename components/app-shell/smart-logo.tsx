@@ -56,9 +56,34 @@ export function SmartLogo({ className }: SmartLogoProps) {
       style={{ cursor: 'pointer' }}
       className={className}
     >
-      <Group gap="xs">
-        <img src="/logo.png" alt="TLA Logo" width={26} height={26} style={{ objectFit: 'contain' }} />
-        <Title mr={16} order={3} fw={600} style={{ cursor: 'pointer' }}>
+      <Group gap="xs" style={{ flexWrap: 'nowrap' }}>
+        <img 
+          src="/logo.png" 
+          alt="TLA Logo" 
+          width={26} 
+          height={26} 
+          style={{ 
+            objectFit: 'contain',
+            flexShrink: 0,
+            width: 'clamp(20px, 4vw, 26px)',
+            height: 'clamp(20px, 4vw, 26px)',
+            imageRendering: 'crisp-edges',
+          }} 
+        />
+        <Title 
+          order={3} 
+          fw={600} 
+          style={{ 
+            cursor: 'pointer',
+            fontSize: 'clamp(0.7rem, 2.2vw, 1rem)',
+            lineHeight: 1.2,
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           Culinary Assessment
         </Title>
       </Group>

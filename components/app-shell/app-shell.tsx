@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // NextImage import removed - using regular img tags
 import Link from 'next/link';
@@ -17,7 +17,7 @@ import {
   useMantineColorScheme,
 } from '@mantine/core';
 
-import { useDisclosure, useHotkeys } from '@mantine/hooks';
+import { useDisclosure, useHotkeys, useMediaQuery } from '@mantine/hooks';
 
 // Logo will be loaded from public directory
 
@@ -40,10 +40,15 @@ interface AppShellProps {
 
 export function AppShell({ children, links = [], headerContent }: AppShellProps) {
   const [opened, { toggle, close }] = useDisclosure();
+  const [mounted, setMounted] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const { setColorScheme, colorScheme } = useMantineColorScheme();
 
   const pathname = usePathname();
+
+  // Responsive breakpoints with hydration safety
+  const isMobile = useMediaQuery('(max-width: 1023px)');
 
   const changeTheme = () => {
     setColorScheme(colorScheme === 'light' ? 'dark' : 'light');
@@ -72,38 +77,81 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
   // Listen for theme change hotkey
   useHotkeys([[THEME_HOT_KEY, changeTheme]]);
 
+  // Hydration effect
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Close mobile navigation on route change
   useEffect(() => {
     close();
   }, [pathname, close]);
 
+  // Click outside handler for mobile navigation
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobile && opened && overlayRef.current && !overlayRef.current.contains(event.target as Node)) {
+        close();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mounted, isMobile, opened, close]);
+
   return (
     <MantineAppShell
-      header={{ height: 60 }}
+      header={{ height: { base: 60, sm: 70 } }}
       navbar={{
-        width: 300,
+        width: { base: 280, sm: 300 },
         breakpoint: 'lg',
-        collapsed: { mobile: !opened },
+        collapsed: { mobile: !opened, desktop: false },
       }}
       padding="md"
     >
-      {/* Desktop header */}
+      {/* Mobile Navigation Overlay */}
+      {mounted && isMobile && (
+        <div 
+          ref={overlayRef}
+          className="mobile-nav-overlay" 
+          data-opened={opened}
+          onClick={close}
+        />
+      )}
+
+      {/* Responsive Header */}
       <MantineAppShell.Header
-        display="flex"
-        style={{ flexDirection: 'column', height: 60 }}
+        style={{ 
+          height: 'auto',
+          minHeight: 'var(--header-height-mobile)',
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--spacing-sm)',
+        }}
         bg="paper"
       >
-        <Group justify="space-between" h="100%" px="md">
-          <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="lg" size="sm" />
+        <Group gap="sm" style={{ flex: '1', minWidth: 0, maxWidth: '100%' }}>
+          <Burger 
+            opened={opened} 
+            onClick={toggle} 
+            hiddenFrom="lg" 
+            size="sm"
+            aria-label="Toggle navigation"
+            style={{ flexShrink: 0 }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
             <SmartLogo />
-          </Group>
-          <Group gap="md">
-            {headerContent}
-            <UserMenu />
-          </Group>
+          </div>
+        </Group>
+        <Group gap="md" style={{ flexShrink: 0 }}>
+          {headerContent}
+          <UserMenu />
         </Group>
       </MantineAppShell.Header>
+
       <MantineAppShell.Navbar p="md">
         <Flex direction="column" gap="md">
           {links.map(link => {
@@ -141,6 +189,7 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
           })}
         </Flex>
       </MantineAppShell.Navbar>
+      
       {/* Page content */}
       <MantineAppShell.Main display="flex" bg="background">
         <Box w="100%">{children}</Box>
