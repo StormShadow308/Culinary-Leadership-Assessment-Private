@@ -101,6 +101,13 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [mounted, isMobile, opened, close]);
 
+  // Debug mobile navigation
+  useEffect(() => {
+    if (mounted) {
+      console.log('Mobile navigation debug:', { isMobile, opened, linksCount: links.length });
+    }
+  }, [mounted, isMobile, opened, links.length]);
+
   return (
     <MantineAppShell
       header={{ height: { base: 60, sm: 70 } }}
@@ -112,7 +119,7 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
       padding="md"
     >
       {/* Mobile Navigation Overlay */}
-      {mounted && isMobile && (
+      {mounted && isMobile && opened && (
         <div 
           ref={overlayRef}
           className="mobile-nav-overlay" 

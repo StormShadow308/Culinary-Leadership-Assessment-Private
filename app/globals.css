@@ -58,10 +58,7 @@
   height: var(--header-height-mobile);
   min-height: var(--header-height-mobile);
   padding: var(--spacing-sm);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -79,10 +76,10 @@
 .mantine-AppShell-navbar {
   width: var(--sidebar-width-mobile);
   position: fixed;
-  top: var(--header-height-mobile);
+  top: 0;
   left: 0;
-  height: calc(100vh - var(--header-height-mobile));
-  height: calc(100dvh - var(--header-height-mobile));
+  height: 100vh;
+  height: 100dvh;
   z-index: 200;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
@@ -110,7 +107,7 @@
 .mantine-AppShell-main {
   padding: var(--content-padding-mobile);
   margin-left: 0;
-  margin-top: var(--header-height-mobile);
+  margin-top: 0;
   min-height: calc(100vh - var(--header-height-mobile));
   min-height: calc(100dvh - var(--header-height-mobile));
   overflow-x: hidden;
