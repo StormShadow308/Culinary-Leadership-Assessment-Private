@@ -51,6 +51,14 @@
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .mantine-AppShell-root {
+    flex-direction: row;
+  }
 }
 
 /* Responsive Header */
@@ -63,12 +71,20 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .mantine-AppShell-header {
     height: var(--header-height-desktop);
     min-height: var(--header-height-desktop);
+  }
+}
+
+@media (min-width: 1024px) {
+  .mantine-AppShell-header {
+    width: 100%;
+    position: relative;
   }
 }
 
@@ -112,6 +128,7 @@
   min-height: calc(100dvh - var(--header-height-mobile));
   overflow-x: hidden;
   background: var(--mantine-color-body);
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -121,6 +138,31 @@
     margin-top: 0;
     min-height: calc(100vh - var(--header-height-desktop));
     min-height: calc(100dvh - var(--header-height-desktop));
+    width: calc(100% - var(--sidebar-width-desktop));
+    flex: 1;
+    position: relative;
+  }
+  
+  /* Ensure proper desktop layout */
+  .mantine-AppShell-root {
+    display: flex;
+    flex-direction: row;
+  }
+  
+  .mantine-AppShell-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+  
+  .mantine-AppShell-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
   }
 }
 

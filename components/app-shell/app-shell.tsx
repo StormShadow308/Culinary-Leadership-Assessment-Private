@@ -117,6 +117,7 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         collapsed: { mobile: !opened, desktop: false },
       }}
       padding="md"
+      layout="default"
     >
       {/* Mobile Navigation Overlay */}
       {mounted && isMobile && opened && (
