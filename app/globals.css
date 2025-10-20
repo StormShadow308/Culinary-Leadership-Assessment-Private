@@ -102,8 +102,24 @@
   padding: var(--spacing-sm);
 }
 
-.mantine-AppShell-navbar[data-opened="true"] {
-  transform: translateX(0);
+/* Mobile navbar when opened - multiple selectors for compatibility */
+.mantine-AppShell-navbar[data-opened="true"],
+.mantine-AppShell-navbar:not([data-collapsed="true"]),
+.mantine-AppShell-navbar[aria-expanded="true"] {
+  transform: translateX(0) !important;
+}
+
+/* Ensure mobile navbar is hidden by default */
+@media (max-width: 1023px) {
+  .mantine-AppShell-navbar[data-collapsed="true"],
+  .mantine-AppShell-navbar[aria-expanded="false"] {
+    transform: translateX(-100%) !important;
+  }
+  
+  /* Force mobile navbar to be visible when opened */
+  .mantine-AppShell-navbar:not([data-collapsed="true"]) {
+    transform: translateX(0) !important;
+  }
 }
 
 @media (min-width: 1024px) {

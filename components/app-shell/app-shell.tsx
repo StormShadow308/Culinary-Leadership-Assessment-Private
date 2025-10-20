@@ -104,9 +104,29 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
   // Debug mobile navigation
   useEffect(() => {
     if (mounted) {
-      console.log('Mobile navigation debug:', { isMobile, opened, linksCount: links.length });
+      console.log('Mobile navigation debug:', { 
+        isMobile, 
+        opened, 
+        linksCount: links.length,
+        burgerVisible: isMobile,
+        navbarElement: document.querySelector('.mantine-AppShell-navbar')
+      });
     }
   }, [mounted, isMobile, opened, links.length]);
+
+  // Additional debug for navbar state
+  useEffect(() => {
+    if (mounted && isMobile) {
+      const navbar = document.querySelector('.mantine-AppShell-navbar');
+      if (navbar) {
+        console.log('Navbar element found:', {
+          className: navbar.className,
+          style: navbar.getAttribute('style'),
+          dataAttributes: Array.from(navbar.attributes).filter(attr => attr.name.startsWith('data-'))
+        });
+      }
+    }
+  }, [mounted, isMobile, opened]);
 
   return (
     <MantineAppShell
@@ -118,6 +138,7 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
       }}
       padding="md"
       layout="default"
+      withBorder={false}
     >
       {/* Mobile Navigation Overlay */}
       {mounted && isMobile && opened && (
@@ -144,7 +165,10 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         <Group gap="sm" style={{ flex: '1', minWidth: 0, maxWidth: '100%' }}>
           <Burger 
             opened={opened} 
-            onClick={toggle} 
+            onClick={() => {
+              console.log('Burger clicked! Current state:', { opened, isMobile });
+              toggle();
+            }} 
             hiddenFrom="lg" 
             size="sm"
             aria-label="Toggle navigation"
