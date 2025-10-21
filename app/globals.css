@@ -149,13 +149,14 @@
   overflow-x: hidden;
   background: var(--mantine-color-body);
   width: 100%;
+  position: relative;
 }
 
 @media (min-width: 1024px) {
   .mantine-AppShell-main {
     padding: var(--content-padding-desktop);
     margin-left: var(--sidebar-width-desktop);
-    margin-top: 0;
+    margin-top: var(--header-height-desktop);
     min-height: calc(100vh - var(--header-height-desktop));
     min-height: calc(100dvh - var(--header-height-desktop));
     width: calc(100% - var(--sidebar-width-desktop));
@@ -170,19 +171,20 @@
   }
   
   .mantine-AppShell-header {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 100;
+    height: var(--header-height-desktop);
   }
   
   .mantine-AppShell-navbar {
     position: fixed;
-    top: 0;
+    top: var(--header-height-desktop);
     left: 0;
-    height: 100vh;
-    height: 100dvh;
+    height: calc(100vh - var(--header-height-desktop));
+    height: calc(100dvh - var(--header-height-desktop));
   }
 }
 

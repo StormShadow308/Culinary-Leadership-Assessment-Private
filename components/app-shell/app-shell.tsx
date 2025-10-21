@@ -141,6 +141,11 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
       padding="md"
       layout="default"
       withBorder={false}
+      style={{
+        height: '100vh',
+        height: '100dvh',
+        overflow: 'hidden'
+      }}
     >
       {/* Mobile Navigation Overlay */}
       {mounted && isMobile && opened && (
@@ -209,11 +214,19 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
                 variant="subtle"
                 size="xs"
                 className="mobile-close-button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('Close button clicked');
                   close();
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px',
+                  zIndex: 1000,
+                  position: 'relative'
+                }}
               >
                 ✕ Close
               </Button>
