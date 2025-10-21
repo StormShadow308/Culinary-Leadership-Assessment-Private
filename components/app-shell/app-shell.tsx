@@ -10,9 +10,11 @@ import {
   Anchor,
   Box,
   Burger,
+  Button,
   Flex,
   Group,
   AppShell as MantineAppShell,
+  Text,
   Title,
   useMantineColorScheme,
 } from '@mantine/core';
@@ -146,7 +148,20 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
           ref={overlayRef}
           className="mobile-nav-overlay" 
           data-opened={opened}
-          onClick={close}
+          onClick={() => {
+            console.log('Overlay clicked, closing mobile nav');
+            close();
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 150,
+            cursor: 'pointer'
+          }}
         />
       )}
 
@@ -186,6 +201,24 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
 
       <MantineAppShell.Navbar p="md">
         <Flex direction="column" gap="md">
+          {/* Mobile close button */}
+          {mounted && isMobile && (
+            <Group justify="space-between" align="center" mb="md">
+              <Text size="sm" fw={600}>Navigation</Text>
+              <Button
+                variant="subtle"
+                size="xs"
+                className="mobile-close-button"
+                onClick={() => {
+                  console.log('Close button clicked');
+                  close();
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                ✕ Close
+              </Button>
+            </Group>
+          )}
           {links.map(link => {
             const active = isLinkActive(link.href);
             return (
@@ -201,6 +234,13 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
                 }
                 p="xs"
                 style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                onClick={() => {
+                  // Close mobile navigation when a link is clicked
+                  if (isMobile) {
+                    console.log('Navigation link clicked, closing mobile nav');
+                    close();
+                  }
+                }}
               >
                 <Group gap="md">
                   {link.icon && (
