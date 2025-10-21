@@ -102,14 +102,15 @@
   padding: var(--spacing-sm);
 }
 
-/* Mobile navbar - always hidden by default on mobile */
+/* Mobile navbar - standard mobile app behavior */
 @media (max-width: 1023px) {
   .mantine-AppShell-navbar {
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
   }
   
-  /* Only show when explicitly opened */
+  /* Show when opened - multiple selectors for compatibility */
   .mantine-AppShell-navbar[data-opened="true"],
   .mantine-AppShell-navbar:not([data-collapsed="true"]) {
     transform: translateX(0);
@@ -118,6 +119,19 @@
   /* Ensure it's hidden when collapsed */
   .mantine-AppShell-navbar[data-collapsed="true"] {
     transform: translateX(-100%);
+  }
+  
+  /* Mobile overlay for outside click */
+  .mobile-nav-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 150 !important;
+    cursor: pointer !important;
+    touch-action: none !important;
   }
 }
 
@@ -133,10 +147,6 @@
     padding: var(--spacing-md);
   }
   
-  /* Hide mobile close button on desktop */
-  .mantine-AppShell-navbar .mobile-close-button {
-    display: none;
-  }
 }
 
 /* Responsive Main Content */

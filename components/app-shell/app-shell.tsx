@@ -10,11 +10,9 @@ import {
   Anchor,
   Box,
   Burger,
-  Button,
   Flex,
   Group,
   AppShell as MantineAppShell,
-  Text,
   Title,
   useMantineColorScheme,
 } from '@mantine/core';
@@ -91,16 +89,23 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
 
   // Click outside handler for mobile navigation
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !isMobile) return;
     
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && opened && overlayRef.current && !overlayRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (opened && overlayRef.current && overlayRef.current.contains(event.target as Node)) {
+        console.log('Outside click detected, closing mobile nav');
         close();
       }
     };
 
+    // Add both mouse and touch events for better mobile support
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, [mounted, isMobile, opened, close]);
 
   // Debug mobile navigation
@@ -153,7 +158,9 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
           ref={overlayRef}
           className="mobile-nav-overlay" 
           data-opened={opened}
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('Overlay clicked, closing mobile nav');
             close();
           }}
@@ -165,7 +172,8 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 150,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            touchAction: 'none'
           }}
         />
       )}
@@ -185,14 +193,20 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         <Group gap="sm" style={{ flex: '1', minWidth: 0, maxWidth: '100%' }}>
           <Burger 
             opened={opened} 
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               console.log('Burger clicked! Current state:', { opened, isMobile });
               toggle();
             }} 
             hiddenFrom="lg" 
             size="sm"
             aria-label="Toggle navigation"
-            style={{ flexShrink: 0 }}
+            style={{ 
+              flexShrink: 0,
+              zIndex: 200,
+              position: 'relative'
+            }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
             <SmartLogo />
@@ -206,32 +220,6 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
 
       <MantineAppShell.Navbar p="md">
         <Flex direction="column" gap="md">
-          {/* Mobile close button */}
-          {mounted && isMobile && (
-            <Group justify="space-between" align="center" mb="md">
-              <Text size="sm" fw={600}>Navigation</Text>
-              <Button
-                variant="subtle"
-                size="xs"
-                className="mobile-close-button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Close button clicked');
-                  close();
-                }}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  zIndex: 1000,
-                  position: 'relative'
-                }}
-              >
-                ✕ Close
-              </Button>
-            </Group>
-          )}
           {links.map(link => {
             const active = isLinkActive(link.href);
             return (
