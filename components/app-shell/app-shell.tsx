@@ -99,8 +99,10 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
     };
 
     // Add both mouse and touch events for better mobile support
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    if (opened) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -146,11 +148,6 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
       padding="md"
       layout="default"
       withBorder={false}
-      style={{
-        height: '100vh',
-        height: '100dvh',
-        overflow: 'hidden'
-      }}
     >
       {/* Mobile Navigation Overlay */}
       {mounted && isMobile && opened && (

@@ -15,49 +15,78 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Cohorts API: Current user found:', currentUser.email, currentUser.role);
 
-    // Security check: Only organization users can access this endpoint
-    if (currentUser.role !== 'organization') {
-      console.log('❌ Cohorts API: Access denied - user is not an organization user');
-      return NextResponse.json({ error: 'Access denied - organization users only' }, { status: 403 });
+    // Security check: Only organization users and admins can access this endpoint
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      console.log('❌ Cohorts API: Access denied - user is not an organization user or admin');
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
     }
 
-    // Get user's organization
-    const userMembership = await db
-      .select({ organizationId: member.organizationId })
-      .from(member)
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
+    // Get user's organization or handle admin access
+    let organizationId: string | null = null;
+    
+    if (currentUser.role === 'admin') {
+      // Admin users can access all organizations
+      console.log('✅ Cohorts API: Admin user - accessing all organizations');
+      organizationId = null; // null means all organizations
+    } else {
+      // Organization users can only access their own organization
+      const userMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, currentUser.id))
+        .limit(1);
 
-    console.log('🔍 Cohorts API: User membership:', userMembership);
+      console.log('🔍 Cohorts API: User membership:', userMembership);
 
-    if (userMembership.length === 0) {
-      console.log('❌ Cohorts API: User not associated with organization');
-      return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+      if (userMembership.length === 0) {
+        console.log('❌ Cohorts API: User not associated with organization');
+        return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+      }
+
+      organizationId = userMembership[0].organizationId;
+      console.log('✅ Cohorts API: Organization ID:', organizationId);
     }
-
-    const organizationId = userMembership[0].organizationId;
-    console.log('✅ Cohorts API: Organization ID:', organizationId);
 
     // Get all cohorts for this organization with participant counts
-    const cohortsData = await db
-      .select({
-        id: cohorts.id,
-        name: cohorts.name,
-        organizationId: cohorts.organizationId,
-        createdAt: cohorts.createdAt,
-        updatedAt: cohorts.updatedAt,
-        participantCount: sql<number>`COUNT(${participants.id})`.as('participantCount')
-      })
-      .from(cohorts)
-      .leftJoin(participants, eq(cohorts.id, participants.cohortId))
-      .where(eq(cohorts.organizationId, organizationId))
-      .groupBy(cohorts.id, cohorts.name, cohorts.organizationId, cohorts.createdAt, cohorts.updatedAt);
+    let cohortsData;
+    if (organizationId) {
+      // Organization user - get cohorts for their organization only
+      cohortsData = await db
+        .select({
+          id: cohorts.id,
+          name: cohorts.name,
+          organizationId: cohorts.organizationId,
+          createdAt: cohorts.createdAt,
+          updatedAt: cohorts.updatedAt,
+          participantCount: sql<number>`COUNT(${participants.id})`.as('participantCount')
+        })
+        .from(cohorts)
+        .leftJoin(participants, eq(cohorts.id, participants.cohortId))
+        .where(eq(cohorts.organizationId, organizationId))
+        .groupBy(cohorts.id, cohorts.name, cohorts.organizationId, cohorts.createdAt, cohorts.updatedAt);
+    } else {
+      // Admin user - get cohorts for all organizations
+      cohortsData = await db
+        .select({
+          id: cohorts.id,
+          name: cohorts.name,
+          organizationId: cohorts.organizationId,
+          createdAt: cohorts.createdAt,
+          updatedAt: cohorts.updatedAt,
+          participantCount: sql<number>`COUNT(${participants.id})`.as('participantCount')
+        })
+        .from(cohorts)
+        .leftJoin(participants, eq(cohorts.id, participants.cohortId))
+        .groupBy(cohorts.id, cohorts.name, cohorts.organizationId, cohorts.createdAt, cohorts.updatedAt);
+    }
 
-    // Security check: Ensure all returned cohorts belong to the user's organization
-    const unauthorizedCohorts = cohortsData.filter(cohort => cohort.organizationId !== organizationId);
-    if (unauthorizedCohorts.length > 0) {
-      console.error('🚨 SECURITY VIOLATION: Unauthorized cohorts detected:', unauthorizedCohorts);
-      return NextResponse.json({ error: 'Security violation detected' }, { status: 500 });
+    // Security check: Ensure all returned cohorts belong to the user's organization (skip for admin users)
+    if (organizationId) {
+      const unauthorizedCohorts = cohortsData.filter(cohort => cohort.organizationId !== organizationId);
+      if (unauthorizedCohorts.length > 0) {
+        console.error('🚨 SECURITY VIOLATION: Unauthorized cohorts detected:', unauthorizedCohorts);
+        return NextResponse.json({ error: 'Security violation detected' }, { status: 500 });
+      }
     }
 
     console.log('✅ Cohorts API: Cohorts data (security verified):', cohortsData);
@@ -75,18 +104,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Get user's organization
-    const userMembership = await db
-      .select({ organizationId: member.organizationId })
-      .from(member)
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
-
-    if (userMembership.length === 0) {
-      return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+    // Security check: Only organization users and admins can create cohorts
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
     }
 
-    const organizationId = userMembership[0].organizationId;
+    // Get user's organization or handle admin access
+    let organizationId: string | null = null;
+    
+    if (currentUser.role === 'admin') {
+      // For admin users, we need to get organizationId from request body
+      const { name, organizationId: reqOrgId } = await request.json();
+      if (!reqOrgId) {
+        return NextResponse.json({ error: 'Organization ID is required for admin users' }, { status: 400 });
+      }
+      organizationId = reqOrgId;
+    } else {
+      // Organization users can only create cohorts in their own organization
+      const userMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, currentUser.id))
+        .limit(1);
+
+      if (userMembership.length === 0) {
+        return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+      }
+
+      organizationId = userMembership[0].organizationId;
+    }
+    
     const { name } = await request.json();
 
     if (!name || !name.trim()) {

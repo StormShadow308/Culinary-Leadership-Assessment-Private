@@ -102,16 +102,23 @@
   padding: var(--spacing-sm);
 }
 
-/* Mobile navbar - standard mobile app behavior */
+/* Mobile navbar behavior */
 @media (max-width: 1023px) {
   .mantine-AppShell-navbar {
+    width: 280px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 200;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 200;
+    background: var(--mantine-color-body);
+    border-right: 1px solid var(--mantine-color-gray-3);
   }
   
-  /* Show when opened - multiple selectors for compatibility */
-  .mantine-AppShell-navbar[data-opened="true"],
+  /* Show when opened */
   .mantine-AppShell-navbar:not([data-collapsed="true"]) {
     transform: translateX(0);
   }
@@ -160,6 +167,49 @@
   background: var(--mantine-color-body);
   width: 100%;
   position: relative;
+}
+
+/* Mobile main content */
+@media (max-width: 1023px) {
+  .mantine-AppShell-main {
+    padding: 1rem;
+    margin-left: 0;
+    margin-top: 0;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
+    overflow-x: hidden;
+    background: var(--mantine-color-body);
+  }
+  
+  /* Ensure mobile header is properly positioned */
+  .mantine-AppShell-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 60px;
+    min-height: 60px;
+    background: var(--mantine-color-body);
+    border-bottom: 1px solid var(--mantine-color-gray-3);
+  }
+  
+  /* Mobile responsive container */
+  .responsive-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  /* Mobile cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+  }
 }
 
 @media (min-width: 1024px) {

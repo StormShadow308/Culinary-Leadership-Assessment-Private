@@ -19,28 +19,37 @@ export async function GET(
     const { cohortId } = params;
     console.log('✅ Students API: Current user found:', currentUser.email, currentUser.role);
 
-    // Security check: Only organization users can access this endpoint
-    if (currentUser.role !== 'organization') {
-      console.log('❌ Students API: Access denied - user is not an organization user');
-      return NextResponse.json({ error: 'Access denied - organization users only' }, { status: 403 });
+    // Security check: Only organization users and admins can access this endpoint
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      console.log('❌ Students API: Access denied - user is not an organization user or admin');
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
     }
 
-    // Get user's organization
-    const userMembership = await db
-      .select({ organizationId: member.organizationId })
-      .from(member)
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
+    // Get user's organization or handle admin access
+    let organizationId: string | null = null;
+    
+    if (currentUser.role === 'admin') {
+      // Admin users can access all organizations - we'll verify cohort access later
+      console.log('✅ Students API: Admin user - accessing all organizations');
+      organizationId = null; // null means all organizations
+    } else {
+      // Organization users can only access their own organization
+      const userMembership = await db
+        .select({ organizationId: member.organizationId })
+        .from(member)
+        .where(eq(member.userId, currentUser.id))
+        .limit(1);
 
-    console.log('🔍 Students API: User membership:', userMembership);
+      console.log('🔍 Students API: User membership:', userMembership);
 
-    if (userMembership.length === 0) {
-      console.log('❌ Students API: User not associated with organization');
-      return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+      if (userMembership.length === 0) {
+        console.log('❌ Students API: User not associated with organization');
+        return NextResponse.json({ error: 'User is not associated with an organization' }, { status: 403 });
+      }
+
+      organizationId = userMembership[0].organizationId;
+      console.log('✅ Students API: Organization ID:', organizationId);
     }
-
-    const organizationId = userMembership[0].organizationId;
-    console.log('✅ Students API: Organization ID:', organizationId);
 
     // Verify cohort exists and belongs to user's organization
     const cohort = await db
