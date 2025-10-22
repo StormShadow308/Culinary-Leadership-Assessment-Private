@@ -11,6 +11,11 @@ import { isDatabaseConnected, executeWithHealthCheck } from './lib/db-connection
 const userCache = new Map<string, { role: string; isOrgMember: boolean; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Rate limiting for log messages to prevent spam
+const logRateLimit = new Map<string, { count: number; lastReset: number }>();
+const LOG_RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_LOGS_PER_WINDOW = 5;
+
 // Database connection status
 let dbConnectionHealthy = true;
 let lastDbCheck = 0;
@@ -24,7 +29,37 @@ setInterval(() => {
       userCache.delete(key);
     }
   }
+  
+  // Clean up log rate limiting
+  for (const [key, value] of logRateLimit.entries()) {
+    if (now - value.lastReset > LOG_RATE_LIMIT_WINDOW) {
+      logRateLimit.delete(key);
+    }
+  }
 }, 60000); // Clean up every minute
+
+// Helper function to check if we should log a message (rate limiting)
+function shouldLogMessage(messageKey: string): boolean {
+  const now = Date.now();
+  const current = logRateLimit.get(messageKey);
+  
+  if (!current) {
+    logRateLimit.set(messageKey, { count: 1, lastReset: now });
+    return true;
+  }
+  
+  if (now - current.lastReset > LOG_RATE_LIMIT_WINDOW) {
+    logRateLimit.set(messageKey, { count: 1, lastReset: now });
+    return true;
+  }
+  
+  if (current.count >= MAX_LOGS_PER_WINDOW) {
+    return false;
+  }
+  
+  current.count++;
+  return true;
+}
 
 // Database health check function with timeout
 async function checkDatabaseHealth(): Promise<boolean> {
@@ -222,12 +257,17 @@ export async function middleware(request: NextRequest) {
 
   // STRICT ROLE-BASED ACCESS CONTROL
   if (user) {
-    console.log(`🔐 Access Control: User ${user.email} (Role: ${userRole}) trying to access ${pathname}`);
+    // Only log access control messages occasionally to reduce noise
+    if (shouldLogMessage(`access-control-${user.email}`)) {
+      console.log(`🔐 Access Control: User ${user.email} (Role: ${userRole}) trying to access ${pathname}`);
+    }
     
     // ADMIN-ONLY ROUTES: Only admins can access
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {
       if (userRole !== 'admin') {
-        console.log(`❌ Access Denied: Non-admin user trying to access admin area`);
+        if (shouldLogMessage(`admin-access-denied-${user.email}`)) {
+          console.log(`❌ Access Denied: Non-admin user trying to access admin area`);
+        }
         if (userRole === 'student') {
           return NextResponse.redirect(new URL('/assessment', request.url));
         } else if (userRole === 'organization') {
@@ -241,7 +281,9 @@ export async function middleware(request: NextRequest) {
     // ORGANIZATION-ONLY ROUTES: Only organization users and admins can access
     if (pathname === '/organisation' || pathname.startsWith('/organisation/')) {
       if (userRole !== 'organization' && userRole !== 'admin') {
-        console.log(`❌ Access Denied: Non-organization user trying to access organization area`);
+        if (shouldLogMessage(`org-access-denied-${user.email}`)) {
+          console.log(`❌ Access Denied: Non-organization user trying to access organization area`);
+        }
         if (userRole === 'student') {
           return NextResponse.redirect(new URL('/assessment', request.url));
         } else {
@@ -253,7 +295,9 @@ export async function middleware(request: NextRequest) {
     // STUDENT-ONLY ROUTES: Only students can access assessment and attempt routes
     if (pathname === '/assessment' || pathname.startsWith('/attempt')) {
       if (userRole !== 'student') {
-        console.log(`❌ Access Denied: Non-student user trying to access student area`);
+        if (shouldLogMessage(`student-access-denied-${user.email}`)) {
+          console.log(`❌ Access Denied: Non-student user trying to access student area`);
+        }
         if (userRole === 'admin') {
           return NextResponse.redirect(new URL('/admin', request.url));
         } else if (userRole === 'organization') {
@@ -272,7 +316,10 @@ export async function middleware(request: NextRequest) {
   if (!user && (pathname === '/admin' || pathname.startsWith('/admin/') || 
                 pathname === '/organisation' || pathname.startsWith('/organisation/') ||
                 pathname === '/assessment' || pathname.startsWith('/attempt'))) {
-    console.log(`🔒 Unauthenticated user trying to access protected route: ${pathname}`);
+    // Rate limit unauthenticated access logs to prevent spam from prefetch requests
+    if (shouldLogMessage(`unauthenticated-access-${pathname}`)) {
+      console.log(`🔒 Unauthenticated user trying to access protected route: ${pathname}`);
+    }
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 

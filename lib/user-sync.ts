@@ -2,6 +2,7 @@ import { createClient } from './supabase-server';
 import { db } from '../db';
 import { user as userSchema } from '~/db/schema';
 import { eq } from 'drizzle-orm';
+import { RequestContext, withRequestIsolation } from './request-context';
 
 export async function syncUserFromSupabase(supabaseUser: unknown) {
   try {
@@ -58,34 +59,41 @@ export async function syncUserFromSupabase(supabaseUser: unknown) {
 }
 
 
-export async function getCurrentUser() {
+export const getCurrentUser = withRequestIsolation(async () => {
   try {
-    console.log('🔍 getCurrentUser: Creating Supabase client...');
+    const requestId = RequestContext.getRequestId() || 'unknown';
+    const logger = RequestContext.createLogger(requestId);
+    
+    logger.debug('Creating Supabase client...');
     const supabase = await createClient();
-    console.log('🔍 getCurrentUser: Getting user from Supabase...');
+    
+    logger.debug('Getting user from Supabase...');
     const { data: { user: supabaseUser }, error } = await supabase.auth.getUser();
     
-    console.log('🔍 getCurrentUser: Supabase response:', { 
+    logger.debug('Supabase response:', { 
       hasUser: !!supabaseUser, 
       error: error?.message,
       userEmail: supabaseUser?.email 
     });
     
     if (error) {
-      console.log('❌ getCurrentUser: Supabase error:', error);
+      logger.warn('Supabase error:', error);
       return null;
     }
     
     if (!supabaseUser) {
-      console.log('❌ getCurrentUser: No Supabase user found');
+      logger.debug('No Supabase user found');
       return null;
     }
 
-    console.log('✅ getCurrentUser: Supabase user found, syncing to local database...');
+    // Set user context for this request
+    RequestContext.setContext(requestId, supabaseUser.email || undefined);
+    
+    logger.debug('Supabase user found, syncing to local database...');
     // Sync user to local database
     await syncUserFromSupabase(supabaseUser);
 
-    console.log('🔍 getCurrentUser: Getting user from local database...');
+    logger.debug('Getting user from local database...');
     // Get user from local database
     const localUser = await db
       .select()
@@ -93,7 +101,7 @@ export async function getCurrentUser() {
       .where(eq(userSchema.email, supabaseUser.email))
       .limit(1);
 
-    console.log('🔍 getCurrentUser: Local user result:', localUser[0] ? {
+    logger.debug('Local user result:', localUser[0] ? {
       id: localUser[0].id,
       email: localUser[0].email,
       role: localUser[0].role
@@ -101,7 +109,9 @@ export async function getCurrentUser() {
 
     return localUser[0] || null;
   } catch (error) {
-    console.error('❌ getCurrentUser: Error:', error);
+    const requestId = RequestContext.getRequestId() || 'unknown';
+    const logger = RequestContext.createLogger(requestId);
+    logger.error('Error in getCurrentUser:', error);
     return null;
   }
-}
+});

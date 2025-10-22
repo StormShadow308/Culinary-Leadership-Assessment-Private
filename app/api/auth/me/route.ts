@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '~/lib/user-sync';
+import { withRateLimit } from '~/lib/rate-limiter';
 
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
     
@@ -21,3 +22,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const GET = withRateLimit(handler);

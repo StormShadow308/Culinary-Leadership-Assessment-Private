@@ -219,12 +219,15 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         <Flex direction="column" gap="md">
           {links.map(link => {
             const active = isLinkActive(link.href);
+            // Disable prefetch for admin routes to prevent unauthorized access attempts
+            const shouldPrefetch = !link.href.startsWith('/admin');
+            
             return (
               <Anchor
                 key={link.href}
                 underline="never"
                 component={Link}
-                prefetch={true}
+                prefetch={shouldPrefetch}
                 href={link.href}
                 bg={active ? 'var(--mantine-primary-color-light)' : 'transparent'}
                 c={
