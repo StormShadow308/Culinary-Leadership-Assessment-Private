@@ -13,15 +13,24 @@ export default async function OrganisationAnswers() {
     return <div>Unauthorized</div>;
   }
 
-  // Check if user has organization membership
-  const userMembership = await getUserMembership(currentUser.id);
+  // Check if user is admin or has organization membership
+  const isAdmin = currentUser.role === 'admin';
+  let userMembership = null;
 
-  if (!userMembership) {
-    return (
-      <Stack>
-        <div>You don't have access to any organization. Please contact your administrator.</div>
-      </Stack>
-    );
+  if (isAdmin) {
+    // Admin users have access to all organizations
+    // We'll handle organization selection in the component
+  } else {
+    // Regular users need organization membership
+    userMembership = await getUserMembership(currentUser.id);
+
+    if (!userMembership) {
+      return (
+        <Stack>
+          <div>You don't have access to any organization. Please contact your administrator.</div>
+        </Stack>
+      );
+    }
   }
 
   return (
