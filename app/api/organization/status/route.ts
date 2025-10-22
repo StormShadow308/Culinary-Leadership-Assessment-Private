@@ -12,25 +12,37 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (currentUser.role !== 'organization') {
-      return NextResponse.json({ error: 'Only organization users can check organization status' }, { status: 403 });
+    // Security check: Only organization users and admins can access this endpoint
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
     }
 
-    // Check if user has an organization membership
-    const membership = await db
-      .select({
-        id: member.id,
-        organizationId: member.organizationId,
-        role: member.role,
-        createdAt: member.createdAt,
-        organizationName: organization.name,
-        organizationSlug: organization.slug,
-        organizationMetadata: organization.metadata,
-      })
-      .from(member)
-      .innerJoin(organization, eq(member.organizationId, organization.id))
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
+    // Check if user has an organization membership (skip for admin users)
+    let membership;
+    if (currentUser.role === 'admin') {
+      // Admin users don't need organization membership
+      return NextResponse.json({ 
+        hasOrganization: true,
+        isAdmin: true,
+        message: 'Admin user - has access to all organizations'
+      });
+    } else {
+      // Organization users need membership
+      membership = await db
+        .select({
+          id: member.id,
+          organizationId: member.organizationId,
+          role: member.role,
+          createdAt: member.createdAt,
+          organizationName: organization.name,
+          organizationSlug: organization.slug,
+          organizationMetadata: organization.metadata,
+        })
+        .from(member)
+        .innerJoin(organization, eq(member.organizationId, organization.id))
+        .where(eq(member.userId, currentUser.id))
+        .limit(1);
+    }
 
     if (membership.length === 0) {
       return NextResponse.json({ 

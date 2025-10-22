@@ -15,9 +15,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (currentUser.role !== 'organization') {
-      console.log('❌ User role is not organization:', currentUser.role);
-      return NextResponse.json({ error: 'Only organization users can create organizations' }, { status: 403 });
+    // Security check: Only organization users and admins can create organizations
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      console.log('❌ User role is not organization or admin:', currentUser.role);
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
     }
 
     const { name, description } = await request.json();
@@ -26,22 +27,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organization name is required' }, { status: 400 });
     }
 
-    // Check if user already has an organization membership
-    console.log('🔍 Checking existing membership for user:', currentUser.id);
-    const existingMembership = await db
-      .select()
-      .from(member)
-      .where(eq(member.userId, currentUser.id))
-      .limit(1);
+    // Check if user already has an organization membership (skip for admin users)
+    if (currentUser.role !== 'admin') {
+      console.log('🔍 Checking existing membership for user:', currentUser.id);
+      const existingMembership = await db
+        .select()
+        .from(member)
+        .where(eq(member.userId, currentUser.id))
+        .limit(1);
 
-    console.log('📊 Existing membership found:', existingMembership.length > 0);
+      console.log('📊 Existing membership found:', existingMembership.length > 0);
 
-    if (existingMembership.length > 0) {
-      console.log('⚠️ User already has organization membership:', existingMembership[0].organizationId);
-      return NextResponse.json({ 
-        error: 'User already has an organization membership',
-        existingOrganization: existingMembership[0].organizationId
-      }, { status: 400 });
+      if (existingMembership.length > 0) {
+        console.log('⚠️ User already has organization membership:', existingMembership[0].organizationId);
+        return NextResponse.json({ 
+          error: 'User already has an organization membership',
+          existingOrganization: existingMembership[0].organizationId
+        }, { status: 400 });
+      }
+    } else {
+      console.log('✅ Admin user - skipping membership check');
     }
 
     // Generate unique organization ID and slug

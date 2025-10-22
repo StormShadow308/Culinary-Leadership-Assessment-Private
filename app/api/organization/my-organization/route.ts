@@ -12,6 +12,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    // Security check: Only organization users and admins can access this endpoint
+    if (currentUser.role !== 'organization' && currentUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Access denied - organization users and admins only' }, { status: 403 });
+    }
+
+    // Admin users don't have a specific organization
+    if (currentUser.role === 'admin') {
+      return NextResponse.json({ 
+        organization: null,
+        isAdmin: true,
+        message: 'Admin user - has access to all organizations'
+      });
+    }
+
     // Get user's organization membership
     const userMembership = await db
       .select({
