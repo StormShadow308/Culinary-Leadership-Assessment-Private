@@ -51,22 +51,56 @@ export async function GET(
       console.log('✅ Students API: Organization ID:', organizationId);
     }
 
-    // Verify cohort exists and belongs to user's organization
-    const cohort = await db
-      .select()
+    // First, check if cohort exists at all (for debugging)
+    const cohortExists = await db
+      .select({ id: cohorts.id, name: cohorts.name, organizationId: cohorts.organizationId })
       .from(cohorts)
-      .where(
-        and(
-          eq(cohorts.id, cohortId),
-          eq(cohorts.organizationId, organizationId)
-        )
-      )
+      .where(eq(cohorts.id, cohortId))
       .limit(1);
+    
+    console.log('🔍 Students API: Cohort exists check:', {
+      cohortId,
+      exists: cohortExists.length > 0,
+      cohortData: cohortExists[0] || null
+    });
 
-    console.log('🔍 Students API: Cohort verification:', cohort);
+    // Verify cohort exists and belongs to user's organization (or admin can access any)
+    let cohort;
+    if (organizationId) {
+      // Organization user - verify cohort belongs to their organization
+      cohort = await db
+        .select()
+        .from(cohorts)
+        .where(
+          and(
+            eq(cohorts.id, cohortId),
+            eq(cohorts.organizationId, organizationId)
+          )
+        )
+        .limit(1);
+    } else {
+      // Admin user - can access any cohort
+      cohort = await db
+        .select()
+        .from(cohorts)
+        .where(eq(cohorts.id, cohortId))
+        .limit(1);
+    }
+
+    console.log('🔍 Students API: Cohort verification:', {
+      cohortId,
+      organizationId,
+      userRole: currentUser.role,
+      cohortFound: cohort.length > 0,
+      cohortData: cohort[0] || null
+    });
 
     if (cohort.length === 0) {
-      console.log('❌ Students API: Cohort not found or access denied');
+      console.log('❌ Students API: Cohort not found or access denied', {
+        cohortId,
+        organizationId,
+        userRole: currentUser.role
+      });
       return NextResponse.json({ error: 'Cohort not found or access denied' }, { status: 404 });
     }
 
