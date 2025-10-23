@@ -123,15 +123,21 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
     }
   }, [mounted, isMobile, opened, links.length]);
 
-  // Additional debug for navbar state
+  // Force mobile menu state with data attributes
   useEffect(() => {
     if (mounted && isMobile) {
       const navbar = document.querySelector('.mantine-AppShell-navbar');
       if (navbar) {
-        console.log('Navbar element found:', {
-          className: navbar.className,
-          style: navbar.getAttribute('style'),
-          dataAttributes: Array.from(navbar.attributes).filter(attr => attr.name.startsWith('data-'))
+        // Force set data attributes for CSS selectors
+        navbar.setAttribute('data-opened', opened.toString());
+        navbar.setAttribute('data-collapsed', (!opened).toString());
+        navbar.setAttribute('aria-expanded', opened.toString());
+        
+        console.log('Navbar state updated:', {
+          opened,
+          dataOpened: navbar.getAttribute('data-opened'),
+          dataCollapsed: navbar.getAttribute('data-collapsed'),
+          ariaExpanded: navbar.getAttribute('aria-expanded')
         });
       }
     }
@@ -146,7 +152,7 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         collapsed: { mobile: !opened, desktop: false },
       }}
       padding="md"
-      layout="default"
+      layout="alt"
       withBorder={false}
     >
       {/* Mobile Navigation Overlay */}
@@ -194,7 +200,27 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
               e.preventDefault();
               e.stopPropagation();
               console.log('Burger clicked! Current state:', { opened, isMobile });
-              toggle();
+              
+              // Force toggle the state
+              if (opened) {
+                close();
+              } else {
+                toggle();
+              }
+              
+              // Additional debugging
+              setTimeout(() => {
+                const navbar = document.querySelector('.mantine-AppShell-navbar');
+                if (navbar) {
+                  console.log('After toggle - Navbar state:', {
+                    opened: !opened,
+                    dataOpened: navbar.getAttribute('data-opened'),
+                    dataCollapsed: navbar.getAttribute('data-collapsed'),
+                    ariaExpanded: navbar.getAttribute('aria-expanded'),
+                    transform: getComputedStyle(navbar).transform
+                  });
+                }
+              }, 100);
             }} 
             hiddenFrom="lg" 
             size="sm"
@@ -202,7 +228,8 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
             style={{ 
               flexShrink: 0,
               zIndex: 200,
-              position: 'relative'
+              position: 'relative',
+              cursor: 'pointer'
             }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -215,7 +242,10 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         </Group>
       </MantineAppShell.Header>
 
-      <MantineAppShell.Navbar p="md">
+      <MantineAppShell.Navbar 
+        p="md"
+        className={mounted && isMobile ? `mobile-navbar ${opened ? 'mobile-navbar-open' : 'mobile-navbar-closed'}` : ''}
+      >
         <Flex direction="column" gap="md">
           {links.map(link => {
             const active = isLinkActive(link.href);

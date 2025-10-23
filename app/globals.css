@@ -116,16 +116,25 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--mantine-color-body);
     border-right: 1px solid var(--mantine-color-gray-3);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
   
-  /* Show when opened */
-  .mantine-AppShell-navbar:not([data-collapsed="true"]) {
-    transform: translateX(0);
+  /* Show when opened - use multiple selectors for Mantine compatibility */
+  .mantine-AppShell-navbar:not([data-collapsed="true"]),
+  .mantine-AppShell-navbar[data-opened="true"],
+  .mantine-AppShell-navbar[aria-expanded="true"] {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
-  /* Ensure it's hidden when collapsed */
-  .mantine-AppShell-navbar[data-collapsed="true"] {
-    transform: translateX(-100%);
+  /* Ensure it's hidden when collapsed - use multiple selectors */
+  .mantine-AppShell-navbar[data-collapsed="true"],
+  .mantine-AppShell-navbar[data-opened="false"],
+  .mantine-AppShell-navbar[aria-expanded="false"] {
+    transform: translateX(-100%) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
   
   /* Mobile overlay for outside click */
@@ -139,6 +148,71 @@
     z-index: 150 !important;
     cursor: pointer !important;
     touch-action: none !important;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  /* Fallback CSS classes for mobile navbar */
+  .mobile-navbar {
+    width: 280px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 200;
+    background: var(--mantine-color-body);
+    border-right: 1px solid var(--mantine-color-gray-3);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .mobile-navbar-open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .mobile-navbar-closed {
+    transform: translateX(-100%) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* Animation for mobile menu */
+  @keyframes slideIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
   }
 }
 
