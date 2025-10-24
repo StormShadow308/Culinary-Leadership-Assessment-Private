@@ -680,9 +680,10 @@ export default async function Organisation(props: OrganisationProps) {
   }
 
   return (
-    <Stack>
-      {/* Admin Organization Selector */}
-      {isAdmin ? (
+    <div className="mobile-page-container">
+      <Stack>
+        {/* Admin Organization Selector */}
+        {isAdmin ? (
         <AdminOrgWrapper currentOrgId={currentOrgId} showNavigationButtons={true}>
           <FilteredOrganizationDashboard
             totalRespondents={totalRespondents}
@@ -738,7 +739,8 @@ export default async function Organisation(props: OrganisationProps) {
           orgCohorts={orgCohorts}
           selectedCohort={selectedCohort}
         />
-      )}
-    </Stack>
+        )}
+      </Stack>
+    </div>
   );
 }

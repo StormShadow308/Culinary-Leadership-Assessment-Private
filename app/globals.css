@@ -248,7 +248,8 @@
   .mantine-AppShell-main {
     padding: 1rem;
     margin-left: 0;
-    margin-top: 0;
+    margin-top: 60px; /* Add margin-top to account for fixed header */
+    padding-top: 1rem; /* Ensure content doesn't stick to header */
     width: 100%;
     min-height: calc(100vh - 60px);
     min-height: calc(100dvh - 60px);
@@ -275,6 +276,7 @@
     width: 100%;
     max-width: 100%;
     margin: 0;
+    margin-top: 0; /* Ensure no additional margin-top */
   }
   
   /* Mobile cards grid */
@@ -282,6 +284,24 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 0.5rem;
+  }
+  
+  /* Mobile page containers - ensure they start below header */
+  .mobile-page-container {
+    margin-top: 0;
+    padding-top: 1rem;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
+  }
+  
+  /* Mobile organization selector spacing */
+  .mobile-org-selector {
+    margin-top: 0;
+    padding-top: 0.5rem;
     width: 100%;
   }
 }

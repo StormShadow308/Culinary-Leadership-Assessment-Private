@@ -68,9 +68,10 @@ export function FilteredOrganizationDashboard({
 }: FilteredOrganizationDashboardProps) {
 
   return (
-    <Stack gap="md">
-      {/* Organization Header */}
-      <Card padding="lg" radius="md" withBorder>
+    <div className="mobile-page-container">
+      <Stack gap="md">
+        {/* Organization Header */}
+        <Card padding="lg" radius="md" withBorder>
         <Group justify="space-between" align="flex-start">
           <Stack gap="xs">
             <Title order={2}>
@@ -118,6 +119,7 @@ export function FilteredOrganizationDashboard({
         postCategoryData={postCategoryData}
         topPostRespondents={topPostRespondents}
       />
-    </Stack>
+      </Stack>
+    </div>
   );
 }

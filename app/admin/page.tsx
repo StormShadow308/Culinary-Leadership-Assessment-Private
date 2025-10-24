@@ -122,7 +122,7 @@ export default async function Admin(props: AdminProps) {
   ];
 
   return (
-    <div className="responsive-container">
+    <div className="responsive-container mobile-page-container">
       <Group justify="space-between" align="center" wrap="wrap" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <Title 
           order={2}
@@ -152,6 +152,7 @@ export default async function Admin(props: AdminProps) {
       <SimpleGrid 
         cols={{ base: 1, sm: 2, lg: 3 }} 
         spacing="md"
+        className="cards-grid"
       >
         {stats.map((stat) => (
           <Card 
