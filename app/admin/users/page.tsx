@@ -138,13 +138,14 @@ export default function AdminUsers() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>User Management</Title>
-        <Text size="sm" c="dimmed">
-          {users.length} users total
-        </Text>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>User Management</Title>
+          <Text size="sm" c="dimmed">
+            {users.length} users total
+          </Text>
+        </Group>
 
       <Table striped highlightOnHover>
         <thead>
@@ -275,6 +276,7 @@ export default function AdminUsers() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

@@ -263,13 +263,14 @@ export default function AdminParticipants() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Participant Management</Title>
-        <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
-          Create Participant
-        </Button>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Participant Management</Title>
+          <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
+            Create Participant
+          </Button>
+        </Group>
 
       <Text size="sm" c="dimmed">
         {participants.length} participants total
@@ -497,6 +498,7 @@ export default function AdminParticipants() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

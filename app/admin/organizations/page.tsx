@@ -111,13 +111,14 @@ export default function AdminOrganizations() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Organization Management</Title>
-        <Text size="sm" c="dimmed">
-          {organizations.length} organizations total
-        </Text>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Organization Management</Title>
+          <Text size="sm" c="dimmed">
+            {organizations.length} organizations total
+          </Text>
+        </Group>
 
       {/* Independent Students Section */}
       <Card withBorder>
@@ -225,6 +226,7 @@ export default function AdminOrganizations() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

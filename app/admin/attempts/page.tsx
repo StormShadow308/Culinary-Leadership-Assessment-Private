@@ -359,13 +359,14 @@ export default function AdminAttempts() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Assessment Attempts</Title>
-        <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
-          Create Attempt
-        </Button>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Assessment Attempts</Title>
+          <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
+            Create Attempt
+          </Button>
+        </Group>
 
       <Text size="sm" c="dimmed">
         {attempts.length} attempts total
@@ -590,6 +591,7 @@ export default function AdminAttempts() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

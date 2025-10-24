@@ -14,15 +14,17 @@ export default async function AdminSync() {
   }
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <Title order={2}>Data Synchronization</Title>
-        <Text size="sm" c="dimmed">
-          Keep Supabase and local database in sync
-        </Text>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Title order={2}>Data Synchronization</Title>
+          <Text size="sm" c="dimmed">
+            Keep Supabase and local database in sync
+          </Text>
+        </Group>
 
-      <SyncDashboard />
-    </Stack>
+        <SyncDashboard />
+      </Stack>
+    </div>
   );
 }

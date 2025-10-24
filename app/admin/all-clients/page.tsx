@@ -13,24 +13,26 @@ export default async function AllClientsData() {
   }
 
   return (
-    <Stack 
-      gap="md" 
-      style={{ 
-        backgroundColor: 'transparent',
-        minHeight: '100vh'
-      }}
-    >
-      <Group justify="space-between" align="center">
-        <Title order={2}>All Client's Data</Title>
-      </Group>
-
-      <Card 
-        withBorder 
-        padding="lg" 
-        radius="md"
+    <div className="mobile-page-container">
+      <Stack 
+        gap="md" 
+        style={{ 
+          backgroundColor: 'transparent',
+          minHeight: '100vh'
+        }}
       >
-        <AllClientsDataTable />
-      </Card>
-    </Stack>
+        <Group justify="space-between" align="center">
+          <Title order={2}>All Client's Data</Title>
+        </Group>
+
+        <Card 
+          withBorder 
+          padding="lg" 
+          radius="md"
+        >
+          <AllClientsDataTable />
+        </Card>
+      </Stack>
+    </div>
   );
 }

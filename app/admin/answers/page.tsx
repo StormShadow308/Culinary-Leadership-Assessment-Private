@@ -13,14 +13,16 @@ export default async function AdminAnswers() {
   }
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <Title order={2}>Answer Management</Title>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Title order={2}>Answer Management</Title>
+        </Group>
 
-      <Card withBorder padding="lg" radius="md">
-        <AnswersDataTable />
-      </Card>
-    </Stack>
+        <Card withBorder padding="lg" radius="md">
+          <AnswersDataTable />
+        </Card>
+      </Stack>
+    </div>
   );
 }

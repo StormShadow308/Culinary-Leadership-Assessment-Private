@@ -212,13 +212,14 @@ export default function AdminCohorts() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Cohort Management</Title>
-        <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
-          Create Cohort
-        </Button>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Cohort Management</Title>
+          <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
+            Create Cohort
+          </Button>
+        </Group>
 
       <Text size="sm" c="dimmed">
         {cohorts.length} cohorts total
@@ -405,6 +406,7 @@ export default function AdminCohorts() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

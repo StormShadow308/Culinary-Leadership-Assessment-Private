@@ -175,13 +175,14 @@ export default function AdminAssessments() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Assessment Management</Title>
-        <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
-          Create Assessment
-        </Button>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Assessment Management</Title>
+          <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
+            Create Assessment
+          </Button>
+        </Group>
 
       <Text size="sm" c="dimmed">
         {assessments.length} assessments total
@@ -320,6 +321,7 @@ export default function AdminAssessments() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }

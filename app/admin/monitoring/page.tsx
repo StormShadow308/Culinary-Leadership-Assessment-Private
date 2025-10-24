@@ -14,15 +14,17 @@ export default async function AdminMonitoring() {
   }
 
   return (
-    <Stack gap="md">
-      <Group justify="space-between" align="center">
-        <Title order={2}>System Monitoring</Title>
-        <Text size="sm" c="dimmed">
-          Monitor concurrent users and system performance
-        </Text>
-      </Group>
+    <div className="mobile-page-container">
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Title order={2}>System Monitoring</Title>
+          <Text size="sm" c="dimmed">
+            Monitor concurrent users and system performance
+          </Text>
+        </Group>
 
-      <MonitoringDashboard />
-    </Stack>
+        <MonitoringDashboard />
+      </Stack>
+    </div>
   );
 }

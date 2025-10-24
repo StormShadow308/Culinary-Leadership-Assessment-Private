@@ -143,10 +143,11 @@ export default function QAAdminPage() {
   }
 
   return (
-    <Stack h="100%" gap="md">
-      <Group justify="space-between">
-        <Title order={2}>Questions & Answers</Title>
-        <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
+    <div className="mobile-page-container">
+      <Stack h="100%" gap="md">
+        <Group justify="space-between">
+          <Title order={2}>Questions & Answers</Title>
+          <Button leftSection={<IconPlus size="1rem" />} onClick={() => setCreateModalOpen(true)}>
           Create Question
         </Button>
       </Group>
@@ -244,6 +245,7 @@ export default function QAAdminPage() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+      </Stack>
+    </div>
   );
 }
