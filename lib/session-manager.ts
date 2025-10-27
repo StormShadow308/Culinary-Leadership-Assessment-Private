@@ -379,17 +379,12 @@ export class SessionManager {
   }> {
     try {
       const activeSessions = await db
-        .select({ count: session.id })
+        .select({ id: session.id })
         .from(session)
-        .where(
-          and(
-            eq(session.active, true),
-            gte(session.expiresAt, new Date())
-          )
-        );
+        .where(gte(session.expiresAt, new Date()));
 
       const totalUsers = await db
-        .select({ count: user.id })
+        .select({ id: user.id })
         .from(user);
 
       return {

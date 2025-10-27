@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       .select({
         sessionId: session.id,
         userId: session.userId,
-        lastActivity: session.lastActivityAt,
+        createdAt: session.createdAt,
         ipAddress: session.ipAddress,
         userAgent: session.userAgent,
         userEmail: user.email,
@@ -27,24 +27,19 @@ export async function GET(request: NextRequest) {
       })
       .from(session)
       .leftJoin(user, eq(session.userId, user.id))
-      .where(
-        and(
-          eq(session.active, true),
-          gte(session.expiresAt, new Date())
-        )
-      )
-      .orderBy(session.lastActivityAt)
+      .where(gte(session.expiresAt, new Date()))
+      .orderBy(session.createdAt)
       .limit(50); // Limit to last 50 active users
 
     // Format the data
-    const userActivity = activeSessions.map(session => ({
-      userId: session.userId || 'unknown',
-      email: session.userEmail || 'unknown',
-      role: session.userRole || 'unknown',
-      lastActivity: session.lastActivity ? new Date(session.lastActivity).toLocaleString() : 'unknown',
-      ipAddress: session.ipAddress || 'unknown',
-      userAgent: session.userAgent || 'unknown',
-      sessionId: session.sessionId
+    const userActivity = activeSessions.map(s => ({
+      userId: s.userId || 'unknown',
+      email: s.userEmail || 'unknown',
+      role: s.userRole || 'unknown',
+      lastActivity: s.createdAt ? new Date(s.createdAt).toLocaleString() : 'unknown',
+      ipAddress: s.ipAddress || 'unknown',
+      userAgent: s.userAgent || 'unknown',
+      sessionId: s.sessionId
     }));
 
     console.log(`✅ Found ${userActivity.length} active users`);
