@@ -5,32 +5,10 @@ import { user as userSchema, participants, cohorts } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateAndSendPasscode } from '~/lib/passcode-service';
 import { SyncService } from '~/lib/sync-service';
-import { RateLimiter } from '~/lib/rate-limiter';
-import { SessionManager } from '~/lib/session-manager';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Registration request received');
-    
-    // Rate limiting check
-    const rateLimitResult = await RateLimiter.checkRateLimit(request, 'anonymous');
-    if (!rateLimitResult.allowed) {
-      console.log('🚫 Rate limit exceeded for registration');
-      return NextResponse.json(
-        { 
-          error: 'Too many registration attempts. Please try again later.',
-          retryAfter: rateLimitResult.retryAfter 
-        }, 
-        { 
-          status: 429,
-          headers: RateLimiter.getRateLimitHeaders(
-            rateLimitResult.allowed,
-            rateLimitResult.remaining,
-            rateLimitResult.resetTime
-          )
-        }
-      );
-    }
 
     const { email, password, name, role = 'student' } = await request.json();
     console.log('📝 Registration data:', { email, name, role });

@@ -3,33 +3,11 @@ import { db } from '~/db';
 import { organization, participants, attempts, cohorts } from '~/db/schema';
 import { getCurrentUser } from '~/lib/user-sync';
 import { eq, and, sql } from 'drizzle-orm';
-import { SessionManager } from '~/lib/session-manager';
 import { DataIsolationService } from '~/lib/data-isolation';
-import { RateLimiter } from '~/lib/rate-limiter';
 
 export async function GET(request: Request) {
   try {
     console.log('🔍 Fetching all clients data...');
-    
-    // Rate limiting check
-    const rateLimitResult = await RateLimiter.checkRateLimit(request as any, 'admin');
-    if (!rateLimitResult.allowed) {
-      console.log('🚫 Rate limit exceeded for admin API');
-      return NextResponse.json(
-        { 
-          error: 'Too many requests. Please try again later.',
-          retryAfter: rateLimitResult.retryAfter 
-        }, 
-        { 
-          status: 429,
-          headers: RateLimiter.getRateLimitHeaders(
-            rateLimitResult.allowed,
-            rateLimitResult.remaining,
-            rateLimitResult.resetTime
-          )
-        }
-      );
-    }
     
     // Check if user is admin using the original method
     console.log('🔍 Calling getCurrentUser()...');
@@ -419,9 +397,6 @@ export async function GET(request: Request) {
     
     // Log data access for audit
     console.log(`📊 Data access logged: User ${currentUser.email} accessed all-clients data`);
-    
-    // Record successful request for rate limiting
-    RateLimiter.recordSuccess(request as any, 'admin');
     
     return NextResponse.json({ 
       clients: sanitizedData,
