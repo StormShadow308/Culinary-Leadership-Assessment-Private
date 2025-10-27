@@ -65,6 +65,25 @@ export class RateLimiter {
       }
     }
   }
+
+  /**
+   * Get rate limiting statistics
+   */
+  static getStats(): {
+    totalEntries: number;
+    activeUsers: number;
+    blockedUsers: number;
+  } {
+    const totalEntries = this.requests.size;
+    const activeUsers = totalEntries; // Same as total entries
+    const blockedUsers = 0; // Tracked separately if needed
+
+    return {
+      totalEntries,
+      activeUsers,
+      blockedUsers
+    };
+  }
 }
 
 // Clean up every 5 minutes
