@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { RequestContext } from './request-context';
 
 /**
  * Concurrent user session manager
@@ -167,21 +166,10 @@ export function withConcurrentUserHandling<T extends any[], R>(
   handler: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const request = args[0] as NextRequest;
-    const requestId = RequestContext.getRequestId() || 'unknown';
-    const logger = RequestContext.createLogger(requestId);
-    
     try {
-      // Get client IP
-      const ipAddress = ConcurrentUserManager.getClientIP(request);
-      
-      // For now, we'll just log the session info
-      // In a real implementation, you'd validate the user session here
-      logger.debug('Processing request', { ipAddress });
-      
       return await handler(...args);
     } catch (error) {
-      logger.error('Error in concurrent user handler:', error);
+      console.error('Error in concurrent user handler:', error);
       throw error;
     }
   };

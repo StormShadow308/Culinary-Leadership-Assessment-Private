@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { RequestContext } from './request-context';
 
 export interface ApiError {
   code: string;
   message: string;
   details?: any;
   timestamp: string;
-  requestId?: string;
 }
 
 export class ApiErrorHandler {
@@ -19,20 +17,15 @@ export class ApiErrorHandler {
     message: string,
     details?: any
   ): NextResponse {
-    const requestId = RequestContext.getRequestId();
-    const userEmail = RequestContext.getUserEmail();
-    
     const error: ApiError = {
       code,
       message,
       details,
       timestamp: new Date().toISOString(),
-      requestId: requestId || undefined,
     };
 
-    // Log error with context
-    const logger = RequestContext.createLogger(requestId || 'unknown', userEmail || undefined);
-    logger.error(`API Error [${code}]: ${message}`, { details, status });
+    // Log error
+    console.error(`API Error [${code}]: ${message}`, { details, status });
 
     return NextResponse.json(error, { status });
   }

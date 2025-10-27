@@ -2,7 +2,6 @@ import { createClient } from './supabase-server';
 import { db } from '../db';
 import { user as userSchema } from '~/db/schema';
 import { eq } from 'drizzle-orm';
-import { RequestContext, withRequestIsolation } from './request-context';
 
 export async function syncUserFromSupabase(supabaseUser: unknown) {
   try {
@@ -59,41 +58,23 @@ export async function syncUserFromSupabase(supabaseUser: unknown) {
 }
 
 
-export const getCurrentUser = withRequestIsolation(async () => {
+export async function getCurrentUser() {
   try {
-    const requestId = RequestContext.getRequestId() || 'unknown';
-    const logger = RequestContext.createLogger(requestId);
-    
-    logger.debug('Creating Supabase client...');
     const supabase = await createClient();
-    
-    logger.debug('Getting user from Supabase...');
     const { data: { user: supabaseUser }, error } = await supabase.auth.getUser();
     
-    logger.debug('Supabase response:', { 
-      hasUser: !!supabaseUser, 
-      error: error?.message,
-      userEmail: supabaseUser?.email 
-    });
-    
     if (error) {
-      logger.warn('Supabase error:', error);
+      console.warn('Supabase error:', error);
       return null;
     }
     
     if (!supabaseUser) {
-      logger.debug('No Supabase user found');
       return null;
     }
 
-    // Set user context for this request
-    RequestContext.setContext(requestId, supabaseUser.email || undefined);
-    
-    logger.debug('Supabase user found, syncing to local database...');
     // Sync user to local database
     await syncUserFromSupabase(supabaseUser);
 
-    logger.debug('Getting user from local database...');
     // Get user from local database
     const localUser = await db
       .select()
@@ -101,17 +82,9 @@ export const getCurrentUser = withRequestIsolation(async () => {
       .where(eq(userSchema.email, supabaseUser.email))
       .limit(1);
 
-    logger.debug('Local user result:', localUser[0] ? {
-      id: localUser[0].id,
-      email: localUser[0].email,
-      role: localUser[0].role
-    } : 'null');
-
     return localUser[0] || null;
   } catch (error) {
-    const requestId = RequestContext.getRequestId() || 'unknown';
-    const logger = RequestContext.createLogger(requestId);
-    logger.error('Error in getCurrentUser:', error);
+    console.error('Error in getCurrentUser:', error);
     return null;
   }
-});
+}
