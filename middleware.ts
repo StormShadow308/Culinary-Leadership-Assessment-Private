@@ -93,6 +93,11 @@ async function checkDatabaseHealth(): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url);
 
+  // Always redirect from home to sign-in page first
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
+
   // Allow unauthenticated access to attempt routes
   if (pathname.startsWith('/attempt')) {
     return NextResponse.next();
@@ -228,10 +233,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Always redirect from home to sign-in page first
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
-  }
+  // Root redirect handled above
 
   // Allow unauthenticated access to authentication pages
   if (pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-email') {
