@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Culinary Leadership Assessment | Transform Your Leadership Skills</title>
+    <meta name="description" content="Transform your culinary leadership skills with our comprehensive assessment platform. Evaluate expertise, track progress, and develop effective team management strategies." />
+    <meta name="author" content="Transformational Leadership Academy" />
+    <meta name="keywords" content="culinary leadership, chef assessment, kitchen management, team leadership, culinary skills" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Culinary Leadership Assessment" />
+    <meta property="og:description" content="Transform your culinary leadership skills with our comprehensive assessment platform." />
+    <meta property="og:image" content="/landing-site/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Culinary Leadership Assessment" />
+    <meta name="twitter:description" content="Transform your culinary leadership skills with our comprehensive assessment platform." />
+    <meta name="twitter:image" content="/landing-site/og-image.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/landing-site/favicon.ico" />
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/landing-site/assets/index-B4l14p04.css" as="style" />
+    <link rel="preload" href="/landing-site/assets/index-BszT7WMJ.js" as="script" crossorigin />
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" crossorigin href="/landing-site/assets/index-B4l14p04.css">
+    
+    <!-- Module script -->
+    <script type="module" crossorigin src="/landing-site/assets/index-BszT7WMJ.js" defer></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script>
+      // Intercept clicks on assessment and dashboard links to redirect to Next.js auth pages
+      document.addEventListener('click', function(e) {
+        const target = e.target.closest('a');
+        if (target && target.href) {
+          const href = target.getAttribute('href');
+          // Redirect assessment links to sign-up
+          if (href === '#assessment' || href.includes('assessment')) {
+            e.preventDefault();
+            window.location.href = '/sign-up';
+          }
+          // Redirect participant/dashboard links to sign-in
+          if (href === '#participant' || href === '#admin' || href === '#organization') {
+            e.preventDefault();
+            window.location.href = '/sign-in';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

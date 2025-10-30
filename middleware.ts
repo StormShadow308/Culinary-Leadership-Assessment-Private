@@ -228,13 +228,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Always redirect from home to sign-in page first
+  // Always redirect from home to landing site
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    return NextResponse.redirect(new URL('/landing-site/index.html', request.url));
   }
 
-  // Allow unauthenticated access to authentication pages
-  if (pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-email') {
+  // Allow unauthenticated access to landing page and authentication pages
+  if (pathname === '/landing' || pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-email') {
     return NextResponse.next();
   }
 
@@ -340,7 +340,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - landing-site (static landing page files)
+     * - lovable-uploads (landing page images)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|landing-site|lovable-uploads).*)',
   ],
 };

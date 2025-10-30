@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-export default {
+const nextConfig = {
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
@@ -16,10 +16,31 @@ export default {
   generateEtags: false,
   // Force dynamic rendering for pages that use cookies
   trailingSlash: false,
-  // Security headers
+  // Security and caching headers
   async headers() {
     return [
       {
+        // Cache static landing page assets
+        source: '/landing-site/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Cache images
+        source: '/lovable-uploads/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Security headers for all pages
         source: '/(.*)',
         headers: [
           {
@@ -39,3 +60,5 @@ export default {
     ];
   },
 };
+
+export default nextConfig;
