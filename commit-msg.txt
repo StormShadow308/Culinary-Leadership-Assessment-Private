@@ -1,0 +1,9 @@
+FIX: Sign-up error - removed undefined SessionManager and RateLimiter references
+
+- Fixed registration API failing due to undefined SessionManager.getSessionContext()
+- Removed RateLimiter.recordSuccess() call that was not imported
+- Registration now completes successfully
+- Users can now sign up without errors
+- Kept SyncService validation which is properly imported
+
+This fixes the "Sign-up Error: An error occurred during sign-up" issue
