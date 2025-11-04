@@ -306,8 +306,6 @@ export default function AdminCohorts() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Organization"
@@ -316,8 +314,6 @@ export default function AdminCohorts() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '' })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Alert icon={<IconAlertCircle size="1rem" />} color="blue" variant="light">
             <Text size="sm">
@@ -349,8 +345,6 @@ export default function AdminCohorts() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Organization"
@@ -359,8 +353,6 @@ export default function AdminCohorts() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '' })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Alert icon={<IconAlertCircle size="1rem" />} color="blue" variant="light">
             <Text size="sm">

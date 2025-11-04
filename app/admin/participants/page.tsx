@@ -360,8 +360,6 @@ export default function AdminParticipants() {
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <TextInput
             label="Email"
@@ -370,8 +368,6 @@ export default function AdminParticipants() {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Organization"
@@ -380,8 +376,6 @@ export default function AdminParticipants() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '', cohortId: '' })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Cohort"
@@ -393,8 +387,6 @@ export default function AdminParticipants() {
             value={formData.cohortId}
             onChange={(value) => setFormData({ ...formData, cohortId: value || '' })}
             disabled={!formData.organizationId}
-            maxDropdownHeight={200}
-            searchable
           />
           <Switch
             label="Opted Out"
@@ -425,8 +417,6 @@ export default function AdminParticipants() {
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <TextInput
             label="Email"
@@ -435,8 +425,6 @@ export default function AdminParticipants() {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Organization"
@@ -445,8 +433,6 @@ export default function AdminParticipants() {
             value={formData.organizationId}
             onChange={(value) => setFormData({ ...formData, organizationId: value || '', cohortId: '' })}
             required
-            maxDropdownHeight={200}
-            searchable
           />
           <Select
             label="Cohort"
@@ -458,8 +444,6 @@ export default function AdminParticipants() {
             value={formData.cohortId}
             onChange={(value) => setFormData({ ...formData, cohortId: value || '' })}
             disabled={!formData.organizationId}
-            maxDropdownHeight={200}
-            searchable
           />
           <Switch
             label="Opted Out"
