@@ -7,12 +7,12 @@ import { getCurrentUser } from '~/lib/user-sync';
 import { eq } from 'drizzle-orm';
 
 /**
- * API endpoint to create predefined generic cohorts for the N/A organization
+ * API endpoint to create a single default cohort for the N/A organization (Independent Learners)
  * Only accessible by admin users
  */
 export async function POST(request: NextRequest) {
   try {
-    console.log('🎓 Setting up default cohorts for N/A organization...');
+    console.log('🎓 Setting up default cohort for N/A organization (Independent Learners)...');
     
     // Verify admin access
     const currentUser = await getCurrentUser();
@@ -46,21 +46,18 @@ export async function POST(request: NextRequest) {
       .execute();
 
     if (existingCohorts.length > 0) {
-      console.log('✅ Default cohorts already exist:', existingCohorts.length);
+      console.log('✅ Default cohort already exists');
       return NextResponse.json({
         success: true,
-        message: 'Default cohorts already exist',
+        message: 'Default cohort "Independent Learners" already exists',
         cohorts: existingCohorts,
       });
     }
 
-    // Create predefined generic cohorts for N/A organization
+    // Create single cohort for N/A organization
+    // Independent students don't need multiple cohorts since they're not part of structured programs
     const predefinedCohorts = [
-      'General Assessment Group',
-      'Independent Learners',
-      'Self-Directed Students',
-      'Open Enrollment',
-      'Unassigned Participants'
+      'Independent Learners'
     ];
 
     const createdCohorts = [];
@@ -91,11 +88,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('✅ Default cohorts setup completed:', createdCohorts.length);
+    console.log('✅ Default cohort setup completed');
 
     return NextResponse.json({
       success: true,
-      message: `Created ${createdCohorts.length} default cohorts`,
+      message: 'Created default cohort "Independent Learners"',
       cohorts: createdCohorts,
     });
 
@@ -104,7 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Setup failed',
-        message: error instanceof Error ? error.message : 'Failed to setup default cohorts'
+        message: error instanceof Error ? error.message : 'Failed to setup default cohort'
       },
       { status: 500 }
     );

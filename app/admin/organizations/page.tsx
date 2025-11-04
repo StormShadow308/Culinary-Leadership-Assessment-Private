@@ -152,13 +152,13 @@ export default function AdminOrganizations() {
                 } catch (error) {
                   notifications.show({
                     title: 'Error',
-                    message: error instanceof Error ? error.message : 'Failed to setup cohorts',
+                    message: error instanceof Error ? error.message : 'Failed to setup cohort',
                     color: 'red',
                   });
                 }
               }}
             >
-              Setup Default Cohorts
+              Setup Default Cohort
             </Button>
             <Button 
               variant="filled" 

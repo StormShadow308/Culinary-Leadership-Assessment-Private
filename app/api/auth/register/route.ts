@@ -166,7 +166,8 @@ export async function POST(request: NextRequest) {
       if (role === 'student') {
         console.log('🎓 Creating participant record for student...');
         
-        // Get the default cohort for the default organization
+        // Get the single default cohort for independent students
+        // N/A organization uses only one cohort: "Independent Learners"
         const defaultCohort = await db
           .select()
           .from(cohorts)

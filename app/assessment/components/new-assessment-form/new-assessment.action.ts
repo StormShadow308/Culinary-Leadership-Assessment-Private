@@ -127,18 +127,37 @@ export const newAssessmentAction = actionClient
       } else {
         // Determine organization ID - use from invite or create default
         let targetOrgId: string;
+        let targetCohortId: string | null = null;
         
         if (organizationId) {
           // Use organization from invite
           targetOrgId = organizationId;
+          // Cohort will be assigned later if needed (for invited students)
+          targetCohortId = null;
         } else {
           // Use the default N/A organization for independent students
           // This organization should already exist in the database with id 'org_default_students'
           console.log('🏢 Using default N/A organization for independent student...');
           targetOrgId = 'org_default_students';
+          
+          // Get the single default cohort for independent students
+          console.log('🎓 Fetching default cohort for independent student...');
+          const defaultCohort = await db
+            .select()
+            .from(cohorts)
+            .where(eq(cohorts.organizationId, 'org_default_students'))
+            .limit(1)
+            .execute();
+          
+          if (defaultCohort.length > 0) {
+            targetCohortId = defaultCohort[0].id;
+            console.log('✅ Assigned to default cohort:', defaultCohort[0].name);
+          } else {
+            console.warn('⚠️ No default cohort found for N/A organization');
+          }
         }
 
-        // Create new participant with determined organization
+        // Create new participant with determined organization and cohort
         const [newParticipant] = await db
           .insert(participants)
           // @ts-expect-error - TypeScript doesn't recognize the values method correctly
@@ -146,6 +165,7 @@ export const newAssessmentAction = actionClient
             email,
             fullName,
             organizationId: targetOrgId,
+            cohortId: targetCohortId,
             createdAt: new Date().toISOString(),
             lastActiveAt: new Date().toISOString(),
           })
