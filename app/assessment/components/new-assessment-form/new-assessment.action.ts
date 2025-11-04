@@ -132,66 +132,10 @@ export const newAssessmentAction = actionClient
           // Use organization from invite
           targetOrgId = organizationId;
         } else {
-          // Get or create a default organization for independent students
-          console.log('🏢 Checking for default organization...');
-          
-          // Check by ID first (primary key)
-          const existingOrgById = await db
-            .select({ id: organization.id })
-            .from(organization)
-            .where(eq(organization.id, 'org_default_students'))
-            .limit(1)
-            .execute();
-
-          if (existingOrgById.length > 0) {
-            console.log('✅ Default organization found by ID');
-            targetOrgId = existingOrgById[0].id;
-          } else {
-            // Also check by slug as fallback
-            const existingOrgBySlug = await db
-              .select({ id: organization.id })
-              .from(organization)
-              .where(eq(organization.slug, 'default-students'))
-              .limit(1)
-              .execute();
-
-            if (existingOrgBySlug.length > 0) {
-              console.log('✅ Default organization found by slug');
-              targetOrgId = existingOrgBySlug[0].id;
-            } else {
-              // Create default organization for independent students
-              console.log('🏢 Creating new default organization...');
-              try {
-                const [newOrg] = await db
-                  .insert(organization)
-                  // @ts-expect-error - Drizzle ORM type inference issue
-                  .values({
-                    id: 'org_default_students',
-                    name: 'Independent Students',
-                    slug: 'default-students',
-                    createdAt: new Date(),
-                  })
-                  .returning({ id: organization.id })
-                  .execute();
-                targetOrgId = newOrg.id;
-                console.log('✅ Default organization created');
-              } catch (orgError: any) {
-                // If it fails due to duplicate key, fetch the existing one
-                if (orgError.code === '23505') {
-                  console.log('⚠️ Organization already exists (race condition), fetching it...');
-                  const [existingOrg] = await db
-                    .select({ id: organization.id })
-                    .from(organization)
-                    .where(eq(organization.id, 'org_default_students'))
-                    .limit(1)
-                    .execute();
-                  targetOrgId = existingOrg.id;
-                } else {
-                  throw orgError;
-                }
-              }
-            }
-          }
+          // Use the default N/A organization for independent students
+          // This organization should already exist in the database with id 'org_default_students'
+          console.log('🏢 Using default N/A organization for independent student...');
+          targetOrgId = 'org_default_students';
         }
 
         // Create new participant with determined organization
