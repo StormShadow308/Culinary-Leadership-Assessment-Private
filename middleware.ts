@@ -93,9 +93,31 @@ async function checkDatabaseHealth(): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url);
 
-  // Allow unauthenticated access to attempt routes
-  if (pathname.startsWith('/attempt')) {
-    return NextResponse.next();
+  // Allow unauthenticated access to attempt routes and assessment page (for invite links)
+  if (pathname.startsWith('/attempt') || pathname === '/assessment') {
+    // For authenticated users, still enforce role-based access control below
+    // For unauthenticated users, allow access (invite links)
+    const cookieStoreQuick = await cookies();
+    const supabaseQuick = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStoreQuick.getAll();
+          },
+          setAll() {}
+        }
+      }
+    );
+    
+    const { data: { user: quickUser } } = await supabaseQuick.auth.getUser();
+    
+    if (!quickUser) {
+      // Unauthenticated user - allow access for invite links
+      return NextResponse.next();
+    }
+    // Authenticated user - continue to role-based checks
   }
 
   const cookieStore = await cookies();
@@ -223,11 +245,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname === '/assessment') {
-    console.log('User is trying to access /assessment');
-    return NextResponse.next();
-  }
-
   // Always redirect from home to landing site
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/landing-site/index.html', request.url));
@@ -313,9 +330,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users to sign-in for protected routes
+  // Note: /assessment and /attempt are excluded as they allow unauthenticated access for invite links
   if (!user && (pathname === '/admin' || pathname.startsWith('/admin/') || 
-                pathname === '/organisation' || pathname.startsWith('/organisation/') ||
-                pathname === '/assessment' || pathname.startsWith('/attempt'))) {
+                pathname === '/organisation' || pathname.startsWith('/organisation/'))) {
     // Rate limit unauthenticated access logs to prevent spam from prefetch requests
     if (shouldLogMessage(`unauthenticated-access-${pathname}`)) {
       console.log(`🔒 Unauthenticated user trying to access protected route: ${pathname}`);

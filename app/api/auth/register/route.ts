@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       } 
       
       // Find user by email in the list
-      const supabaseUser = supabaseUsers.users.find(user => user.email === email);
+      const supabaseUser = supabaseUsers?.users?.find((user: any) => user.email === email);
       
       if (supabaseUser) {
         console.log('⚠️ User exists in Supabase but not in local database - cleaning up orphaned user...');
@@ -175,8 +175,9 @@ export async function POST(request: NextRequest) {
 
         if (defaultCohort.length > 0) {
           // Create participant record
+          // @ts-expect-error - Drizzle ORM type inference issue with optional fields
           await db.insert(participants).values({
-            email: email,
+            email,
             fullName: name,
             organizationId: 'org_default_students',
             cohortId: defaultCohort[0].id,
