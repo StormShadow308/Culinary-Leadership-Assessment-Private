@@ -32,19 +32,30 @@ export function NewAssessmentForm(props: NewAssessmentFormProps) {
   });
 
   const onSubmit = async (data: NewAssessmentForm) => {
+    console.log('📝 Form submitted:', data);
     const forceContinue = participantEmail && participantName ? true : false;
 
     const response = await executeAsync({ ...data, assessmentId, forceContinue, organizationId });
+    
+    console.log('📬 Response received:', response);
 
     if (response.data?.error === 'duplicate_email') {
+      console.log('⚠️ Duplicate email detected');
       setError('email', {
         type: 'manual',
         message:
           'Participant with this email already exists. Do you want to continue or start over?',
       });
     } else if (response.data?.success) {
+      console.log('✅ Success! Redirecting to attempt:', response.data.attemptId);
       // Redirect to first question or dashboard
       router.push(`/attempt/${response.data.attemptId}`);
+    } else if (response.data?.error) {
+      console.error('❌ Error from action:', response.data.error, response.data.message);
+    } else if (response.serverError) {
+      console.error('❌ Server error:', response.serverError);
+    } else {
+      console.warn('⚠️ Unexpected response:', response);
     }
   };
 

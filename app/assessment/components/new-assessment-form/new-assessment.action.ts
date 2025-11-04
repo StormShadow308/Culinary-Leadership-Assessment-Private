@@ -17,32 +17,34 @@ export const newAssessmentAction = actionClient
   .schema(newAssessmentSchema)
   .action(
     async ({ parsedInput: { fullName, email, forceContinue, assessmentId, resetProgress, organizationId } }) => {
-      console.log('🎯 New assessment action started:', { fullName, email, assessmentId, organizationId });
-      
-      if (!assessmentId) {
-        console.error('❌ Assessment ID missing');
-        return { error: 'assessment_missing', message: 'Assessment ID is required' };
-      }
+      try {
+        console.log('🎯 New assessment action started:', { fullName, email, assessmentId, organizationId });
+        
+        if (!assessmentId) {
+          console.error('❌ Assessment ID missing');
+          return { error: 'assessment_missing', message: 'Assessment ID is required' };
+        }
 
-      // Check if assessment exists
-      const assessmentExists = await db
-        .select({ id: assessments.id })
-        .from(assessments)
-        .where(eq(assessments.id, assessmentId))
-        .execute();
+        // Check if assessment exists
+        const assessmentExists = await db
+          .select({ id: assessments.id })
+          .from(assessments)
+          .where(eq(assessments.id, assessmentId))
+          .execute();
 
-      if (assessmentExists.length === 0) {
-        console.error('❌ Assessment not found:', assessmentId);
-        return { error: 'assessment_not_found', message: 'Assessment not found' };
-      }
-      
-      console.log('✅ Assessment found:', assessmentId);
+        if (assessmentExists.length === 0) {
+          console.error('❌ Assessment not found:', assessmentId);
+          return { error: 'assessment_not_found', message: 'Assessment not found' };
+        }
+        
+        console.log('✅ Assessment found:', assessmentId);
 
       let participant: Participant;
       let existingAttempts: Array<Attempt> = [];
       let assessmentType = 'pre_assessment'; // Default to pre-assessment
 
       // Check if a participant with the same email already exists
+      console.log('🔍 Checking for existing participant:', email);
       const existingParticipant = await db
         .select()
         .from(participants)
@@ -263,12 +265,25 @@ export const newAssessmentAction = actionClient
         attempt = newAttempt;
       }
 
-      console.log('✅ Assessment action completed successfully:', { participantId: participant.id, attemptId: attempt.id });
-      
-      return {
-        success: true,
-        participantId: participant.id,
-        attemptId: attempt.id,
-      };
+        console.log('✅ Assessment action completed successfully:', { participantId: participant.id, attemptId: attempt.id });
+        
+        return {
+          success: true,
+          participantId: participant.id,
+          attemptId: attempt.id,
+        };
+      } catch (error) {
+        console.error('❌ Assessment action failed with error:', error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          email,
+          assessmentId
+        });
+        return {
+          error: 'action_failed',
+          message: error instanceof Error ? error.message : 'Failed to create assessment attempt'
+        };
+      }
     }
   );
