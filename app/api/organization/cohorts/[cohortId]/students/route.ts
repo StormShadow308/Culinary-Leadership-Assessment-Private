@@ -122,11 +122,13 @@ export async function GET(
       .where(eq(participants.cohortId, cohortId))
       .orderBy(participants.fullName);
 
-    // Security check: Ensure all returned students belong to the user's organization
-    const unauthorizedStudents = students.filter(student => student.organizationId !== organizationId);
-    if (unauthorizedStudents.length > 0) {
-      console.error('🚨 SECURITY VIOLATION: Unauthorized students detected:', unauthorizedStudents);
-      return NextResponse.json({ error: 'Security violation detected' }, { status: 500 });
+    // Security check: Ensure all returned students belong to the user's organization (skip for admin users)
+    if (organizationId) {
+      const unauthorizedStudents = students.filter(student => student.organizationId !== organizationId);
+      if (unauthorizedStudents.length > 0) {
+        console.error('🚨 SECURITY VIOLATION: Unauthorized students detected:', unauthorizedStudents);
+        return NextResponse.json({ error: 'Security violation detected' }, { status: 500 });
+      }
     }
 
     // Remove organizationId from response for security
