@@ -306,17 +306,42 @@ export async function middleware(request: NextRequest) {
         } else {
           return NextResponse.redirect(new URL('/assessment', request.url));
         }
+      } else {
+        // Clear invite session cookie when organization user returns to their dashboard
+        const hasInviteSession = cookieStore.get('invite_session')?.value === 'true';
+        if (hasInviteSession && (userRole === 'organization' || userRole === 'admin')) {
+          const response = NextResponse.next();
+          response.cookies.delete('invite_session');
+          console.log(`🧹 Cleared invite session for user: ${user.email} returning to organization dashboard`);
+          return response;
+        }
       }
     }
 
     // STUDENT-ONLY ROUTES: Only students can access assessment and attempt routes
     // EXCEPTION: Allow invite links (invite=true query parameter) for all users
     if (pathname === '/assessment' || pathname.startsWith('/attempt')) {
-      // Check if this is an invite link
+      // Check if this is an invite link or if user has an active invite session
       const url = new URL(request.url);
       const isInviteLink = url.searchParams.get('invite') === 'true';
+      const hasInviteSession = cookieStore.get('invite_session')?.value === 'true';
       
-      if (!isInviteLink && userRole !== 'student') {
+      // If this is a new invite link, set the invite session cookie
+      if (isInviteLink && !hasInviteSession) {
+        const response = NextResponse.next();
+        response.cookies.set('invite_session', 'true', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24, // 24 hours
+          path: '/',
+        });
+        console.log(`✅ Invite link access granted for user: ${user.email} (Role: ${userRole}) - Session cookie set`);
+        return response;
+      }
+      
+      // Allow access if user has invite session or is a student
+      if (!isInviteLink && !hasInviteSession && userRole !== 'student') {
         if (shouldLogMessage(`student-access-denied-${user.email}`)) {
           console.log(`❌ Access Denied: Non-student user trying to access student area`);
         }
@@ -327,9 +352,11 @@ export async function middleware(request: NextRequest) {
         } else {
           return NextResponse.redirect(new URL('/assessment', request.url));
         }
-      } else if (isInviteLink) {
-        // Allow invite link access for all authenticated users
-        console.log(`✅ Invite link access granted for user: ${user.email} (Role: ${userRole})`);
+      } else if (hasInviteSession) {
+        // Allow continued access for users with active invite session
+        if (shouldLogMessage(`invite-session-access-${user.email}`)) {
+          console.log(`✅ Invite session access granted for user: ${user.email} (Role: ${userRole})`);
+        }
       }
     }
 
