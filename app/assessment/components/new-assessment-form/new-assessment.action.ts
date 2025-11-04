@@ -17,7 +17,10 @@ export const newAssessmentAction = actionClient
   .schema(newAssessmentSchema)
   .action(
     async ({ parsedInput: { fullName, email, forceContinue, assessmentId, resetProgress, organizationId } }) => {
+      console.log('🎯 New assessment action started:', { fullName, email, assessmentId, organizationId });
+      
       if (!assessmentId) {
+        console.error('❌ Assessment ID missing');
         return { error: 'assessment_missing', message: 'Assessment ID is required' };
       }
 
@@ -29,8 +32,11 @@ export const newAssessmentAction = actionClient
         .execute();
 
       if (assessmentExists.length === 0) {
+        console.error('❌ Assessment not found:', assessmentId);
         return { error: 'assessment_not_found', message: 'Assessment not found' };
       }
+      
+      console.log('✅ Assessment found:', assessmentId);
 
       let participant: Participant;
       let existingAttempts: Array<Attempt> = [];
@@ -45,6 +51,7 @@ export const newAssessmentAction = actionClient
 
       if (existingParticipant.length > 0) {
         // Participant exists
+        console.log('👤 Existing participant found:', email);
         participant = existingParticipant[0];
 
         // Check for ALL existing attempts for this assessment
@@ -137,6 +144,7 @@ export const newAssessmentAction = actionClient
             // Create default organization for independent students
             const [newOrg] = await db
               .insert(organization)
+              // @ts-expect-error - Drizzle ORM type inference issue
               .values({
                 id: 'org_default_students',
                 name: 'Independent Students',
@@ -162,6 +170,7 @@ export const newAssessmentAction = actionClient
               for (const cohortName of predefinedCohorts) {
                 await db
                   .insert(cohorts)
+                  // @ts-expect-error - Drizzle ORM type inference issue with timestamp fields
                   .values({
                     organizationId: targetOrgId,
                     name: cohortName,
@@ -188,6 +197,7 @@ export const newAssessmentAction = actionClient
           .returning()
           .execute();
 
+        console.log('👤 New participant created:', email);
         participant = newParticipant;
       }
 
@@ -253,6 +263,8 @@ export const newAssessmentAction = actionClient
         attempt = newAttempt;
       }
 
+      console.log('✅ Assessment action completed successfully:', { participantId: participant.id, attemptId: attempt.id });
+      
       return {
         success: true,
         participantId: participant.id,
