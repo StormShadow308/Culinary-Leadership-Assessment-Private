@@ -33,30 +33,50 @@ export const inviteStudentAction = actionClient
 
       // Check if cohort exists or create it
       let cohortId: string;
-      const existingCohort = await db
-        .select({ id: cohorts.id })
-        .from(cohorts)
-        .where(and(eq(cohorts.name, cohortName), eq(cohorts.organizationId, organizationId)))
-        .execute();
-
-      if (existingCohort.length > 0) {
-        cohortId = existingCohort[0].id;
+      
+      // Special handling for N/A organization - only use existing "Independent Learners" cohort
+      if (organizationId === 'org_default_students') {
+        console.log('🏢 N/A Organization detected - using single "Independent Learners" cohort');
+        const naOrgCohort = await db
+          .select({ id: cohorts.id })
+          .from(cohorts)
+          .where(eq(cohorts.organizationId, 'org_default_students'))
+          .limit(1)
+          .execute();
+        
+        if (naOrgCohort.length === 0) {
+          return { error: 'Independent Learners cohort not found. Please contact administrator.' };
+        }
+        
+        cohortId = naOrgCohort[0].id;
+        console.log('✅ Using Independent Learners cohort:', cohortId);
       } else {
-        // Organization users can now create new cohorts
-        // Create new cohort
-        const [newCohort] = await db
-          .insert(cohorts)
-          // @ts-expect-error - TypeScript doesn't recognize all the fields in the object
-          .values({
-            name: cohortName,
-            organizationId: organizationId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .returning({ id: cohorts.id })
+        // For regular organizations, check if cohort exists or create it
+        const existingCohort = await db
+          .select({ id: cohorts.id })
+          .from(cohorts)
+          .where(and(eq(cohorts.name, cohortName), eq(cohorts.organizationId, organizationId)))
           .execute();
 
-        cohortId = newCohort.id;
+        if (existingCohort.length > 0) {
+          cohortId = existingCohort[0].id;
+        } else {
+          // Organization users can now create new cohorts
+          // Create new cohort
+          const [newCohort] = await db
+            .insert(cohorts)
+            // @ts-expect-error - TypeScript doesn't recognize all the fields in the object
+            .values({
+              name: cohortName,
+              organizationId: organizationId,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            .returning({ id: cohorts.id })
+            .execute();
+
+          cohortId = newCohort.id;
+        }
       }
 
       // Check if participant already exists

@@ -161,6 +161,36 @@ export default function AdminOrganizations() {
               Setup Default Cohort
             </Button>
             <Button 
+              variant="light"
+              color="orange"
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/cleanup-na-cohorts', {
+                    method: 'POST',
+                  });
+                  const data = await response.json();
+                  
+                  if (data.success) {
+                    notifications.show({
+                      title: 'Success',
+                      message: `Cleaned up ${data.details.cohortsDeleted} duplicate cohorts. ${data.details.participantsReassigned} participants reassigned.`,
+                      color: 'green',
+                    });
+                  } else {
+                    throw new Error(data.error || data.message);
+                  }
+                } catch (error) {
+                  notifications.show({
+                    title: 'Error',
+                    message: error instanceof Error ? error.message : 'Failed to cleanup cohorts',
+                    color: 'red',
+                  });
+                }
+              }}
+            >
+              Cleanup Duplicate Cohorts
+            </Button>
+            <Button 
               variant="filled" 
               onClick={() => router.push('/organisation?orgId=org_default_students')}
             >
