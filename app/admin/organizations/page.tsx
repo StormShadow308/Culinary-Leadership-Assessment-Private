@@ -129,12 +129,44 @@ export default function AdminOrganizations() {
               Students who signed up independently without an organization invite
             </Text>
           </Stack>
-          <Button 
-            variant="outline" 
-            onClick={() => router.push('/organisation?orgId=org_default_students')}
-          >
-            View Independent Students
-          </Button>
+          <Group>
+            <Button 
+              variant="light"
+              color="blue"
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/setup-default-cohorts', {
+                    method: 'POST',
+                  });
+                  const data = await response.json();
+                  
+                  if (data.success) {
+                    notifications.show({
+                      title: 'Success',
+                      message: data.message,
+                      color: 'green',
+                    });
+                  } else {
+                    throw new Error(data.message);
+                  }
+                } catch (error) {
+                  notifications.show({
+                    title: 'Error',
+                    message: error instanceof Error ? error.message : 'Failed to setup cohorts',
+                    color: 'red',
+                  });
+                }
+              }}
+            >
+              Setup Default Cohorts
+            </Button>
+            <Button 
+              variant="filled" 
+              onClick={() => router.push('/organisation?orgId=org_default_students')}
+            >
+              View Results & Analytics
+            </Button>
+          </Group>
         </Group>
       </Card>
 
