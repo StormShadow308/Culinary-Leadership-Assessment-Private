@@ -196,7 +196,7 @@ export const inviteStudentAction = actionClient
       const orgData = await db.execute(sql`
         SELECT name FROM organization WHERE id = ${organizationId}
       `);
-      const organizationName = orgData.rows[0]?.name || 'Unknown Organization';
+      const organizationName = (orgData.rows[0]?.name as string) || 'Unknown Organization';
 
       // Send invitation email using the invitation service
       const emailResult = await sendInvitationEmail({
