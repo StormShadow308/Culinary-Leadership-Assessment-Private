@@ -133,53 +133,62 @@ export const newAssessmentAction = actionClient
           targetOrgId = organizationId;
         } else {
           // Get or create a default organization for independent students
-          const existingOrg = await db
+          console.log('🏢 Checking for default organization...');
+          
+          // Check by ID first (primary key)
+          const existingOrgById = await db
             .select({ id: organization.id })
             .from(organization)
-            .where(eq(organization.slug, 'default-students'))
+            .where(eq(organization.id, 'org_default_students'))
             .limit(1)
             .execute();
 
-          if (existingOrg.length > 0) {
-            targetOrgId = existingOrg[0].id;
+          if (existingOrgById.length > 0) {
+            console.log('✅ Default organization found by ID');
+            targetOrgId = existingOrgById[0].id;
           } else {
-            // Create default organization for independent students
-            const [newOrg] = await db
-              .insert(organization)
-              // @ts-expect-error - Drizzle ORM type inference issue
-              .values({
-                id: 'org_default_students',
-                name: 'Independent Students',
-                slug: 'default-students',
-                createdAt: new Date(),
-              })
-              .returning({ id: organization.id })
+            // Also check by slug as fallback
+            const existingOrgBySlug = await db
+              .select({ id: organization.id })
+              .from(organization)
+              .where(eq(organization.slug, 'default-students'))
+              .limit(1)
               .execute();
-            targetOrgId = newOrg.id;
 
-            // Only admins can create cohorts
-            const currentUser = await getCurrentUser();
-            if (currentUser && currentUser.role === 'admin') {
-              // Create predefined cohorts for independent students organization (admin only)
-              const predefinedCohorts = [
-                'Fall 2024 Leadership Cohort',
-                'Spring 2025 Advanced Cohort',
-                'Summer 2025 Intensive Cohort',
-                'Executive Leadership Program',
-                'Culinary Management Cohort'
-              ];
-
-              for (const cohortName of predefinedCohorts) {
-                await db
-                  .insert(cohorts)
-                  // @ts-expect-error - Drizzle ORM type inference issue with timestamp fields
+            if (existingOrgBySlug.length > 0) {
+              console.log('✅ Default organization found by slug');
+              targetOrgId = existingOrgBySlug[0].id;
+            } else {
+              // Create default organization for independent students
+              console.log('🏢 Creating new default organization...');
+              try {
+                const [newOrg] = await db
+                  .insert(organization)
+                  // @ts-expect-error - Drizzle ORM type inference issue
                   .values({
-                    organizationId: targetOrgId,
-                    name: cohortName,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
+                    id: 'org_default_students',
+                    name: 'Independent Students',
+                    slug: 'default-students',
+                    createdAt: new Date(),
                   })
+                  .returning({ id: organization.id })
                   .execute();
+                targetOrgId = newOrg.id;
+                console.log('✅ Default organization created');
+              } catch (orgError: any) {
+                // If it fails due to duplicate key, fetch the existing one
+                if (orgError.code === '23505') {
+                  console.log('⚠️ Organization already exists (race condition), fetching it...');
+                  const [existingOrg] = await db
+                    .select({ id: organization.id })
+                    .from(organization)
+                    .where(eq(organization.id, 'org_default_students'))
+                    .limit(1)
+                    .execute();
+                  targetOrgId = existingOrg.id;
+                } else {
+                  throw orgError;
+                }
               }
             }
           }
