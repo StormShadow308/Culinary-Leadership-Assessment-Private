@@ -310,8 +310,13 @@ export async function middleware(request: NextRequest) {
     }
 
     // STUDENT-ONLY ROUTES: Only students can access assessment and attempt routes
+    // EXCEPTION: Allow invite links (invite=true query parameter) for all users
     if (pathname === '/assessment' || pathname.startsWith('/attempt')) {
-      if (userRole !== 'student') {
+      // Check if this is an invite link
+      const url = new URL(request.url);
+      const isInviteLink = url.searchParams.get('invite') === 'true';
+      
+      if (!isInviteLink && userRole !== 'student') {
         if (shouldLogMessage(`student-access-denied-${user.email}`)) {
           console.log(`❌ Access Denied: Non-student user trying to access student area`);
         }
@@ -322,6 +327,9 @@ export async function middleware(request: NextRequest) {
         } else {
           return NextResponse.redirect(new URL('/assessment', request.url));
         }
+      } else if (isInviteLink) {
+        // Allow invite link access for all authenticated users
+        console.log(`✅ Invite link access granted for user: ${user.email} (Role: ${userRole})`);
       }
     }
 
