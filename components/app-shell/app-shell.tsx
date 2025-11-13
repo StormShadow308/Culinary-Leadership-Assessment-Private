@@ -15,6 +15,7 @@ import {
   AppShell as MantineAppShell,
   Title,
   useMantineColorScheme,
+  ScrollArea,
 } from '@mantine/core';
 
 import { useDisclosure, useHotkeys, useMediaQuery } from '@mantine/hooks';
@@ -246,51 +247,57 @@ export function AppShell({ children, links = [], headerContent }: AppShellProps)
         p="md"
         className={mounted && isMobile ? `mobile-navbar ${opened ? 'mobile-navbar-open' : 'mobile-navbar-closed'}` : ''}
       >
-        <Flex direction="column" gap="md">
-          {links.map(link => {
-            const active = isLinkActive(link.href);
-            // Disable prefetch for admin routes to prevent unauthorized access attempts
-            const shouldPrefetch = !link.href.startsWith('/admin');
-            
-            return (
-              <Anchor
-                key={link.href}
-                underline="never"
-                component={Link}
-                prefetch={shouldPrefetch}
-                href={link.href}
-                bg={active ? 'var(--mantine-primary-color-light)' : 'transparent'}
-                c={
-                  active ? 'var(--mantine-primary-color-light-color)' : 'var(--mantine-color-text)'
-                }
-                p="xs"
-                style={{ borderRadius: 'var(--mantine-radius-sm)' }}
-                onClick={() => {
-                  // Close mobile navigation when a link is clicked
-                  if (isMobile) {
-                    console.log('Navigation link clicked, closing mobile nav');
-                    close();
+        <ScrollArea 
+          style={{ height: 'calc(100vh - 120px)' }}
+          scrollbarSize={8}
+          scrollHideDelay={500}
+        >
+          <Flex direction="column" gap="md" pr="xs">
+            {links.map(link => {
+              const active = isLinkActive(link.href);
+              // Disable prefetch for admin routes to prevent unauthorized access attempts
+              const shouldPrefetch = !link.href.startsWith('/admin');
+              
+              return (
+                <Anchor
+                  key={link.href}
+                  underline="never"
+                  component={Link}
+                  prefetch={shouldPrefetch}
+                  href={link.href}
+                  bg={active ? 'var(--mantine-primary-color-light)' : 'transparent'}
+                  c={
+                    active ? 'var(--mantine-primary-color-light-color)' : 'var(--mantine-color-text)'
                   }
-                }}
-              >
-                <Group gap="md">
-                  {link.icon && (
-                    <Box 
-                      style={{ 
-                        color: active ? 'var(--mantine-primary-color-light-color)' : 'inherit',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {link.icon}
-                    </Box>
-                  )}
-                  <Box>{link.label}</Box>
-                </Group>
-              </Anchor>
-            );
-          })}
-        </Flex>
+                  p="xs"
+                  style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                  onClick={() => {
+                    // Close mobile navigation when a link is clicked
+                    if (isMobile) {
+                      console.log('Navigation link clicked, closing mobile nav');
+                      close();
+                    }
+                  }}
+                >
+                  <Group gap="md">
+                    {link.icon && (
+                      <Box 
+                        style={{ 
+                          color: active ? 'var(--mantine-primary-color-light-color)' : 'inherit',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {link.icon}
+                      </Box>
+                    )}
+                    <Box>{link.label}</Box>
+                  </Group>
+                </Anchor>
+              );
+            })}
+          </Flex>
+        </ScrollArea>
       </MantineAppShell.Navbar>
       
       {/* Page content */}

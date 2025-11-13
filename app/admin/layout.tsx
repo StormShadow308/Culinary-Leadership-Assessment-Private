@@ -1,4 +1,4 @@
-import { IconHome, IconQuestionMark, IconUsers, IconBuilding, IconSchool, IconUserCheck, IconClipboardList, IconFileText, IconTable, IconListCheck, IconRefresh, IconActivity } from '@tabler/icons-react';
+import { IconHome, IconQuestionMark, IconUsers, IconBuilding, IconSchool, IconUserCheck, IconClipboardList, IconFileText, IconTable, IconListCheck, IconRefresh, IconActivity, IconMail } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
 import { GlobalOrgProvider } from '~/app/organisation/components/global-org-context';
@@ -20,6 +20,11 @@ const ADMIN_DASHBOARD_LINKS: Array<NavLink> = [
     href: '/admin/answers',
     label: 'Answers',
     icon: <IconListCheck />,
+  },
+  {
+    href: '/admin/send-results',
+    label: 'Send Results',
+    icon: <IconMail />,
   },
   {
     href: '/admin/sync',

@@ -1,4 +1,4 @@
-import { IconLayoutDashboard, IconSchool, IconListCheck, IconUsers } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconSchool, IconListCheck, IconUsers, IconMail } from '@tabler/icons-react';
 
 import { AppShell, type NavLink } from '~/components/app-shell';
 import { SmartOrgProvider } from './components/smart-org-provider';
@@ -24,6 +24,11 @@ const ORGANISATION_DASHBOARD_LINKS: Array<NavLink> = [
     href: '/organisation/answers',
     label: 'Answers',
     icon: <IconListCheck />,
+  },
+  {
+    href: '/organisation/send-results',
+    label: 'Send Results',
+    icon: <IconMail />,
   },
 ];
 
