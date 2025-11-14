@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/db';
 import { participants, attempts, cohorts } from '~/db/schema';
-import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { eq, and, isNotNull, inArray, sql } from 'drizzle-orm';
 
 interface ReportData {
   totalScore: number;
@@ -34,7 +34,10 @@ export async function GET(request: Request) {
     // Fetch cohort names
     const cohortIds = [...new Set(orgParticipants.map(p => p.cohortId).filter(Boolean))];
     const cohortData = cohortIds.length > 0
-      ? await db.select({ id: cohorts.id, name: cohorts.name }).from(cohorts).where(sql`id = ANY(${cohortIds})`)
+      ? await db
+          .select({ id: cohorts.id, name: cohorts.name })
+          .from(cohorts)
+          .where(inArray(cohorts.id, cohortIds))
       : [];
     
     const cohortMap = new Map(cohortData.map(c => [c.id, c.name]));
@@ -52,7 +55,7 @@ export async function GET(request: Request) {
           .from(attempts)
           .where(
             and(
-              sql`participant_id = ANY(${participantIds})`,
+              inArray(attempts.participantId, participantIds),
               isNotNull(attempts.completedAt)
             )
           )
