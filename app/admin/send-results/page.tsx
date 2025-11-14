@@ -16,6 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconMail, IconSearch, IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { useGlobalOrg } from '~/app/organisation/components/global-org-context';
 
 interface Participant {
   id: string;
@@ -30,6 +31,7 @@ interface Participant {
 }
 
 export default function AdminSendResultsPage() {
+  const { selectedOrgId } = useGlobalOrg();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,15 +40,22 @@ export default function AdminSendResultsPage() {
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
-    fetchIndependentParticipants();
-  }, []);
+    fetchParticipants();
+  }, [selectedOrgId]);
 
-  const fetchIndependentParticipants = async () => {
+  const fetchParticipants = async () => {
+    // Require an organization to be selected in the admin org selector
+    if (!selectedOrgId) {
+      setParticipants([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      // Fetch participants from the N/A organization (independent students)
-      const response = await fetch('/api/admin/independent-participants');
-      if (!response.ok) throw new Error('Failed to fetch independent participants');
+      // Fetch participants for the currently selected organization
+      const response = await fetch(`/api/organization/participants?orgId=${selectedOrgId}`);
+      if (!response.ok) throw new Error('Failed to fetch participants');
       
       const data = await response.json();
       setParticipants(data.participants || []);
@@ -54,12 +63,23 @@ export default function AdminSendResultsPage() {
       console.error('Error fetching participants:', error);
       setResult({
         success: false,
-        message: 'Failed to load independent participants',
+        message: 'Failed to load participants',
       });
     } finally {
       setLoading(false);
     }
   };
+
+  // If no organization is selected in the admin header, prompt the admin to choose one
+  if (!selectedOrgId) {
+    return (
+      <Stack>
+        <Alert icon={<IconAlertCircle />} title="No Organization Selected" color="yellow">
+          Please select an organization in the header to send results.
+        </Alert>
+      </Stack>
+    );
+  }
 
   const filteredParticipants = participants.filter(p => {
     const searchLower = searchQuery.toLowerCase();
@@ -130,9 +150,9 @@ export default function AdminSendResultsPage() {
   return (
     <Stack>
       <div>
-        <Title order={2}>Send Results to Independent Students</Title>
+        <Title order={2}>Send Assessment Results</Title>
         <Text c="dimmed" size="sm" mt="xs">
-          Send personalized assessment results via email to independent students who registered without an organization.
+          Send personalized assessment results via email to participants of the selected organization.
         </Text>
       </div>
 
