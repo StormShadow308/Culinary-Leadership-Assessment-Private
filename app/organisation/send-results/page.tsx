@@ -16,7 +16,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconMail, IconSearch, IconAlertCircle, IconCheck } from '@tabler/icons-react';
-import { useOrgUser } from '../components/org-user-context';
+import { useGlobalOrg } from '../components/global-org-context';
 
 interface Participant {
   id: string;
@@ -30,7 +30,7 @@ interface Participant {
 }
 
 export default function SendResultsPage() {
-  const { selectedOrgId } = useOrgUser();
+  const { selectedOrgId } = useGlobalOrg();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');

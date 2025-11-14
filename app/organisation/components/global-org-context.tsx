@@ -56,7 +56,7 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
     }
   }, [searchParams, selectedOrgId, isInitialized]);
 
-  // Fetch organizations (only for admin users)
+  // Fetch organizations for admin users, or the single organization for org users
   const refreshOrganizations = async () => {
     setLoading(true);
     try {
@@ -72,11 +72,34 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
       
       const user = await userResponse.json();
       if (user.role !== 'admin') {
-        setOrganizations([]);
+        // Organisation user: fetch their own organization context
+        const orgResponse = await fetch('/api/organization/my-organization', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (orgResponse.ok) {
+          const data = await orgResponse.json();
+          if (data.organization) {
+            setOrganizations([data.organization]);
+            // Auto-bind selectedOrgId only if it isn't already set from URL
+            if (!selectedOrgId) {
+              setSelectedOrgId(data.organization.id);
+            }
+          } else {
+            setOrganizations([]);
+          }
+        } else {
+          console.error('Failed to fetch user organization:', orgResponse.status);
+          setOrganizations([]);
+        }
+
         return;
       }
 
-      // Only fetch organizations if user is admin
+      // Admin user: fetch all organizations
       const response = await fetch('/api/admin/organizations', {
         credentials: 'include',
         headers: {
@@ -130,8 +153,12 @@ export function GlobalOrgProvider({ children }: GlobalOrgProviderProps) {
   );
 }
 
+export function useGlobalOrgOptional() {
+  return useContext(GlobalOrgContext);
+}
+
 export function useGlobalOrg() {
-  const context = useContext(GlobalOrgContext);
+  const context = useGlobalOrgOptional();
   if (context === undefined) {
     throw new Error('useGlobalOrg must be used within a GlobalOrgProvider');
   }

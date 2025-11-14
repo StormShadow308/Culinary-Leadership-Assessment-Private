@@ -36,18 +36,13 @@ export function SmartOrgProvider({ children }: SmartOrgProviderProps) {
     return <div>Loading...</div>;
   }
 
-  // Use admin context for admin users, org user context for others
-  if (userRole === 'admin') {
-    return (
-      <GlobalOrgProvider>
-        {children}
-      </GlobalOrgProvider>
-    );
-  } else {
-    return (
+  // Wrap with both providers so both useGlobalOrg (admin) and useOrgUser (org users)
+  // are always safe to call within organisation routes.
+  return (
+    <GlobalOrgProvider>
       <OrgUserProvider>
         {children}
       </OrgUserProvider>
-    );
-  }
+    </GlobalOrgProvider>
+  );
 }
