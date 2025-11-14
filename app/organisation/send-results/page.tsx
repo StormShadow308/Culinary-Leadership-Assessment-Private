@@ -30,7 +30,7 @@ interface Participant {
 }
 
 export default function SendResultsPage() {
-  const { selectedOrgId } = useGlobalOrg();
+  const { selectedOrgId, loading: orgLoading, isInitialized } = useGlobalOrg();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,11 +39,14 @@ export default function SendResultsPage() {
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
+    // Only attempt to fetch once org context is initialized
+    if (!isInitialized) return;
     fetchParticipants();
-  }, [selectedOrgId]);
+  }, [selectedOrgId, isInitialized]);
 
   const fetchParticipants = async () => {
     if (!selectedOrgId) {
+      setParticipants([]);
       setLoading(false);
       return;
     }
@@ -132,6 +135,18 @@ export default function SendResultsPage() {
     }
   };
 
+  // While org context is initializing or loading, show a loading state
+  if (!isInitialized || orgLoading) {
+    return (
+      <Stack>
+        <Alert icon={<IconAlertCircle />} title="Loading Organization" color="blue">
+          Detecting your organization, please wait...
+        </Alert>
+      </Stack>
+    );
+  }
+
+  // If, after initialization, we still don't have an organization, show the warning
   if (!selectedOrgId) {
     return (
       <Stack>

@@ -50,9 +50,6 @@ function GlobalOrgProviderInner({ children }: GlobalOrgProviderProps) {
     const orgId = searchParams.get('orgId');
     if (orgId && orgId !== selectedOrgId) {
       setSelectedOrgId(orgId);
-    } else if (!orgId && selectedOrgId) {
-      // If URL doesn't have orgId but context does, clear it
-      setSelectedOrgId(null);
     }
   }, [searchParams, selectedOrgId, isInitialized]);
 
