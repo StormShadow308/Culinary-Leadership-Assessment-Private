@@ -171,19 +171,24 @@ function generateResultsEmail(data: EmailData): string {
     hasPostAssessment,
   } = data;
 
+  // Choose which score should be treated as the primary score for display
+  // If there is a post-assessment, we treat that as primary.
+  // If there is only a pre-assessment, we show the pre score (e.g. 5/40) instead of 0/40.
+  const primaryScore = hasPostAssessment ? postScore : preScore;
+  const primaryPercentage = Math.round((primaryScore / maxScore) * 100);
+
   const improvement = postScore - preScore;
   const improvementPercent = preScore > 0 ? Math.round((improvement / preScore) * 100) : 0;
-  const postPercentage = Math.round((postScore / maxScore) * 100);
 
   let performanceMessage = '';
-  if (postScore >= maxScore * 0.875) {
-    performanceMessage = '🌟 Outstanding Performance! You\'ve demonstrated exceptional leadership skills.';
-  } else if (postScore >= maxScore * 0.7) {
-    performanceMessage = '👏 Excellent Progress! You\'ve shown strong leadership capabilities.';
-  } else if (postScore >= maxScore * 0.525) {
-    performanceMessage = '✨ Good Development! You\'re making solid progress in your leadership journey.';
+  if (primaryScore >= maxScore * 0.875) {
+    performanceMessage = '31f Outstanding Performance! You\'ve demonstrated exceptional leadership skills.';
+  } else if (primaryScore >= maxScore * 0.7) {
+    performanceMessage = '44f Excellent Progress! You\'ve shown strong leadership capabilities.';
+  } else if (primaryScore >= maxScore * 0.525) {
+    performanceMessage = '4a8 Good Development! You\'re making solid progress in your leadership journey.';
   } else {
-    performanceMessage = '💪 Keep Growing! You\'ve taken important first steps in developing your leadership skills.';
+    performanceMessage = '4aa Keep Growing! You\'ve taken important first steps in developing your leadership skills.';
   }
 
   return `
@@ -320,13 +325,13 @@ function generateResultsEmail(data: EmailData): string {
       </div>
       ` : `
       <div class="score-box">
-        <div class="score-large">${postScore} / ${maxScore}</div>
+        <div class="score-large">${primaryScore} / ${maxScore}</div>
         <div style="color: #6b7280; font-size: 16px; margin-top: 8px;">
-          (${postPercentage}%)
+          (${primaryPercentage}%)
         </div>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" style="width: ${postPercentage}%"></div>
+        <div class="progress-fill" style="width: ${primaryPercentage}%"></div>
       </div>
       `}
       
