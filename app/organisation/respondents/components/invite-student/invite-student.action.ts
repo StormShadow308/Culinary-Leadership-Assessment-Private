@@ -133,45 +133,64 @@ export const inviteStudentAction = actionClient
         };
       }
 
-      // Check if participant already has an attempt for this assessment
-      const existingAttempt = await db
+      // Check existing attempts for this participant and assessment (both pre and post)
+      const existingAttempts = await db
         .select()
         .from(attempts)
         .where(
           and(
             eq(attempts.participantId, participantId),
-            eq(attempts.assessmentId, defaultAssessment.id),
-            eq(attempts.type, 'pre_assessment')
+            eq(attempts.assessmentId, defaultAssessment.id)
           )
         )
         .execute();
 
       let attemptId: string;
 
-      if (existingAttempt.length > 0) {
-        // Use existing attempt if it's not completed
-        if (existingAttempt[0].status !== 'completed') {
-          attemptId = existingAttempt[0].id;
-        } else {
-          // Create a new post-assessment attempt if pre-assessment is completed
-          const [newAttempt] = await db
-            .insert(attempts)
-            .values({
-              participantId,
-              assessmentId: defaultAssessment.id,
-              startedAt: new Date().toISOString(),
-              status: 'in_progress',
-              type: 'post_assessment',
-              lastQuestionSeen: 1,
-              welcomeEmailSent: true,
-            })
-            .returning({ id: attempts.id })
-            .execute();
+      // Find pre- and post-assessment attempts, if any
+      const existingPreAttempt = existingAttempts.find(a => a.type === 'pre_assessment');
+      const existingPostAttempt = existingAttempts.find(a => a.type === 'post_assessment');
 
-          attemptId = newAttempt.id;
+      if (existingPreAttempt) {
+        if (existingPreAttempt.status !== 'completed') {
+          // Reuse in-progress pre-assessment attempt
+          attemptId = existingPreAttempt.id;
+        } else {
+          // Pre-assessment completed: we want to invite for post-assessment
+          if (existingPostAttempt) {
+            // Reuse existing post-assessment attempt (resetting basic progress)
+            attemptId = existingPostAttempt.id;
+
+            await db
+              .update(attempts)
+              .set({
+                status: 'in_progress',
+                lastQuestionSeen: 1,
+                // Do not clear reportData here; student will progress from start
+              })
+              .where(eq(attempts.id, attemptId))
+              .execute();
+          } else {
+            // No post-assessment yet: create one
+            const [newAttempt] = await db
+              .insert(attempts)
+              .values({
+                participantId,
+                assessmentId: defaultAssessment.id,
+                startedAt: new Date().toISOString(),
+                status: 'in_progress',
+                type: 'post_assessment',
+                lastQuestionSeen: 1,
+                welcomeEmailSent: true,
+              })
+              .returning({ id: attempts.id })
+              .execute();
+
+            attemptId = newAttempt.id;
+          }
         }
       } else {
-        // Create new attempt
+        // No pre-assessment yet: start with a new pre-assessment attempt
         const [newAttempt] = await db
           .insert(attempts)
           .values({
