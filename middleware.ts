@@ -318,8 +318,8 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // STUDENT-ONLY ROUTES: Only students can access assessment and attempt routes
-    // EXCEPTION: Allow invite links (invite=true query parameter) for all users
+    // STUDENT-ASSESSMENT ROUTES: Primarily for students, but allow org/admin users too
+    // EXCEPTION: Invite links (invite=true query parameter) still set a short-lived session
     if (pathname === '/assessment' || pathname.startsWith('/attempt')) {
       // Check if this is an invite link or if user has an active invite session
       const url = new URL(request.url);
@@ -340,17 +340,11 @@ export async function middleware(request: NextRequest) {
         return response;
       }
       
-      // Allow access if user has invite session or is a student
+      // Previously: non-student users without invite session were redirected away.
+      // Now: allow org/admin users to access assessment/attempt routes for testing and post-assessments.
       if (!isInviteLink && !hasInviteSession && userRole !== 'student') {
-        if (shouldLogMessage(`student-access-denied-${user.email}`)) {
-          console.log(`❌ Access Denied: Non-student user trying to access student area`);
-        }
-        if (userRole === 'admin') {
-          return NextResponse.redirect(new URL('/admin', request.url));
-        } else if (userRole === 'organization') {
-          return NextResponse.redirect(new URL('/organisation', request.url));
-        } else {
-          return NextResponse.redirect(new URL('/assessment', request.url));
+        if (shouldLogMessage(`student-access-non-student-${user.email}`)) {
+          console.log(`ℹ️ Non-student user accessing assessment area (allowed): ${user.email} (Role: ${userRole})`);
         }
       } else if (hasInviteSession) {
         // Allow continued access for users with active invite session
