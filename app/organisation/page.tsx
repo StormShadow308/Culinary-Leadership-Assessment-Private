@@ -16,7 +16,7 @@ import { AdminOrgWrapper } from './components/admin-org-wrapper';
 import { AnalysisDashboard } from '~/components/analysis-dashboard';
 import { FilteredOrganizationDashboard } from './components/filtered-organization-dashboard';
 
-import { and, avg, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, avg, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 
 import { CohortScoringCurve } from './charts/cohort-scoring-curve';
 import { ProficiencyLevelsChart } from './charts/proficiency-levels-chart';
@@ -345,7 +345,7 @@ export default async function Organisation(props: OrganisationProps) {
     .from(attempts)
     .where(
       and(
-        eq(attempts.status, 'completed'),
+        isNotNull(attempts.completedAt),
         eq(attempts.type, 'post_assessment'),
         inArray(attempts.participantId, participantIds)
       )
@@ -389,7 +389,7 @@ export default async function Organisation(props: OrganisationProps) {
     .from(attempts)
     .where(
       and(
-        eq(attempts.status, 'completed'),
+        isNotNull(attempts.completedAt),
         eq(attempts.type, 'post_assessment'),
         inArray(attempts.participantId, participantIds)
       )
@@ -421,7 +421,7 @@ export default async function Organisation(props: OrganisationProps) {
     .from(attempts)
     .where(
       and(
-        eq(attempts.status, 'completed'),
+        isNotNull(attempts.completedAt),
         eq(attempts.type, 'post_assessment'),
         inArray(attempts.participantId, participantIds)
       )
@@ -519,7 +519,7 @@ export default async function Organisation(props: OrganisationProps) {
     .from(attempts)
     .where(
       and(
-        eq(attempts.status, 'completed'),
+        isNotNull(attempts.completedAt),
         eq(attempts.type, 'post_assessment'),
         inArray(attempts.participantId, participantIds)
       )
@@ -615,7 +615,7 @@ export default async function Organisation(props: OrganisationProps) {
       and(
         eq(participants.organizationId, currentOrgId),
         selectedCohort ? eq(participants.cohortId, selectedCohort) : void 0,
-        eq(attempts.status, 'completed'),
+        isNotNull(attempts.completedAt),
         eq(attempts.type, 'post_assessment')
       )
     )
