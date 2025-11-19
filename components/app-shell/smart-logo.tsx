@@ -56,17 +56,17 @@ export function SmartLogo({ className }: SmartLogoProps) {
       style={{ cursor: 'pointer' }}
       className={className}
     >
-      <Group gap="xs" style={{ flexWrap: 'nowrap' }}>
+      <Group gap="sm" style={{ flexWrap: 'nowrap' }}>
         <img 
           src="/whatsapp-logo.jpeg" 
           alt="Company Logo" 
-          width={32} 
-          height={32} 
+          width={40} 
+          height={40} 
           style={{ 
             objectFit: 'contain',
             flexShrink: 0,
-            width: 'clamp(24px, 4.5vw, 32px)',
-            height: 'clamp(24px, 4.5vw, 32px)',
+            width: 'clamp(28px, 5vw, 40px)',
+            height: 'clamp(28px, 5vw, 40px)',
             imageRendering: 'crisp-edges',
           }} 
         />

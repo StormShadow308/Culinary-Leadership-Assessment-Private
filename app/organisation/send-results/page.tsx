@@ -179,15 +179,15 @@ export default function SendResultsPage() {
       )}
 
       <Paper p="md" withBorder>
-        <Group justify="space-between" mb="md">
+        <Group justify="space-between" mb="md" wrap="wrap" gap="sm">
           <TextInput
             placeholder="Search by name, email, or cohort..."
             leftSection={<IconSearch size={16} />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ flex: 1, maxWidth: 400 }}
+            style={{ flex: 1, minWidth: 220, maxWidth: 400 }}
           />
-          <Group>
+          <Group gap="sm" wrap="wrap">
             <Button
               variant="light"
               onClick={toggleAll}
@@ -206,7 +206,7 @@ export default function SendResultsPage() {
           </Group>
         </Group>
 
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', overflowX: 'auto' }}>
           <LoadingOverlay visible={loading} />
           <Table striped highlightOnHover>
             <Table.Thead>

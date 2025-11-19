@@ -116,11 +116,11 @@ export default async function AttemptQuestionPage({
               <img
                 src="/whatsapp-logo.jpeg"
                 alt="Company Logo"
-                width={140}
-                height={60}
+                width={180}
+                height={80}
                 style={{ objectFit: 'contain' }}
               />
-              <Space m="auto" />
+              <Space w="md" />
               <Stack gap="0" align="end">
                 <Text size="md">{participant[0]?.participant.fullName}</Text>
                 <Text size="sm" c="dimmed">
