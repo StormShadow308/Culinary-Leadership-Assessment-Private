@@ -78,11 +78,23 @@ export const printPdfAction = actionClient
         .from(attempts)
         .where(and(eq(attempts.participantId, studentId), eq(attempts.type, 'pre_assessment')));
 
-      if (!preAssessment?.reportData) {
+      // Get post-assessment data (final/full results if available)
+      const [postAssessment] = await db
+        .select({
+          status: attempts.status,
+          reportData: attempts.reportData,
+        })
+        .from(attempts)
+        .where(and(eq(attempts.participantId, studentId), eq(attempts.type, 'post_assessment')));
+
+      // Prefer post-assessment report data (full result) when available, otherwise fall back to pre-assessment
+      const reportData = (postAssessment?.reportData || preAssessment?.reportData) as
+        | ReportData
+        | undefined;
+
+      if (!reportData) {
         return { error: 'No assessment data available' };
       }
-
-      const reportData = preAssessment.reportData as ReportData;
 
       // Instead of generating PDF on server, return the data and let client handle PDF generation
       return {

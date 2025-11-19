@@ -186,9 +186,19 @@ export default async function StudentReport({ params }: { params: Promise<{ id: 
     })
     .from(attempts)
     .where(and(eq(attempts.participantId, id), eq(attempts.type, 'pre_assessment')));
+  // Get post-assessment data (final/full results if available)
+  const [postAssessment] = await db
+    .select({
+      status: attempts.status,
+      reportData: attempts.reportData,
+    })
+    .from(attempts)
+    .where(and(eq(attempts.participantId, id), eq(attempts.type, 'post_assessment')));
 
-  // We'll use pre-assessment data for this example
-  const reportData = preAssessment?.reportData as ReportData | undefined;
+  // Prefer post-assessment report data (full result) when available, otherwise fall back to pre-assessment
+  const reportData = (postAssessment?.reportData || preAssessment?.reportData) as
+    | ReportData
+    | undefined;
 
   // If no report data is available
   if (!reportData) {
